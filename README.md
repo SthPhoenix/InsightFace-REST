@@ -7,6 +7,8 @@ in official DeepInsight InsightFace [repository](https://github.com/deepinsight/
 This repository provides source code for building face recognition REST API
 and Dockerfiles for fast deployment.
 
+Currently this repository contains Dockerfiles for CPU inference.
+
 
 ## Prerequesites:
 
