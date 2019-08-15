@@ -1,0 +1,7 @@
+Flask
+mxnet-mkl
+opencv-python
+sklearn
+scikit-image
+easydict
+numpy==1.16.2
