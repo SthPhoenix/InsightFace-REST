@@ -100,6 +100,4 @@ DeepInsight [Model Zoo](https://github.com/deepinsight/insightface/wiki/Model-Zo
 
 
 ## Known issues:
-1. Docker container requires at least 4GB RAM.
-2. MTCNN thresholds was a bit tuned for faster inference, but it has 
-side effect of producing wrong face probability scores above 0.0-1.0 range.
+1. Docker container requires at least 4GB RAM (MTCNN uses lots of RAM)
