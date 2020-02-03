@@ -39,20 +39,24 @@ def do_flip(data):
 
 def reproject_bb(dets, scale):
     for i, bb in enumerate(dets):
-        dets[i] = bb / scale
+        if dets.shape[0] != 5:
+            dets[i] = bb / scale
+        else:
+            dets[i] = bb
+            dets[i][0:4] = bb[0:4] / scale
     return dets
 
 
-def resize(img):
+def resize(img,max_size=640):
     try:
         largest_size = sorted(img.shape[:2])[0]
-        scale = 640 / largest_size
-        if scale < 1:
-            img_res = cv2.resize(img, (0, 0), fx=scale, fy=scale)
-            return img_res, scale
-        else:
+        scale = max_size / largest_size
+        if scale >= 1 or max_size==0:
             scale = 1
             return img, scale
+        else:
+            img_res = cv2.resize(img, (0, 0), fx=scale, fy=scale)
+            return img_res, scale
     except:
         return None
 
@@ -68,7 +72,6 @@ class FaceModel:
 
             config.gpu_options.per_process_gpu_memory_fraction = 0.2
             sess = tf.Session(config=config)
-            # sess = tf.Session()
             with sess.as_default():
                 self.pnet, self.rnet, self.onet = detect_face.create_mtcnn(sess, None)
 
@@ -98,19 +101,13 @@ class FaceModel:
         self.model.sym = all_layers['fc1_output']
 
     def get_aligned_face(self, img, force=False):
-        # print('before det', img.shape)
         bounding_boxes, points = detect_face.detect_face(img, self.det_minsize, self.pnet, self.rnet, self.onet,
                                                          self.det_threshold, self.det_factor)
-        # if bounding_boxes.shape[0]==0:
-        #  fimg = np.copy(img)
-        #  do_flip(fimg)
-        #  bounding_boxes, points = detect_face.detect_face(fimg, self.det_minsize, self.pnet, self.rnet, self.onet, self.det_threshold, self.det_factor)
+
         if bounding_boxes.shape[0] == 0 and force:
             print('force det', img.shape)
             bounding_boxes, points = detect_face.detect_face(img, self.det_minsize, self.pnet, self.rnet, self.onet,
                                                              [0.3, 0.3, 0.1], self.det_factor)
-            # bounding_boxes, points = detect_face.detect_face_force(img, None, self.pnet, self.rnet, self.onet)
-        # print('after det')
         if bounding_boxes.shape[0] == 0:
             return None
         bindex = 0
@@ -151,10 +148,11 @@ class FaceModel:
             ret.append(aligned)
         return ret
 
-    def get_all_faces_bulk(self, imgs):
+    def get_all_faces_bulk(self, imgs,max_size=640):
         str_image_size = "%d,%d" % (self.image_size[0], self.image_size[1])
 
-        imgs_res = np.array([resize(img) for img in imgs])
+        imgs_res = np.array([resize(img,max_size) for img in imgs])
+
         res = detect_face.bulk_detect_face(imgs_res[:, 0], self.det_minsize, self.pnet, self.rnet, self.onet,
                                            self.det_threshold, self.det_factor)
 
