@@ -13,20 +13,27 @@ from itertools import chain, islice
 from flask import Flask, render_template, request, jsonify
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-print(dir_path)
 
 parser = argparse.ArgumentParser(description='do verification')
-# general
-parser.add_argument('--image-size', default='112,112', help='')
-parser.add_argument('--model', default=os.path.join(dir_path, 'models/model-r100-ii/model,0'),
+
+port = os.environ.get('PORT', 18080)
+debug = os.environ.get('DEBUG', False)
+max_size = os.environ.get('MAX_SIZE',640)
+model = os.environ.get("MODEL", os.path.join(dir_path, 'models/model-r100-arcface-ms1m-refine-v2/model/model,0'))
+image_size = os.environ.get('FACE_SIZE', '112,112')
+
+parser.add_argument('--image-size', default=image_size, help='')
+parser.add_argument('--max-size', default=max_size, help='Target image max dimension')
+parser.add_argument('--model', default=model,
                     help='path to load model.')
 parser.add_argument('--gpu', default=-1, type=int, help='gpu id')
+parser.add_argument('--threshold', default=1.24, type=float, help='ver dist threshold')
+
 args = parser.parse_args()
 
 model = face_model.FaceModel(args)
 
 app = Flask(__name__)
-
 
 def to_chunks(iterable, size=10):
     iterator = iter(iterable)
@@ -36,7 +43,7 @@ def to_chunks(iterable, size=10):
 
 @app.route('/')
 def hello_world():
-    return 'InsightFace-REST'
+    return 'Hello, This is InsightFace!'
 
 
 def image_resize(image):
@@ -67,7 +74,6 @@ def get_image(data):
                     _bin = np.fromstring(_bin, np.uint8)
                     image = cv2.imdecode(_bin, cv2.IMREAD_COLOR)
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    # image = image_resize(image)
                     return [image]
                 except:
                     return [np.zeros([3, 3], dtype=int)]
@@ -109,17 +115,44 @@ def ver():
     return jsonify(ret)
 
 
+@app.route('/detect', methods=['POST'])
+def det():
+    try:
+        data = request.data
+        values = json.loads(data.decode('utf-8'))
+        images = get_image(values['images'])
+        if images is None:
+            print('target image is None')
+            return '-1'
+        if not isinstance(images, list):
+            images = [images]
+        chunks = to_chunks(images, 50)
+        out = []
+        for chunk in chunks:
+            chunk = list(chunk)
+            bboxes = model.get_all_faces_bulk(chunk)
+            out += bboxes
+        return jsonify(bboxes)
+    except Exception as ex:
+        print(ex)
+        return '-1'
+
+
 @app.route('/extract', methods=['POST'])
 def extract():
+    # try:
     data = request.data
     values = json.loads(data.decode('utf-8'))
+
     images = get_image(values['images'])
+    target_size = values.get('max_size',max_size)
     chunks = to_chunks(images, 20)
     detections = []
     # Iterate through chunked images
+    t0 = time.time()
     for chunk in chunks:
         chunk = list(chunk)
-        detections += model.get_all_faces_bulk(chunk)
+        detections += model.get_all_faces_bulk(chunk, target_size)
 
     def det_provider(dets):
         for id, img in enumerate(dets):
@@ -127,12 +160,13 @@ def extract():
                 for idx, det in enumerate(img):
                     yield ((id, idx), det)
 
-    detections = det_provider(detections)
-    det_chunks = to_chunks(detections, 50)
+    dets = det_provider(detections)
+    det_chunks = to_chunks(dets, 50)
     output = []
+    
     for det_chunk in det_chunks:
-        pos, detections = zip(*det_chunk)
-        aligned, meta = zip(*detections)
+        pos, dets = zip(*det_chunk)
+        aligned, meta = zip(*dets)
         batch = np.stack([e for e in aligned])
         embs = model.get_feature_bulk(batch, norm=True)
         to_out = zip(pos, embs, meta)
@@ -143,6 +177,7 @@ def extract():
                     output.append([])
             emb = {"vec": e[1].tolist(), "det": e[0][1], "prob": e[2][1], 'bbox': [int(p) for p in e[2][0].tolist()]}
             output[im].append(emb)
+
     if len(output) < len(detections):
         for i in range(len(detections) - len(output)):
             output.append([])
@@ -150,4 +185,4 @@ def extract():
 
 
 if __name__ == '__main__':
-    app.run('0.0.0.0', port=6000, debug=False)
+    app.run('0.0.0.0', port=port, debug=debug)
