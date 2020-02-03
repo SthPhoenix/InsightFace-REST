@@ -20,8 +20,68 @@ Currently this repository contains Dockerfiles for CPU inference.
 
 
 ## Usage:
-Currently you can see usage examples in `src/api/tests.py`, API documentation
-will be added later.
+
+API accept requests in JSON in following format:
+```
+{
+  "images":{
+      "data":[
+          base64_encoded_image1,  base64_encoded_image2
+      ]
+  },
+  "max_size":640
+}
+```
+
+Where `max_size` is maximum image diemension, images with diemensions greater than `max_size` 
+will be downsized to provided value, i.e if `max_size` is **640** (default value), then 1024x768 image will
+be resized to 640x384.
+
+If `max_size` is set to **0**, image won't be resized.
+
+To call API from Python you can use following sample code:
+
+```python
+import os
+import json
+import base64
+import requests
+
+def file2base64(path):
+    with open(path, mode='rb') as fl:
+        encoded = base64.b64encode(fl.read()).decode('ascii')
+        return encoded
+
+
+def extract_vecs(ims,max_size=640):
+    target = [file2base64(im) for im in ims]
+    req = {"images": {"data": target},"max_size":max_size}
+    resp = requests.post('/extract', json=req)
+    data = resp.json()
+    return data
+    
+images_path = 'src/api/test_images'
+images = os.path.listdir(images_path)
+data = exctract_vecs(images)
+
+```
+Response is in following format:
+
+```json
+[
+    [
+        {"vec": [0.322431242,0.53545632,], "det": 0, "prob": 0.999, "bbox": [100,100,200,200]},
+        {"vec": [0.235334567,-0.2342546,], "det": 1, "prob": 0.998, "bbox": [200,200,300,300]},
+    ],
+    [
+        {"vec": [0.322431242,0.53545632,], "det": 0, "prob": 0.999, "bbox": [100,100,200,200]},
+        {"vec": [0.235334567,-0.2342546,], "det": 1, "prob": 0.998, "bbox": [200,200,300,300]},
+    ]
+]
+```
+First level is list in order the images were sent, second level are faces detected per each image as 
+dictionary containing face embedding, bounding box, detection probability and detection number.  
+
 
 ## Run:
 1. Clone repo
