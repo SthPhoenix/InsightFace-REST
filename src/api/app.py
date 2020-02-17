@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description='do verification')
 port = os.environ.get('PORT', 6000)
 debug = os.environ.get('DEBUG', False)
 max_size = os.environ.get('MAX_SIZE',640)
-model = os.environ.get("MODEL", os.path.join(dir_path, 'models/model-r100-arcface-ms1m-refine-v2/model/model,0'))
+model = os.environ.get("MODEL", os.path.join(dir_path, 'models/model-r100-ii/model,0'))
 image_size = os.environ.get('FACE_SIZE', '112,112')
 
 parser.add_argument('--image-size', default=image_size, help='')
