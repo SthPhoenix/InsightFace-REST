@@ -56,7 +56,7 @@ def file2base64(path):
 def extract_vecs(ims,max_size=640):
     target = [file2base64(im) for im in ims]
     req = {"images": {"data": target},"max_size":max_size}
-    resp = requests.post('/extract', json=req)
+    resp = requests.post('http://localhost:6000/extract', json=req)
     data = resp.json()
     return data
     
