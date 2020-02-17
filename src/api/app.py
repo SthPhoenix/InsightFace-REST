@@ -16,7 +16,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 parser = argparse.ArgumentParser(description='do verification')
 
-port = os.environ.get('PORT', 18080)
+port = os.environ.get('PORT', 6000)
 debug = os.environ.get('DEBUG', False)
 max_size = os.environ.get('MAX_SIZE',640)
 model = os.environ.get("MODEL", os.path.join(dir_path, 'models/model-r100-arcface-ms1m-refine-v2/model/model,0'))
