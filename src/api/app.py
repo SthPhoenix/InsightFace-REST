@@ -1,6 +1,7 @@
 from flask import Flask
 import face_model
 import argparse
+from distutils.util import strtobool
 import json
 import base64
 # import requests
@@ -16,9 +17,8 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 parser = argparse.ArgumentParser(description='do verification')
 
-port = os.environ.get('PORT', 6000)
-debug = os.environ.get('DEBUG', False)
-max_size = os.environ.get('MAX_SIZE',640)
+port = os.environ.get('PORT', 18080)
+max_size = int(os.environ.get('MAX_SIZE', 640))
 model = os.environ.get("MODEL", os.path.join(dir_path, 'models/model-r100-ii/model,0'))
 image_size = os.environ.get('FACE_SIZE', '112,112')
 
@@ -70,6 +70,7 @@ def get_image(data):
         if _bin is not None:
             if not isinstance(_bin, list):
                 try:
+                    _bin = _bin.split("base64,")[-1]
                     _bin = base64.b64decode(_bin)
                     _bin = np.fromstring(_bin, np.uint8)
                     image = cv2.imdecode(_bin, cv2.IMREAD_COLOR)
@@ -81,6 +82,7 @@ def get_image(data):
                 image = []
                 for __bin in _bin:
                     try:
+                        __bin = __bin.split("base64,")[-1]
                         __bin = base64.b64decode(__bin)
                         __bin = np.fromstring(__bin, np.uint8)
                         _image = cv2.imdecode(__bin, cv2.IMREAD_COLOR)
@@ -149,7 +151,6 @@ def extract():
     chunks = to_chunks(images, 20)
     detections = []
     # Iterate through chunked images
-    t0 = time.time()
     for chunk in chunks:
         chunk = list(chunk)
         detections += model.get_all_faces_bulk(chunk, target_size)
@@ -185,4 +186,4 @@ def extract():
 
 
 if __name__ == '__main__':
-    app.run('0.0.0.0', port=port, debug=debug)
+    app.run('0.0.0.0', port=port)
