@@ -39,11 +39,13 @@ def do_flip(data):
 
 def reproject_bb(dets, scale):
     for i, bb in enumerate(dets):
-        if dets.shape[0] != 5:
-            dets[i] = bb / scale
-        else:
             dets[i] = bb
             dets[i][0:4] = bb[0:4] / scale
+    return dets
+
+def reproject_points(dets, scale):
+    for i, bb in enumerate(dets):
+            dets[i] = bb / scale
     return dets
 
 
@@ -165,7 +167,7 @@ class FaceModel:
             if e is not None:
                 bounding_boxes, points = e
                 bounding_boxes = reproject_bb(bounding_boxes, imgs_res[:, 1][idx])
-                points = reproject_bb(points, imgs_res[:, 1][idx])
+                points = reproject_points(points, imgs_res[:, 1][idx])
 
                 for i in range(bounding_boxes.shape[0]):
                     bbox = bounding_boxes[i, 0:4]
