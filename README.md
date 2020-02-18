@@ -20,13 +20,18 @@ Currently this repository contains Dockerfiles for CPU inference.
 
 
 ## Usage:
+### `/extract` endpoint
 
-API accept requests in JSON in following format:
+Extract endpoint accepts list of images and return faces bounding boxes with corresponding 
+embeddings.
+
+API accept JSON in following format:
 ```
 {
   "images":{
       "data":[
-          base64_encoded_image1,  base64_encoded_image2
+          base64_encoded_image1,  
+          base64_encoded_image2
       ]
   },
   "max_size":640
@@ -56,7 +61,7 @@ def file2base64(path):
 def extract_vecs(ims,max_size=640):
     target = [file2base64(im) for im in ims]
     req = {"images": {"data": target},"max_size":max_size}
-    resp = requests.post('http://localhost:6000/extract', json=req)
+    resp = requests.post('http://localhost:18080/extract', json=req)
     data = resp.json()
     return data
     
@@ -87,8 +92,9 @@ dictionary containing face embedding, bounding box, detection probability and de
 1. Clone repo
 2. Download model **LResNet100E-IR,ArcFace@ms1m-refine-v2** from 
 DeepInsight [Model Zoo](https://github.com/deepinsight/insightface/wiki/Model-Zoo)
-([dropbox](https://www.dropbox.com/s/tj96fsm6t6rq8ye/model-r100-arcface-ms1m-refine-v2.zip?dl=0))
+([dropbox](https://www.dropbox.com/s/tj96fsm6t6rq8ye/model-r100-arcface-ms1m-refine-v2.zip?dl=0)).
 3. Unzip downloaded model to `src/api/models`
+   > You can use script `load_model.sh` to automatically download and unzip model to proper location.
 2. Run `src/api/app.py`
 
 ## Run with Docker:
@@ -96,8 +102,8 @@ DeepInsight [Model Zoo](https://github.com/deepinsight/insightface/wiki/Model-Zo
 1. Follow steps 1-3 from above.
 2. Execute `build.sh` from `docker_tf_opencv` folder to build base image
 `tensorflow-opencv:preconf`
-3. Execute `deploy.sh` from repo root folder to build  and start `insightface-rest:v0.1` image
+3. Execute `deploy.sh` from repo root folder to build  and start `insightface-rest:v0.1.2` image
 
 
 ## Known issues:
-1. Docker container requires at least 4GB RAM (MTCNN uses lots of RAM)
+1. Docker container requires at least 2.2GB RAM (MTCNN uses lots of RAM)
