@@ -1,22 +1,24 @@
+## UPDATE 2020-09-28
+Added GPU support and switched to FastApi, more details in changelog.
+
+
 # InsightFace-REST
 
 InsightFace REST API for easy deployment of face recognition services.
-Code is heavily based on API [code](https://github.com/deepinsight/insightface/tree/master/src/api)
+Code is heavily based on API [code](https://github.com/deepinsight/insightface/tree/master/python-package)
 in official DeepInsight InsightFace [repository](https://github.com/deepinsight/insightface). 
 
 This repository provides source code for building face recognition REST API
 and Dockerfiles for fast deployment.
 
-Currently this repository contains Dockerfiles for CPU inference.
-
-
 ## Prerequesites:
 
-1. Tensorflow
-2. MXNet
+
+1. MXNet
+2. PyTorch
 3. OpenCV
-4. Flask
-5. *Docker (optionally)*
+4. FastApi
+5. Docker
 
 
 ## Usage:
@@ -34,13 +36,12 @@ API accept JSON in following format:
           base64_encoded_image2
       ]
   },
-  "max_size":640
+  "max_size":[640,480]
 }
 ```
 
-Where `max_size` is maximum image diemension, images with diemensions greater than `max_size` 
-will be downsized to provided value, i.e if `max_size` is **640** (default value), then 1024x768 image will
-be resized to 640x384.
+Where `max_size` is maximum image dimension, images with dimensions greater than `max_size`
+will be downsized to provided value.
 
 If `max_size` is set to **0**, image won't be resized.
 
@@ -58,16 +59,16 @@ def file2base64(path):
         return encoded
 
 
-def extract_vecs(ims,max_size=640):
+def extract_vecs(ims,max_size=[640,480]):
     target = [file2base64(im) for im in ims]
     req = {"images": {"data": target},"max_size":max_size}
-    resp = requests.post('http://localhost:18080/extract', json=req)
+    resp = requests.post('http://localhost:18081/extract', json=req)
     data = resp.json()
     return data
     
 images_path = 'src/api/test_images'
 images = os.path.listdir(images_path)
-data = exctract_vecs(images)
+data = extract_vecs(images)
 
 ```
 Response is in following format:
@@ -87,23 +88,27 @@ Response is in following format:
 First level is list in order the images were sent, second level are faces detected per each image as 
 dictionary containing face embedding, bounding box, detection probability and detection number.  
 
-
-## Run:
-1. Clone repo
-2. Download model **LResNet100E-IR,ArcFace@ms1m-refine-v2** from 
-DeepInsight [Model Zoo](https://github.com/deepinsight/insightface/wiki/Model-Zoo)
-([dropbox](https://www.dropbox.com/s/tj96fsm6t6rq8ye/model-r100-arcface-ms1m-refine-v2.zip?dl=0)).
-3. Unzip downloaded model to `src/api/models`
-   > You can use script `load_model.sh` to automatically download and unzip model to proper location.
-2. Run `src/api/app.py`
-
 ## Run with Docker:
 
-1. Follow steps 1-3 from above.
-2. Execute `build.sh` from `docker_tf_opencv` folder to build base image
-`tensorflow-opencv:preconf`
-3. Execute `deploy.sh` from repo root folder to build  and start `insightface-rest:v0.1.2` image
+1. Clone repo.
+2. Execute `deploy.sh` from repo's root.
+3. Go to http://localhost:18081 to access documentation and try API
+
+If you have multiple GPU's with enough GPU memory you can try running multiple containers by
+editing *n_gpu* and *n_con* parameters in `deploy.sh`.
+
+You would need load balancer like HAProxy to work with multiple containers,
+example HAProxy config will be added later.
 
 
-## Known issues:
-1. Docker container requires at least 2.2GB RAM (MTCNN uses lots of RAM)
+## Changelist:
+### 2020-09-28
+- REST API code refactored to FastAPI
+- Detection/Recognition code is now based on official Insightface Python package.
+- TensorFlow MTCNN replaced with PyTorch version
+- Added RetinaFace detector
+- Added InsightFace gender/age detector
+- Added support for GPU inference
+- Resize function refactored for fixed image proportions (significant speed increase and memory usage optimization)
+
+
