@@ -34,8 +34,6 @@ import ujson
 def extract_vecs(task):
     target = task[0]
     server = task[1]
-    # req = {'images': {"data": target},"max_size": 1024}
-
     req = dict(images=dict(data=target),
                max_size=[1024, 768],
                threshold=0.2,
@@ -46,33 +44,18 @@ def extract_vecs(task):
 
     resp = session.post(server, json=req)
     content = ujson.loads(resp.content)
-    #print(content)
-    #content_json = ujson.loads(content)
 
     counts = [len(e) for e in content]
-    #print(counts)
-    #print(content)
+ 
     for im in content:
         for face in im:
             norm = face['norm']
             prob = face['prob']
             facedata = face['facedata']
-            #print("FG",face['gender'], face['age'])
-            #if norm > 16 and norm < 20 :
-            #print(norm)
-            norm = 1
             save_file(facedata, 'crops/{}_{}_{}.jpg'.format(int(norm), prob, face['age']))
 
-    #print(counts)
-    # for i,e in enumerate(counts):
-    #     if e == 0:
-    #         save_file(target[i],"{}.jpg".format(i))
 
-    # values = json.loads(content.decode('utf-8'))
-    # return values
-
-
-ims = '/home/dmitry/PycharmProjects/untitled/InsightFace-REST/images'
+ims = 'test_images'
 
 
 def to_chunks(iterable, size=10):
@@ -81,33 +64,16 @@ def to_chunks(iterable, size=10):
         yield chain([first], islice(iterator, size - 1))
 
 
-import random
-import shutil
-
-if os.path.exists('crops'):
-    shutil.rmtree('crops')
-
-os.makedirs('crops')
-
-
 if __name__ == "__main__":
 
     start = 0
     step = 9
-    server = 'http://10.1.3.166:18080/extract'
+    server = 'http://localhost:18081/extract'
 
-    # files = glob.glob(ims+'*/*.jpg')[start:start+step]
     speeds = []
     for i in range(0, 10):
         files = glob.glob(ims + '*/*.jpg')
         print(f"Total files detected: {len(files)}")
-        # dest = '/home/dmitry/PycharmProjects/scratch/camera_indexer/owl-sig/data/out'
-        # files = glob.glob('{}/**/*.jpg'.format(dest), recursive=True)
-
-        #random.shuffle(files)
-        files = files
-        #files = [e for e in files if "000388.jpg" in e]
-
         multiply = 1
         target = [file2base64(fl) for fl in files] * multiply
         target = list(target)
