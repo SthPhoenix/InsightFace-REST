@@ -100,6 +100,10 @@ editing *n_gpu* and *n_con* parameters in `deploy.sh`.
 You would need load balancer like HAProxy to work with multiple containers,
 example HAProxy config will be added later.
 
+## Work in progress:
+- Add inference with TensorRT (Insightface - complete, Retinaface - in progress)
+- Add Cython postprocessing of Retinaface predictions.
+- Experiment with splitting neural networks and pre- postprocessing into separate modules for better usage of CUDA cores
 
 ## Changelist:
 ### 2020-09-28
