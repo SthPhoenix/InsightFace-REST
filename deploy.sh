@@ -69,7 +69,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
             -e DEF_EXTRACT_EMBEDDING=True\
             -e DEF_EXTRACT_GA=False\
             -e DEF_API_VER='1'\
-            -v $PWD/models:/root/.insightface/models\
+            -v $PWD/models/mxnet:/root/.insightface/models\
             --cpuset-cpus=$CPU_SET\
             --name=$name\
             $IMAGE:$TAG

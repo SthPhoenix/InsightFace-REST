@@ -18,9 +18,6 @@ RUN  wget -O ~/get-pip.py \
 RUN pip install mxnet-cu100 torch torchvision numpy
 RUN pip install insightface fastapi uvicorn ujson facenet-pytorch aiofiles
 
-RUN apt-get install -y
-
-
 WORKDIR /app
 COPY api /app
 
