@@ -50,13 +50,13 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         docker run  -p $port:18080\
             --gpus $device\
             -d\
-            -e PYTHONUNBUFFERED=1\
+            -e PYTHONUNBUFFERED=0\
             -e PORT=18080\
             -e MXNET_CUDNN_AUTOTUNE_DEFAULT=$AUTOTUNE\
             -e MXNET_CPU_WORKER_NTHREADS=$WORKER_NTHREADS\
             -e MXNET_ENGINE_TYPE=ThreadedEnginePerDevice\
             -e MXNET_MKLDNN_CACHE_NUM=0\
-            -e DET_NAME=retinaface_mnet025_v2\
+            -e DET_NAME=retinaface_mnet025_v1\
             -e REC_NAME=arcface_r100_v1\
             -e GA_NAME=genderage_v1\
             -e GA_IGNORE=True\
@@ -64,14 +64,17 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
             -e MIN_FACE_SIZE=20\
             -e MTCNN_FACTOR=0.700\
             -e REC_IGNORE=False\
-            -e MAX_SIZE=640,480\
+            -e MAX_SIZE=1280,800\
             -e DEF_RETURN_FACE_DATA=False\
             -e DEF_EXTRACT_EMBEDDING=True\
             -e DEF_EXTRACT_GA=False\
             -e DEF_API_VER='1'\
             -v $PWD/models/mxnet:/root/.insightface/models\
-            --cpuset-cpus=$CPU_SET\
             --name=$name\
+            --cpuset-cpus=$CPU_SET\
             $IMAGE:$TAG
     done
 done
+
+#DET MODELS:
+#mtcnn, retinaface_mnet025_v1, retinaface_mnet025_v2, retinaface_r50_v1

@@ -35,7 +35,7 @@ def extract_vecs(task):
     target = task[0]
     server = task[1]
     req = dict(images=dict(data=target),
-               max_size=[1024, 768],
+               max_size=[1280, 800],
                threshold=0.2,
                extract_ga=False,
                extract_embedding=True,
@@ -46,13 +46,13 @@ def extract_vecs(task):
     content = ujson.loads(resp.content)
 
     counts = [len(e) for e in content]
- 
+    print(counts)
     for im in content:
         for face in im:
             norm = face['norm']
             prob = face['prob']
             facedata = face['facedata']
-            save_file(facedata, 'crops/{}_{}_{}.jpg'.format(int(norm), prob, face['age']))
+            save_file(facedata, f'crops/{int(norm)}_{prob}_{face["age"]}_{time.time()}.jpg')
 
 
 ims = 'test_images'
@@ -66,12 +66,10 @@ def to_chunks(iterable, size=10):
 
 if __name__ == "__main__":
 
-    start = 0
-    step = 9
     server = 'http://localhost:18081/extract'
 
     speeds = []
-    for i in range(0, 10):
+    for i in range(0, 2):
         files = glob.glob(ims + '*/*.jpg')
         print(f"Total files detected: {len(files)}")
         multiply = 1

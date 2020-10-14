@@ -1,0 +1,18 @@
+FROM nvcr.io/nvidia/tensorrt:20.09-py3
+
+WORKDIR /app
+
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+RUN apt-get update && apt-get install -y libgl1-mesa-glx protobuf-compiler libprotoc-dev
+RUN pip install mxnet torch torchvision insightface fastapi uvicorn ujson
+#RUN pip install insightface
+RUN pip install onnx==1.7.0
+RUN pip install onnx-simplifier
+RUN pip install onnxruntime
+
+COPY converters /app
+
+ENTRYPOINT ["bash"]
+

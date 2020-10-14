@@ -1,0 +1,75 @@
+import os
+from collections import namedtuple
+
+mxnet_models = {
+    'retinaface_mnet025_v0': {
+        'symbol': 'mnet.25-symbol.json',
+        'params': 'mnet.25-0000.params',
+        'shape': (1,3,480,640),
+        'in_package': False
+    },
+    'retinaface_mnet025_v1': {
+        'symbol': 'mnet10-symbol.json',
+        'params': 'mnet10-0000.params',
+        'shape': (1, 3, 480, 640),
+        'in_package': True,
+    },
+    'retinaface_mnet025_v2': {
+        'symbol': 'mnet12-symbol.json',
+        'params': 'mnet12-0000.params',
+        'shape': (1, 3, 480, 640),
+        'in_package': True,
+    },
+    'retinaface_r50_v1': {
+        'symbol': 'R50-symbol.json',
+        'params': 'R50-0000.params',
+        'shape': (1, 3, 480, 640),
+        'in_package': True
+    },
+    'arcface_r100_v1': {
+        'symbol': 'model-symbol.json',
+        'params': 'model-0000.params',
+        'shape': (1, 3, 112, 112),
+        'in_package': True
+    },
+    'genderage_v1': {
+        'symbol': 'model-symbol.json',
+        'params': 'model-0000.params',
+        'shape': (1, 3, 112, 112),
+        'in_package': True
+    }
+}
+
+models_repo = 'https://drive.google.com/drive/folders/109D__GLXHPmiW9tIgsCadTdjcXB0u0vK'
+
+
+class Configs(object):
+    def __init__(self, models_dir: str = '/models'):
+        self.models_dir = self.__get_param('MODELS_DIR', models_dir)
+        self.mxnet_models_dir = os.path.join(self.models_dir, 'mxnet')
+        self.onnx_models_dir = os.path.join(self.models_dir, 'onnx')
+        self.trt_engines_dir = os.path.join(self.models_dir, 'trt-engines')
+        self.mxnet_models = mxnet_models
+        self.type2path = dict(
+            mxnet=self.mxnet_models_dir,
+            onnx=self.onnx_models_dir,
+            engine=self.trt_engines_dir,
+            plan=self.trt_engines_dir
+        )
+
+    def __get_param(self, ENV, default=None):
+        return os.environ.get(ENV, default)
+
+    def get_mxnet_model_paths(self, model_name):
+        symbol_path = os.path.join(self.mxnet_models_dir, model_name, self.mxnet_models[model_name]['symbol'])
+        param_path = os.path.join(self.mxnet_models_dir, model_name, self.mxnet_models[model_name]['params'])
+        return symbol_path, param_path
+
+    def in_official_package(self, model_name):
+        return mxnet_models[model_name]['in_package']
+
+    def build_model_paths(self, model_name: str, type: str):
+        base = self.type2path[type]
+        parent = os.path.join(base, model_name)
+        file = os.path.join(parent, f"{model_name}.{type}")
+        return parent, file

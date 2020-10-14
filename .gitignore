@@ -9,5 +9,7 @@
 /src/api/modules/utils/__pycache__
 /src/api/insightface
 /models
+/crops
+/test_images
 /deploy_debug.sh
 TODO.md

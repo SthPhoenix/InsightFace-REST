@@ -114,7 +114,7 @@ class Processing:
         self.max_size = max_size
         self.model = FaceAnalysis(det_name=det_name, rec_name=rec_name, ga_name=ga_name, device=device,
                                   select_largest=select_largest, keep_all=keep_all, min_face_size=min_face_size,
-                                  mtcnn_factor=mtcnn_factor
+                                  mtcnn_factor=mtcnn_factor, max_size=self.max_size
                                   )
 
     def embed(self, images: Dict[str, list], max_size: List[int] = None,threshold: float = 0.6, return_face_data: bool = False,

@@ -22,10 +22,13 @@ device2ctx = {
 
 # Wrapper for insightface detection model
 class DetectorRetina:
-    def __init__(self, device: str = 'cuda', det_name: str = 'retinaface_r50_v1'):
+    def __init__(self, device: str = 'cuda', det_name: str = 'retinaface_r50_v1', max_size=None):
+        if max_size is None:
+            max_size = [640, 480]
+        max_size = (max_size[1],max_size[0])
         ctx = device2ctx[device]
         self.retina = model_zoo.get_model(det_name)
-        self.retina.prepare(ctx, 0.4)
+        self.retina.prepare(ctx, 0.4, fix_image_size=max_size)
 
     def detect(self, data, threshold=0.6):
         bboxes, landmarks = self.retina.detect(data, threshold=threshold)
@@ -97,7 +100,12 @@ class FaceAnalysis:
     def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
                  ga_name: str = 'genderage_v1', device: str = 'cuda',
                  select_largest: bool = True, keep_all: bool = True, min_face_size: int = 20,
-                 mtcnn_factor: float = 0.709):
+                 mtcnn_factor: float = 0.709, max_size=None):
+
+        if max_size is None:
+            max_size = [640, 480]
+
+        self.max_size = max_size
 
         assert det_name is not None
 
@@ -107,7 +115,7 @@ class FaceAnalysis:
             self.det_model = DetectorMTCNN(device, select_largest=select_largest, keep_all=keep_all,
                                            min_face_size=min_face_size, factor=mtcnn_factor)
         else:
-            self.det_model = DetectorRetina(det_name=det_name, device=device)
+            self.det_model = DetectorRetina(det_name=det_name, device=device, max_size=self.max_size)
 
         if rec_name is not None:
             self.rec_model = model_zoo.get_model(rec_name)
@@ -137,7 +145,7 @@ class FaceAnalysis:
             return_face_data: bool = True, max_size: List[int] = None, threshold: float = 0.6):
 
         if max_size is None:
-            max_size = [640, 480]
+            max_size = self.max_size
 
         img = ImageData(img, max_size=max_size)
         img.resize_image(pad=True)
