@@ -1,6 +1,7 @@
 import os
 import tensorrt as trt
 import sys
+from onnx import ModelProto
 
 # Based on code from NVES_R's response at
 # https://forums.developer.nvidia.com/t/segmentation-fault-when-creating-the-trt-builder-in-python-works-fine-with-trtexec/111376
@@ -31,11 +32,14 @@ def _build_engine_onnx(onnx_path: str, allow_fp16: bool = False):
                 for error in range(parser.num_errors):
                     print(parser.get_error(error))
                 sys.exit(1)
+
             return builder.build_cuda_engine(network)
 
 
 def convert_onnx(onnx_path: str, engine_file_path: str, allow_fp16: bool = False):
+
     engine = _build_engine_onnx(onnx_path=onnx_path,
                                 allow_fp16=allow_fp16)
+
     with open(engine_file_path, "wb") as f:
         f.write(engine.serialize())

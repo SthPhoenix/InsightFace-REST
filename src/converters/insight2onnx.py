@@ -19,6 +19,7 @@ print('mxnet version:', mx.__version__)
 print('onnx version:', onnx.__version__)
 
 
+
 # assert onnx.__version__ == '1.2.1'
 
 
@@ -233,16 +234,20 @@ if __name__ == '__main__':
     config = Configs(models_dir='/models')
 
     models_to_convert = [name for name in config.mxnet_models if config.in_official_package(name)]
+    custom_shape = (1, 3, 480, 640)
 
     for model in models_to_convert:
         print(f"Downloading model: {model}...")
         get_model_file(model, root=config.mxnet_models_dir)
 
     for model in models_to_convert:
-        print(f'Starting conversion of "{model}" model...')
         mxnet_symbol, mxnet_params = config.get_mxnet_model_paths(model)
-        shape = config.mxnet_models[model].get('shape', (1,3,112,112))
+        reshape = config.mxnet_models[model].get('reshape')
+        shape = config.mxnet_models[model].get('shape', (1, 3, 112, 112))
+        if custom_shape and reshape == True:
+            shape = custom_shape
         output_onnx_dir, output_onnx_model = config.build_model_paths(model, "onnx")
         os.makedirs(output_onnx_dir, exist_ok=True)
+        print(f'Converting "{model}" model to ONNX, shape {shape}...')
         convert_insight_model(mxnet_symbol, mxnet_params, output_onnx_model, shape)
 

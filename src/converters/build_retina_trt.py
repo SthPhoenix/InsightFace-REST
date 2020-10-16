@@ -4,24 +4,24 @@ from utils.model_store import get_model_file
 from insight2onnx import convert_insight_model
 from onnx_to_trt import convert_onnx
 from configs import Configs
-from remove_initializer_from_input import remove_initializer_from_input
+from reshape_onnx import  reshape_onnx_input
 
 '''
 ATTENTION!!! This script is for testing purposes only. Work in progress.
 '''
-
 
 def prepare_folders(paths):
     for path in paths:
         os.makedirs(path, exist_ok=True)
 
 
-def prepare_insight_engine(symbol: str,
+def prepare_retina_engine(symbol: str,
                            params: str,
                            onnx_path: str,
                            engine_path: str,
                            model_name: str,
                            mxnet_models_dir: str,
+                           shape: tuple = (1,3,480,640),
                            force: bool = False):
 
     if not os.path.exists(engine_path) or force is True:
@@ -29,7 +29,7 @@ def prepare_insight_engine(symbol: str,
             if not os.path.exists(symbol)  or force is True:
                 get_model_file(model_name, mxnet_models_dir)
             print("Converting MXNet model to ONNX...")
-            convert_insight_model(symbol, params, onnx_path)
+            convert_insight_model(symbol, params, onnx_path, shape)
         print("Building TensorRT engine...")
         convert_onnx(onnx_path, engine_path)
     print("TensorRT model ready.")
@@ -38,7 +38,9 @@ def prepare_insight_engine(symbol: str,
 if __name__ == '__main__':
 
     configs = Configs(models_dir='/models')
-    model_name = 'arcface_r100_v1'
+    #model_name = 'retinaface_r50_v1'
+    model_name = 'retinaface_mnet025_v2'
+    im_size = [1024, 768]  # W, H
 
     prepare_folders([configs.mxnet_models_dir, configs.onnx_models_dir, configs.trt_engines_dir])
 
@@ -47,6 +49,7 @@ if __name__ == '__main__':
     output_onnx_model_path, output_onnx = configs.build_model_paths(model_name, 'onnx')
     output_trt_engine_path, output_engine = configs.build_model_paths(model_name, 'plan')
 
-    prepare_folders([output_onnx_model_path,output_trt_engine_path])
+    prepare_folders([output_onnx_model_path, output_trt_engine_path])
 
-    prepare_insight_engine(mx_symbol, mx_params, output_onnx, output_engine, model_name, configs.mxnet_models_dir, force=True)
+    prepare_retina_engine(mx_symbol, mx_params, output_onnx, output_engine, model_name, configs.mxnet_models_dir,
+                          shape = (1,3,im_size[1],im_size[0]),force=True)

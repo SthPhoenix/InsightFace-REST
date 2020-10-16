@@ -1,42 +1,71 @@
 import os
 from collections import namedtuple
 
+# Net outputs in correct order expected by postprocessing code.
+# TensorRT might change output order for some reasons.
+# Also Triton Inference Server may change output order for both
+# ONNX and TensorRT backends if automatic configuration is used.
+
+retina_outputs = ['face_rpn_cls_prob_reshape_stride32',
+                  'face_rpn_bbox_pred_stride32',
+                  'face_rpn_landmark_pred_stride32',
+                  'face_rpn_cls_prob_reshape_stride16',
+                  'face_rpn_bbox_pred_stride16',
+                  'face_rpn_landmark_pred_stride16',
+                  'face_rpn_cls_prob_reshape_stride8',
+                  'face_rpn_bbox_pred_stride8',
+                  'face_rpn_landmark_pred_stride8']
+
 mxnet_models = {
     'retinaface_mnet025_v0': {
         'symbol': 'mnet.25-symbol.json',
         'params': 'mnet.25-0000.params',
-        'shape': (1,3,480,640),
+        'shape': (1, 3, 480, 640),
+        'outputs': retina_outputs,
+        'reshape': True,
         'in_package': False
     },
     'retinaface_mnet025_v1': {
         'symbol': 'mnet10-symbol.json',
         'params': 'mnet10-0000.params',
         'shape': (1, 3, 480, 640),
+        'outputs': retina_outputs,
+        'reshape': True,
         'in_package': True,
     },
     'retinaface_mnet025_v2': {
         'symbol': 'mnet12-symbol.json',
         'params': 'mnet12-0000.params',
         'shape': (1, 3, 480, 640),
+        'outputs': retina_outputs,
+        'reshape': True,
         'in_package': True,
     },
     'retinaface_r50_v1': {
         'symbol': 'R50-symbol.json',
         'params': 'R50-0000.params',
         'shape': (1, 3, 480, 640),
+        'outputs': retina_outputs,
+        'reshape': True,
         'in_package': True
     },
     'arcface_r100_v1': {
         'symbol': 'model-symbol.json',
         'params': 'model-0000.params',
         'shape': (1, 3, 112, 112),
+        'reshape': False,
         'in_package': True
     },
     'genderage_v1': {
         'symbol': 'model-symbol.json',
         'params': 'model-0000.params',
         'shape': (1, 3, 112, 112),
+        'reshape': False,
         'in_package': True
+    },
+    'centerface': {
+        'in_package': False,
+        'shape': (1, 3, 480, 640)
     }
 }
 

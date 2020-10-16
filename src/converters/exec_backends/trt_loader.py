@@ -27,6 +27,7 @@ def allocate_buffers(engine):
     stream = cuda.Stream()
     out_shapes = []
     input_shapes = []
+    out_names = []
     for binding in engine:
         size = trt.volume(engine.get_binding_shape(binding)) * engine.max_batch_size
         dtype = trt.nptype(engine.get_binding_dtype(binding))
@@ -41,9 +42,10 @@ def allocate_buffers(engine):
             input_shapes.append(engine.get_binding_shape(binding))
         else:
             outputs.append(HostDeviceMem(host_mem, device_mem))
-            #Collect original output shapes from engine
+            #Collect original output shapes and names from engine
             out_shapes.append(engine.get_binding_shape(binding))
-    return inputs, outputs, bindings, stream, input_shapes, out_shapes
+            out_names.append(binding)
+    return inputs, outputs, bindings, stream, input_shapes, out_shapes, out_names
 
 # This function is generalized for multiple inputs/outputs.
 # inputs and outputs are expected to be lists of HostDeviceMem objects.
@@ -74,14 +76,15 @@ class TrtModel(object):
     def build(self):
         with open(self.engine_file, 'rb') as f, trt.Runtime(TRT_LOGGER) as runtime:
             self.engine = runtime.deserialize_cuda_engine(f.read())
-        self.inputs, self.outputs, self.bindings, self.stream, self.input_shapes, self.out_shapes = allocate_buffers(
+        self.inputs, self.outputs, self.bindings, self.stream, self.input_shapes, self.out_shapes, self.out_names = allocate_buffers(
             self.engine)
         self.context = self.engine.create_execution_context()
 
-    def run(self, input, deflatten: bool = True):
+    def run(self, input, deflatten: bool = True, as_dict=False):
         # lazy load implementation
         if self.engine is None:
             self.build()
+
         input = np.asarray([input])
         batch_size = input.shape[0]
         allocate_place = np.prod(input.shape)
@@ -92,5 +95,9 @@ class TrtModel(object):
         #Reshape TRT outputs to original shape instead of flattened array
         if deflatten:
             trt_outputs = [output.reshape(shape) for output, shape in zip(trt_outputs, self.out_shapes)]
+
+        if as_dict:
+            return {name: trt_outputs[i] for i, name in enumerate(self.out_names)}
+
         return trt_outputs[:batch_size]
 
