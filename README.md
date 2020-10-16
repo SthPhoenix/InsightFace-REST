@@ -1,5 +1,12 @@
+## UPDATE 2020-10-16
+
+- Added conversion scripts to convert original MXNet models to ONNX
+and TensorRT
+- Added demo inference scripts for ArcFace and RetinaFace using ONNX
+and TensorRT backends
+
 ## UPDATE 2020-09-28
-Added GPU support and switched to FastApi, more details in changelog.
+- Added GPU support and switched to FastApi, more details in changelog.
 
 
 # InsightFace-REST
@@ -101,11 +108,24 @@ You would need load balancer like HAProxy to work with multiple containers,
 example HAProxy config will be added later.
 
 ## Work in progress:
-- Add inference with TensorRT (Insightface - complete, Retinaface - in progress)
+- Merge TensorRT and ONNX backends in main REST API
+- Add Triton Inference Server as execution backend
 - Add Cython postprocessing of Retinaface predictions.
-- Experiment with splitting neural networks and pre- postprocessing into separate modules for better usage of CUDA cores
+- Add CenterFace detector
+
 
 ## Changelist:
+
+### 2020-10-16
+Conversion scripts:
+- Added conversion of MXNet models to ONNX using Python
+- Added conversion of ONNX to TensorRT using Python
+- Added demo inference scripts for ArcFace and Retinaface using ONNX
+and TensorRT backends
+
+REST API:
+- no changes
+
 ### 2020-09-28
 - REST API code refactored to FastAPI
 - Detection/Recognition code is now based on official Insightface Python package.
