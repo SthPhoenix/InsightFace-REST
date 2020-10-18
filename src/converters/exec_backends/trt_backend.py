@@ -10,7 +10,7 @@ class Arcface:
 
     # warmup
     def prepare(self, ctx=0):
-        print("Warming up TensorRT engine...")
+        print("Warming up ArcFace TensorRT engine...")
         self.rec_model.build()
         self.rec_model.run(np.zeros(self.rec_model.input_shapes[0], np.float32))
         print(f"Engine warmup complete!\nExpecting input shapes: {self.rec_model.input_shapes}")
@@ -31,7 +31,7 @@ class FaceGenderage:
 
     # warmup
     def prepare(self, ctx=0):
-        print("Warming up TensorRT engine...")
+        print("Warming up GenderAge TensorRT engine...")
         self.rec_model.build()
         self.rec_model.run(np.zeros(self.rec_model.input_shapes[0], np.float32))
         print(f"Engine warmup complete!\nExpecting input shapes: {self.rec_model.input_shapes}")
@@ -55,7 +55,7 @@ class RetinaInfer:
     def __init__(self, rec_name='/models/trt-engines/retinaface_mnet025_v2/retinaface_mnet025_v2.plan',
                  output_order=None):
         self.rec_model = TrtModel(rec_name)
-        retina_outputs = ['face_rpn_cls_prob_reshape_stride32',
+        def_outputs = ['face_rpn_cls_prob_reshape_stride32',
                           'face_rpn_bbox_pred_stride32',
                           'face_rpn_landmark_pred_stride32',
                           'face_rpn_cls_prob_reshape_stride16',
@@ -66,13 +66,13 @@ class RetinaInfer:
                           'face_rpn_landmark_pred_stride8']
 
         if not output_order:
-            output_order = retina_outputs
+            output_order = def_outputs
 
         self.output_order = output_order
 
     # warmup
     def prepare(self, ctx=0):
-        print("Warming up TensorRT engine...")
+        print("Warming up RetinaFace TensorRT engine...")
         self.rec_model.build()
         self.rec_model.run(np.zeros(self.rec_model.input_shapes[0], np.float32))
         print(f"Engine warmup complete!\nExpecting input shapes: {self.rec_model.input_shapes}")
@@ -86,5 +86,24 @@ class RetinaInfer:
 
 class CenterFaceInfer:
 
-    def __init__(self):
-        raise NotImplemented
+    def __init__(self, rec_name='/models/trt-engines/centerface/centerface.plan',
+                 output_order=None):
+        self.rec_model = TrtModel(rec_name)
+        def_outputs = ['537', '538', '539', '540']
+
+        if not output_order:
+            output_order = def_outputs
+
+        self.output_order = output_order
+
+    # warmup
+    def prepare(self, ctx=0):
+        print("Warming up Centerface TensorRT engine...")
+        self.rec_model.build()
+        self.rec_model.run(np.zeros(self.rec_model.input_shapes[0], np.float32))
+        print(f"Engine warmup complete!\nExpecting input shapes: {self.rec_model.input_shapes}")
+
+    def run(self, input):
+        net_out = self.rec_model.run(input, deflatten=True, as_dict=True)
+        net_out = [net_out[e] for e in self.output_order]
+        return net_out
