@@ -1,6 +1,9 @@
 from __future__ import division
 import numpy as np
 import cv2
+import logging
+
+from .common.nms import nms
 
 def _whctrs(anchor):
     """
@@ -272,7 +275,7 @@ class FaceDetector:
         t0 = time.time()
         net_out = self.model.run(input_blob)
         t1 = time.time()
-        print(f"inference took: {t1 - t0}")
+        logging.debug(f"inference took: {t1 - t0}")
 
         #print(net_out[7][0][0])
         for _idx, s in enumerate(self._feat_stride_fpn):
@@ -350,7 +353,8 @@ class FaceDetector:
             landmarks = landmarks[order].astype(np.float32, copy=False)
 
         pre_det = np.hstack((proposals[:,0:4], scores)).astype(np.float32, copy=False)
-        keep = self.nms(pre_det)
+        #keep = self.nms(pre_det)
+        keep = nms2(pre_det,thresh = self.nms_threshold)
         det = np.hstack( (pre_det, proposals[:,4:]) )
         det = det[keep, :]
         if self.use_landmarks:
@@ -358,7 +362,7 @@ class FaceDetector:
 
         return det, landmarks
 
-    def nms(self, dets):
+    def nms(self, dets, thresh = 0.4):
         thresh = self.nms_threshold
         x1 = dets[:, 0]
         y1 = dets[:, 1]

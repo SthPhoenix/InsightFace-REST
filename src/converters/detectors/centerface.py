@@ -1,5 +1,9 @@
+import time
 import numpy as np
 import cv2
+import logging
+
+from .common.nms import nms
 
 
 class CenterFace(object):
@@ -18,8 +22,10 @@ class CenterFace(object):
         image_cv = cv2.resize(img, dsize=(self.img_w_new, self.img_h_new))
         cv2.imwrite('resized.jpg', image_cv)
         blob = np.expand_dims(image_cv[:, :, (2, 1, 0)].transpose(2, 0, 1), axis=0).astype("float32")
-
+        t0 = time.time()
         heatmap, scale, offset, lms = self.net.run(blob)
+        t1 = time.time()
+        logging.debug(f"inference took: {t1 - t0}")
         return self.postprocess(heatmap, lms, offset, scale, threshold)
 
     def postprocess(self, heatmap, lms, offset, scale, threshold):
@@ -64,7 +70,7 @@ class CenterFace(object):
                         lm.append(landmark[0, j * 2, c0[i], c1[i]] * s0 + y1)
                     lms.append(lm)
             boxes = np.asarray(boxes, dtype=np.float32)
-            keep = self.nms(boxes[:, :4], boxes[:, 4], 0.3)
+            keep = nms(boxes, 0.3)
             boxes = boxes[keep, :]
             if self.landmarks:
                 lms = np.asarray(lms, dtype=np.float32)
@@ -74,44 +80,3 @@ class CenterFace(object):
         else:
             return boxes
 
-    def nms(self, boxes, scores, nms_thresh):
-        x1 = boxes[:, 0]
-        y1 = boxes[:, 1]
-        x2 = boxes[:, 2]
-        y2 = boxes[:, 3]
-        areas = (x2 - x1 + 1) * (y2 - y1 + 1)
-        order = np.argsort(scores)[::-1]
-        num_detections = boxes.shape[0]
-        suppressed = np.zeros((num_detections,), dtype=np.bool)
-
-        keep = []
-        for _i in range(num_detections):
-            i = order[_i]
-            if suppressed[i]:
-                continue
-            keep.append(i)
-
-            ix1 = x1[i]
-            iy1 = y1[i]
-            ix2 = x2[i]
-            iy2 = y2[i]
-            iarea = areas[i]
-
-            for _j in range(_i + 1, num_detections):
-                j = order[_j]
-                if suppressed[j]:
-                    continue
-
-                xx1 = max(ix1, x1[j])
-                yy1 = max(iy1, y1[j])
-                xx2 = min(ix2, x2[j])
-                yy2 = min(iy2, y2[j])
-                w = max(0, xx2 - xx1 + 1)
-                h = max(0, yy2 - yy1 + 1)
-
-                inter = w * h
-                ovr = inter / (iarea + areas[j] - inter)
-                if ovr >= nms_thresh:
-                    suppressed[j] = True
-
-        return keep
