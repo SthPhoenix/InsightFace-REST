@@ -112,39 +112,11 @@ def arcface_onnx_fixes(onnx_path: str, rewrite: bool = True):
     reshape_node = []
 
     for ind, node in enumerate(model.graph.node):
-        if node.op_type == "PRelu":
-            input_node = node.input
-            input_bn = input_node[0]
-            input_relu_gamma = input_node[1]
-            output_node = node.output[0]
-
-            input_reshape_name = "reshape{}".format(ind)
-            slope_number = "slope{}".format(ind)
-
-            node_reshape = onnx.helper.make_node(
-                op_type="Reshape",
-                inputs=[input_relu_gamma, input_reshape_name],
-                outputs=[slope_number],
-                name=slope_number
-            )
-
-            reshape_node.append(input_reshape_name)
-            node_relu = onnx.helper.make_node(
-                op_type="PRelu",
-                inputs=[input_bn, slope_number],
-                outputs=[output_node],
-                name=output_node
-            )
-            onnx_processed_nodes.extend([node_reshape, node_relu])
-
-        else:
-            # If "spatial = 0" does not work for "BatchNormalization", change "spatial=1"
-            # else comment this "if" condition
-            if node.op_type == "BatchNormalization":
-                for attr in node.attribute:
-                    if (attr.name == "spatial"):
-                        attr.i = 1
-            onnx_processed_nodes.append(node)
+        if node.op_type == "BatchNormalization":
+            for attr in node.attribute:
+                if (attr.name == "spatial"):
+                    attr.i = 1
+        onnx_processed_nodes.append(node)
 
     list_new_inp = []
     list_new_init = []
@@ -165,20 +137,12 @@ def arcface_onnx_fixes(onnx_path: str, rewrite: bool = True):
         list_new_init.append(new_init)
 
     for k, inp in enumerate(model.graph.input):
-        if "relu0_gamma" in inp.name or "relu1_gamma" in inp.name:  # or "relu_gamma" in inp.name:
-            new_reshape = list_new_inp.pop(0)
-            onnx_processed_inputs.extend([inp, new_reshape])
-        else:
             onnx_processed_inputs.extend([inp])
 
     for k, outp in enumerate(model.graph.output):
         onnx_processed_outputs.extend([outp])
 
     for k, init in enumerate(model.graph.initializer):
-        if "relu0_gamma" in init.name or "relu1_gamma" in init.name:
-            new_reshape = list_new_init.pop(0)
-            onnx_processed_initializers.extend([init, new_reshape])
-        else:
             onnx_processed_initializers.extend([init])
 
     graph = onnx.helper.make_graph(
