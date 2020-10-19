@@ -66,6 +66,20 @@ mxnet_models = {
     'centerface': {
         'in_package': False,
         'shape': (1, 3, 480, 640)
+    },
+    'coordinateReg': {
+        'symbol': '2d106det-symbol.json',
+        'params': '2d106det-0000.params',
+        'in_package': False,
+        'shape': (1, 3, 192, 192),
+        'reshape': False
+    },
+    'r100-arcface-msfdrop75': {
+        'symbol': 'model-symbol.json',
+        'params': 'model-0000.params',
+        'in_package': False,
+        'shape': (1, 3, 112, 112),
+        'reshape': False
     }
 }
 
