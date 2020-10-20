@@ -310,7 +310,6 @@ def convert_crop(node, **kwargs):
     start_node = create_helper_tensor_node(start, name + '__starts', kwargs)
     export_nodes.extend(start_node)
     start_node = start_node[-1].name
-    print(start_node)
     shape_node = create_helper_shape_node(inputs[1], inputs[1] + '__shape')
     export_nodes.extend(shape_node)
     shape_node = shape_node[-1].name

@@ -16,6 +16,8 @@ retina_outputs = ['face_rpn_cls_prob_reshape_stride32',
                   'face_rpn_bbox_pred_stride8',
                   'face_rpn_landmark_pred_stride8']
 
+centerface_outputs = ['537', '538', '539', '540']
+
 mxnet_models = {
     'retinaface_mnet025_v0': {
         'symbol': 'mnet.25-symbol.json',
@@ -65,7 +67,10 @@ mxnet_models = {
     },
     'centerface': {
         'in_package': False,
-        'shape': (1, 3, 480, 640)
+        'shape': (1, 3, 480, 640),
+        'reshape': True,
+        'outputs': centerface_outputs,
+        'link': 'https://raw.githubusercontent.com/Star-Clouds/CenterFace/master/models/onnx/centerface_bnmerged.onnx'
     },
     'coordinateReg': {
         'symbol': '2d106det-symbol.json',
@@ -104,15 +109,24 @@ class Configs(object):
         return os.environ.get(ENV, default)
 
     def get_mxnet_model_paths(self, model_name):
-        symbol_path = os.path.join(self.mxnet_models_dir, model_name, self.mxnet_models[model_name]['symbol'])
-        param_path = os.path.join(self.mxnet_models_dir, model_name, self.mxnet_models[model_name]['params'])
+        symbol_path = os.path.join(self.mxnet_models_dir, model_name, self.mxnet_models[model_name].get('symbol', ''))
+        param_path = os.path.join(self.mxnet_models_dir, model_name, self.mxnet_models[model_name].get('params', ''))
         return symbol_path, param_path
 
     def in_official_package(self, model_name):
         return mxnet_models[model_name]['in_package']
 
-    def build_model_paths(self, model_name: str, type: str):
-        base = self.type2path[type]
+    def build_model_paths(self, model_name: str, ext: str):
+        base = self.type2path[ext]
         parent = os.path.join(base, model_name)
-        file = os.path.join(parent, f"{model_name}.{type}")
+        file = os.path.join(parent, f"{model_name}.{ext}")
         return parent, file
+
+    def get_outputs_order(self, model_name):
+        return self.mxnet_models.get(model_name, {}).get('outputs')
+
+    def get_shape(self, model_name):
+        return self.mxnet_models.get(model_name, {}).get('shape')
+
+    def get_dl_link(self, model_name):
+        return self.mxnet_models.get(model_name, {}).get('link')

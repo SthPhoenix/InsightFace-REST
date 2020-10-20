@@ -1,7 +1,6 @@
 import os
 import tensorrt as trt
 import sys
-from onnx import ModelProto
 
 # Based on code from NVES_R's response at
 # https://forums.developer.nvidia.com/t/segmentation-fault-when-creating-the-trt-builder-in-python-works-fine-with-trtexec/111376

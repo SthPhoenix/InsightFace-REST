@@ -1,6 +1,7 @@
 from __future__ import division
 import numpy as np
 import cv2
+import time
 import logging
 
 from .common.nms import nms
@@ -191,25 +192,19 @@ def landmark_pred(boxes, landmark_deltas):
         pred[:,i,1] = landmark_deltas[:,i,1]*heights + ctr_y
     return pred
 
-class FaceDetector:
+class RetinaFace:
     def __init__(self, inference_backend, rac='net3l'):
         self.rac = rac
         self.model = inference_backend
-        self.default_image_size = (480, 640)
+        self.input_shape = (1,3,480, 640)
 
 
-    def prepare(self, nms=0.4, fix_image_size=None):
-
-        if fix_image_size is not None:
-            data_shape = (1,3)+fix_image_size
-        else:
-            data_shape = (1, 3)+self.default_image_size
-
+    def prepare(self, nms=0.4):
         self.model.prepare()
-
+        self.input_shape = self.model.input_shape
         self.nms_threshold = nms
-
         self.landmark_std = 1.0
+
         _ratio = (1.,)
         fmc = 3
         if self.rac=='net3':
@@ -245,10 +240,7 @@ class FaceDetector:
                 value['SCALES'] = tuple(scales)
                 self.anchor_cfg[key] = value
 
-        #print(self._feat_stride_fpn, self.anchor_cfg)
         self.use_landmarks = True
-
-        #print('use_landmarks', self.use_landmarks)
         self.fpn_keys = []
 
         for s in self._feat_stride_fpn:
@@ -262,22 +254,23 @@ class FaceDetector:
 
         self._num_anchors = dict(zip(self.fpn_keys, [anchors.shape[0] for anchors in self._anchors_fpn.values()]))
 
-    def detect(self, im, threshold=0.6, scale=1.0):
-        proposals_list = []
-        scores_list = []
-        landmarks_list = []
-        im_info = [im.shape[0], im.shape[1]]
+
+    def detect(self, im, threshold=0.6):
 
         im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         im = np.transpose(im, (2, 0, 1))
         input_blob = np.expand_dims(im, axis=0).astype(np.float32)
-        import time
         t0 = time.time()
         net_out = self.model.run(input_blob)
         t1 = time.time()
         logging.debug(f"inference took: {t1 - t0}")
+        return self.postprocess(net_out,threshold)
 
-        #print(net_out[7][0][0])
+    def postprocess(self, net_out, threshold):
+        proposals_list = []
+        scores_list = []
+        landmarks_list = []
+        t0 = time.time()
         for _idx, s in enumerate(self._feat_stride_fpn):
             _key = 'stride%s'%s
             stride = int(s)
@@ -296,6 +289,7 @@ class FaceDetector:
             if key in self.anchor_plane_cache:
                 anchors = self.anchor_plane_cache[key]
             else:
+
                 anchors_fpn = self._anchors_fpn['stride%s'%s]
                 anchors = anchors_plane(height, width, stride, anchors_fpn)
                 anchors = anchors.reshape((K * A, 4))
@@ -311,14 +305,11 @@ class FaceDetector:
             bbox_deltas = bbox_deltas.reshape((-1, bbox_pred_len))
 
             proposals = bbox_pred(anchors, bbox_deltas)
-            #proposals = clip_boxes(proposals, im_info[:2])
-
 
             scores_ravel = scores.ravel()
             order = np.where(scores_ravel>=threshold)[0]
             proposals = proposals[order, :]
             scores = scores[order]
-            proposals[:,0:4] /= scale
 
             proposals_list.append(proposals)
             scores_list.append(scores)
@@ -330,11 +321,8 @@ class FaceDetector:
                 landmark_pred_len = landmark_deltas.shape[1]//A
                 landmark_deltas = landmark_deltas.transpose((0, 2, 3, 1)).reshape((-1, 5, landmark_pred_len//5))
                 landmark_deltas *= self.landmark_std
-                #print(landmark_deltas.shape, landmark_deltas)
                 landmarks = landmark_pred(anchors, landmark_deltas)
                 landmarks = landmarks[order, :]
-
-                landmarks[:,:,0:2] /= scale
                 landmarks_list.append(landmarks)
 
         proposals = np.vstack(proposals_list)
@@ -353,10 +341,11 @@ class FaceDetector:
             landmarks = landmarks[order].astype(np.float32, copy=False)
 
         pre_det = np.hstack((proposals[:,0:4], scores)).astype(np.float32, copy=False)
-        keep = nms(pre_det,thresh = self.nms_threshold)
+        keep = nms(pre_det, thresh = self.nms_threshold)
         det = np.hstack( (pre_det, proposals[:,4:]) )
         det = det[keep, :]
         if self.use_landmarks:
             landmarks = landmarks[keep]
-
+        t1 = time.time()
+        logging.debug(f"postprocess took: {t1 - t0}")
         return det, landmarks

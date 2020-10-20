@@ -1,5 +1,7 @@
 import numpy as np
+from numba import njit
 
+@njit()
 def nms(dets, thresh = 0.4):
     x1 = dets[:, 0]
     y1 = dets[:, 1]

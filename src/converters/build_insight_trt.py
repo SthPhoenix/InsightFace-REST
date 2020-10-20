@@ -1,13 +1,12 @@
 import os
 
-from utils.model_store import get_model_file
-from insight2onnx import convert_insight_model
-from onnx_to_trt import convert_onnx
-from configs import Configs
-from remove_initializer_from_input import remove_initializer_from_input
+from modules.converters.onnx_to_trt import convert_onnx
+from modules.configs import Configs
+from modules.utils.model_store import get_model_file
+from modules.converters.insight2onnx import convert_insight_model
 
 '''
-ATTENTION!!! This script is for testing purposes only. Work in progress.
+ATTENTION!!! This script is for testing purposes only.
 '''
 
 
@@ -22,14 +21,15 @@ def prepare_insight_engine(symbol: str,
                            engine_path: str,
                            model_name: str,
                            mxnet_models_dir: str,
+                           input_shape,
                            force: bool = False):
 
     if not os.path.exists(engine_path) or force is True:
         if not os.path.exists(onnx_path) or force is True:
-            if not os.path.exists(symbol)  or force is True:
+            if not os.path.exists(symbol)  and configs.in_official_package(model_name):
                 get_model_file(model_name, mxnet_models_dir)
             print("Converting MXNet model to ONNX...")
-            convert_insight_model(symbol, params, onnx_path)
+            convert_insight_model(symbol, params, onnx_path,input_shape=input_shape)
         print("Building TensorRT engine...")
         convert_onnx(onnx_path, engine_path)
     print("TensorRT model ready.")
@@ -48,5 +48,6 @@ if __name__ == '__main__':
     output_trt_engine_path, output_engine = configs.build_model_paths(model_name, 'plan')
 
     prepare_folders([output_onnx_model_path,output_trt_engine_path])
-
-    prepare_insight_engine(mx_symbol, mx_params, output_onnx, output_engine, model_name, configs.mxnet_models_dir, force=True)
+    input_shape = configs.mxnet_models[model_name]['shape']
+    prepare_insight_engine(mx_symbol, mx_params, output_onnx, output_engine, model_name, configs.mxnet_models_dir,
+                           input_shape, force=True)

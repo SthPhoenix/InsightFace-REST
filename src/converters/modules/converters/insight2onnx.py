@@ -9,11 +9,9 @@ from onnx import checker
 import mxnet as mx
 import numpy as np
 
-from configs import Configs
 # Load edited version of mxnet.contrib.onnx
-from mx2onnx_conv import onnx as onnx_mxnet
-from remove_initializer_from_input import remove_initializer_from_input
-from utils.model_store import get_model_file
+from .mx2onnx_conv import onnx as onnx_mxnet
+from .remove_initializer_from_input import remove_initializer_from_input
 
 print('mxnet version:', mx.__version__)
 print('onnx version:', onnx.__version__)
@@ -170,48 +168,25 @@ def convert_insight_model(symbol, params, onnx_path, input_shape=(1, 3, 112, 112
 
     output_dir = os.path.dirname(onnx_path)
 
-    print("  Creating intermediate copy of source model...")
+    logging.info("Creating intermediate copy of source model...")
 
     intermediate_symbol = os.path.join(output_dir, 'symbol_fixed-symbol.json')
     intermediate_params = os.path.join(output_dir, 'symbol_fixed-0000.params')
     shutil.copy2(symbol, intermediate_symbol)
     shutil.copy2(params, intermediate_params)
 
-    print("  Applying RetinaFace specific fixes to input MXNet model before conversion...")
+    logging.info("Applying RetinaFace specific fixes to input MXNet model before conversion...")
     mxnet_model_fix(intermediate_symbol, intermediate_params, rewrite=True)
 
-    print("  Exporting to ONNX...")
+    logging.info("Exporting to ONNX...")
     onnx_mxnet.export_model(intermediate_symbol, intermediate_params, [input_shape], np.float32, onnx_path)
 
-    print("  Applying ArcFace specific fixes to output ONNX")
+    logging.info("Applying ArcFace specific fixes to output ONNX")
     arcface_onnx_fixes(onnx_path, rewrite=True)
 
-    print('  Removing initializer from inputs in ONNX model...')
+    logging.info("Removing initializer from inputs in ONNX model...")
     remove_initializer_from_input(onnx_path, onnx_path)
 
-    print('  Removing intermediate *.symbol and *.params')
+    logging.info("Removing intermediate *.symbol and *.params")
     os.remove(intermediate_symbol)
     os.remove(intermediate_params)
-
-if __name__ == '__main__':
-
-    config = Configs(models_dir='/models')
-
-    models_to_convert = [name for name in config.mxnet_models if config.in_official_package(name)]
-    custom_shape = (1, 3, 480, 640)
-
-    for model in models_to_convert:
-        print(f"Downloading model: {model}...")
-        get_model_file(model, root=config.mxnet_models_dir)
-
-    for model in models_to_convert:
-        mxnet_symbol, mxnet_params = config.get_mxnet_model_paths(model)
-        reshape = config.mxnet_models[model].get('reshape')
-        shape = config.mxnet_models[model].get('shape', (1, 3, 112, 112))
-        if custom_shape and reshape == True:
-            shape = custom_shape
-        output_onnx_dir, output_onnx_model = config.build_model_paths(model, "onnx")
-        os.makedirs(output_onnx_dir, exist_ok=True)
-        print(f'Converting "{model}" model to ONNX, shape {shape}...')
-        convert_insight_model(mxnet_symbol, mxnet_params, output_onnx_model, shape)
-

@@ -1,13 +1,13 @@
 import os
 
-from utils.model_store import get_model_file
-from insight2onnx import convert_insight_model
-from onnx_to_trt import convert_onnx
-from configs import Configs
-from reshape_onnx import  reshape_onnx_input
+from modules.converters.onnx_to_trt import convert_onnx
+from modules.configs import Configs
+from modules.utils.model_store import get_model_file
+from modules.converters.insight2onnx import convert_insight_model
+
 
 '''
-ATTENTION!!! This script is for testing purposes only. Work in progress.
+ATTENTION!!! This script is for testing purposes only.
 '''
 
 def prepare_folders(paths):
@@ -38,9 +38,9 @@ def prepare_retina_engine(symbol: str,
 if __name__ == '__main__':
 
     configs = Configs(models_dir='/models')
-    #model_name = 'retinaface_r50_v1'
-    model_name = 'retinaface_mnet025_v2'
-    im_size = [1024, 768]  # W, H
+    model_name = 'retinaface_r50_v1'
+    #model_name = 'retinaface_mnet025_v2'
+    im_size = [1280, 1024]  # W, H
 
     prepare_folders([configs.mxnet_models_dir, configs.onnx_models_dir, configs.trt_engines_dir])
 

@@ -3,7 +3,7 @@ import math
 import os
 from typing import List
 
-def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='retinaface'):
+def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
     '''
     :param model: Input ONNX model object
     :param n: Batch size dimension

@@ -1,7 +1,7 @@
 import onnxruntime
 import cv2
 import numpy as np
-
+import logging
 
 class Arcface:
     def __init__(self, rec_name='/models/onnx/arcface_r100_v1/arcface_r100_v1.onnx'):
@@ -10,7 +10,7 @@ class Arcface:
 
     # warmup
     def prepare(self, **kwargs):
-        print("Warming up ArcFace ONNX Runtime engine...")
+        logging.info("Warming up ArcFace ONNX Runtime engine...")
         self.rec_model.run(self.outputs, {self.rec_model.get_inputs()[0].name: [np.zeros((3, 112, 112), np.float32)]})
 
     def get_embedding(self, face_img):
@@ -33,7 +33,7 @@ class FaceGenderage:
 
     # warmup
     def prepare(self, **kwargs):
-        print("Warming up GenderAge ONNX Runtime engine...")
+        logging.info("Warming up GenderAge ONNX Runtime engine...")
         self.rec_model.run(self.outputs,
                            {self.rec_model.get_inputs()[0].name: [np.zeros(tuple(self.input.shape[1:]), np.float32)]})
 
@@ -52,28 +52,27 @@ class FaceGenderage:
         return gender, age
 
 
-class RetinaInfer:
+class DetectorInfer:
 
-    def __init__(self, rec_name='/models/trt-engines/retinaface_mnet025_v2/retinaface_mnet025_v2.plan',
-                 outputs=None):
-        self.rec_model = onnxruntime.InferenceSession(rec_name)
+    def __init__(self, model='/models/onnx/centerface/centerface.onnx',
+                 output_order=None):
+
+        self.rec_model = onnxruntime.InferenceSession(model)
         self.input = self.rec_model.get_inputs()[0]
-        if outputs is None:
-            outputs = [e.name for e in self.rec_model.get_outputs()]
-        self.outputs = outputs
+
+        if output_order is None:
+            output_order = [e.name for e in self.rec_model.get_outputs()]
+        self.output_order = output_order
+
+        self.input_shape = tuple(self.input.shape)
+        print(self.input_shape)
 
     # warmup
-    def prepare(self, **kwargs):
-        print("Warming up RetinaFace ONNX Runtime engine...")
-        self.rec_model.run(self.outputs,
+    def prepare(self, ctx=0):
+        logging.info("Warming up face detection ONNX Runtime engine...")
+        self.rec_model.run(self.output_order,
                            {self.rec_model.get_inputs()[0].name: [np.zeros(tuple(self.input.shape[1:]), np.float32)]})
 
     def run(self, input):
-        net_out = self.rec_model.run(self.outputs, {self.input.name: input})
+        net_out = self.rec_model.run(self.output_order, {self.input.name: input})
         return net_out
-
-
-class CenterFaceInfer:
-
-    def __init__(self):
-        raise NotImplemented
