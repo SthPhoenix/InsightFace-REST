@@ -74,7 +74,8 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None, config:
         return model.SerializeToString()
 
     if backend_name == "trt":
-        trt_path = trt_path.replace('.plan', f'_{im_size[0]}_{im_size[1]}.plan')
+        if reshape_allowed is True:
+            trt_path = trt_path.replace('.plan', f'_{im_size[0]}_{im_size[1]}.plan')
         if not os.path.exists(trt_path):
             prepare_folders([trt_dir])
             temp_onnx_model = onnx_path + '.temp'
