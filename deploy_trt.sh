@@ -43,6 +43,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
             -d\
             -e PYTHONUNBUFFERED=0\
             -e PORT=18080\
+            -e INFERENCE_BACKEND=trt\
             -e DET_NAME=retinaface_mnet025_v2\
             -e REC_NAME=arcface_r100_v1\
             -e GA_NAME=genderage_v1\
