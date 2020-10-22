@@ -1,13 +1,13 @@
+## UPDATE 2020-10-22
+
+- Added TensorRT version of InsightFace-REST API
+
 ## UPDATE 2020-10-16
 
 - Added conversion scripts to convert original MXNet models to ONNX
 and TensorRT
 - Added demo inference scripts for ArcFace and RetinaFace using ONNX
 and TensorRT backends
-
-## UPDATE 2020-09-28
-- Added GPU support and switched to FastApi, more details in changelog.
-
 
 # InsightFace-REST
 
@@ -98,23 +98,35 @@ dictionary containing face embedding, bounding box, detection probability and de
 ## Run with Docker:
 
 1. Clone repo.
-2. Execute `deploy.sh` from repo's root.
+2. Execute `deploy.sh` from repo's root for MXNet version, or `deploy_trt.sh`
+   for TensorRT version
 3. Go to http://localhost:18081 to access documentation and try API
 
 If you have multiple GPU's with enough GPU memory you can try running multiple containers by
-editing *n_gpu* and *n_con* parameters in `deploy.sh`.
+editing *n_gpu* and *n_con* parameters in `deploy.sh` or `deploy_trt.sh`.
 
 You would need load balancer like HAProxy to work with multiple containers,
 example HAProxy config will be added later.
 
 ## Work in progress:
-- Merge TensorRT and ONNX backends in main REST API
 - Add Triton Inference Server as execution backend
 - Add Cython postprocessing of Retinaface predictions.
-- Add CenterFace detector
 
 
 ## Changelist:
+
+### 2020-10-22
+Conversion scripts:
+- Minor refactoring
+
+REST API:
+- Added TensorRT version in `src/api_trt`
+- Added Dockerfile (`src/Dockerfile_trt`)
+- Added deployment script `deploy_trt.sh`
+- Added Centerface detector
+
+TensorRT version contains MXNet and ONNXRuntime compiled for CPU
+for testing and conversion purposes.
 
 ### 2020-10-16
 Conversion scripts:
