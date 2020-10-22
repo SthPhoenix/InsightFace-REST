@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+import time
 import logging
 
 from .trt_loader import TrtModel
@@ -12,7 +13,7 @@ class Arcface:
         self.input_shape = None
 
     # warmup
-    def prepare(self, ctx=0):
+    def prepare(self, ctx_id=0):
         logging.info("Warming up ArcFace TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
@@ -35,7 +36,7 @@ class FaceGenderage:
         self.input_shape = None
 
     # warmup
-    def prepare(self, ctx=0):
+    def prepare(self, ctx_id=0):
         logging.info("Warming up GenderAge TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
@@ -65,7 +66,7 @@ class DetectorInfer:
         self.output_order = output_order
 
     # warmup
-    def prepare(self, ctx=0):
+    def prepare(self, ctx_id=0):
         logging.info(f"Warming up face detector TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]

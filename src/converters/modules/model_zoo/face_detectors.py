@@ -3,6 +3,7 @@ from .detectors.centerface import CenterFace
 
 
 def get_retinaface(model_path, backend, outputs, rac):
+
     inference_backend = backend.DetectorInfer(model=model_path, output_order=outputs)
     model = RetinaFace(inference_backend=inference_backend, rac=rac)
     return model

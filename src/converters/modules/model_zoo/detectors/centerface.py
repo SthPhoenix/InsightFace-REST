@@ -1,33 +1,41 @@
 import time
 import numpy as np
-import cv2
 import logging
 
 from .common.nms import nms
+from typing import Union
+from ..exec_backends.onnxrt_backend import DetectorInfer as DIO
+
+# Since TensorRT and pycuda are optional dependencies it might be not available
+try:
+    from ..exec_backends.trt_backend import DetectorInfer as DIT
+except:
+    DIT = None
+
 
 
 class CenterFace(object):
-    def __init__(self, inference_backend, landmarks=True):
+    def __init__(self, inference_backend: Union[DIT, DIO], landmarks=True):
         self.landmarks = landmarks
         self.net = inference_backend
         self.nms_threshold = 0.3
-        self.input_shape = (1,3,480,640)
+        self.input_shape = (1, 3, 480, 640)
 
     def __call__(self, img, threshold=0.5):
         return self.detect(img, threshold)
 
-    def prepare(self, nms = 0.3, **kwargs):
+    def prepare(self, nms: float = 0.3, **kwargs):
         self.nms_threshold = nms
         self.net.prepare()
         self.input_shape = self.net.input_shape
 
-    def detect(self, img, threshold=0.4):
+    def detect(self, img: np.ndarray, threshold: float = 0.4):
         h, w = img.shape[:2]
         blob = np.expand_dims(img[:, :, (2, 1, 0)].transpose(2, 0, 1), axis=0).astype("float32")
         t0 = time.time()
         heatmap, scale, offset, lms = self.net.run(blob)
         t1 = time.time()
-        logging.debug(f"inference took: {t1 - t0}")
+        logging.debug(f"Centerface inference took: {t1 - t0}")
         return self.postprocess(heatmap, lms, offset, scale, (h, w), threshold)
 
     def postprocess(self, heatmap, lms, offset, scale, size, threshold):
@@ -45,7 +53,7 @@ class CenterFace(object):
             if self.landmarks:
                 lms = np.empty(shape=[0, 10], dtype=np.float32)
         t1 = time.time()
-        logging.debug(f"postprocess took: {t1 - t0}")
+        logging.debug(f"Centerface postprocess took: {t1 - t0}")
 
         if self.landmarks:
             return dets, lms
@@ -81,8 +89,8 @@ class CenterFace(object):
             if self.landmarks:
                 lms = np.asarray(lms, dtype=np.float32)
                 lms = lms[keep, :]
+                lms = lms.reshape((-1, 5, 2))
         if self.landmarks:
             return boxes, lms
         else:
             return boxes
-

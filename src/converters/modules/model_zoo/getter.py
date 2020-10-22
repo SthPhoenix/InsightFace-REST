@@ -1,12 +1,13 @@
 import os
 import logging
-
-from .face_detectors import *
-from .face_processors import *
-
 from typing import List
 
 import onnx
+
+from insightface.model_zoo import get_model as get_model_orig
+
+from .face_detectors import *
+from .face_processors import *
 
 from ..converters.insight2onnx import convert_insight_model
 from ..converters.reshape_onnx import reshape, reshape_onnx_input
@@ -19,7 +20,7 @@ from ..configs import Configs
 
 from .exec_backends import onnxrt_backend as onnx_backend
 
-# TRT backend might be missing for CPU only images
+# Since TensorRT and PyCUDA are optional dependencies it might be not available
 try:
     from .exec_backends import trt_backend
     from ..converters.onnx_to_trt import convert_onnx
@@ -101,11 +102,12 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, roo
 
     backends = {
         'onnx': onnx_backend,
-        'trt': trt_backend
+        'trt': trt_backend,
+        'mxnet': 'mxnet'
     }
     back2ext = {
         'onnx': 'onnx',
-        'trt': 'plan'
+        'trt': 'plan',
     }
 
     if backend_name not in backends:
@@ -117,6 +119,10 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, roo
                       f" Please select one of the following:\n"
                       f"{', '.join(list(models.keys()))}")
         exit(1)
+
+    # Keep original InsightFace package available for a while for testing purposes.
+    if backend_name == 'mxnet':
+        return get_model_orig(model_name, root=config.mxnet_models_dir)
 
     backend = backends[backend_name]
 

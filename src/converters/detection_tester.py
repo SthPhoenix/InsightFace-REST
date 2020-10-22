@@ -30,7 +30,7 @@ logging.basicConfig(
 )
 
 iters = 10
-model_name = 'retinaface_mnet025_v2'
+model_name = 'retinaface_mnet025_v1'
 #model_name = 'retinaface_r50_v1'
 #model_name = 'centerface'
 
@@ -39,13 +39,17 @@ im_size = [640, 480]
 
 detector = get_model(model_name, backend, im_size=im_size, root_dir='/models')
 detector.prepare(nms=0.35)
+
+# Since dynamic shapes are not yet implemented, images during inference
+# must be resized to exact shape which was used for TRT building.
+# To ensure this we read expected input shape from engine itself.
 input_shape = detector.input_shape[2:][::-1]
 logging.info(f"Images will be resized to WxH : {input_shape}")
 
 tt0 = time.time()
-image = cv2.imread('test_images/lumia.jpg', cv2.IMREAD_COLOR)
+image = cv2.imread('test_images2/china.jpg', cv2.IMREAD_COLOR)
 image = ImageData(image, input_shape)
-image.resize_image(mode='stretch')
+image.resize_image(mode='pad')
 tt1 = time.time()
 
 print(f"Preparing image took: {tt1 - tt0}")
