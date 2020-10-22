@@ -58,7 +58,6 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
             -e DEF_EXTRACT_GA=False\
             -e DEF_API_VER='1'\
             -v $PWD/models:/models\
-            -v $PWD/src/api_trt:/app\
             --name=$name\
             $IMAGE:$TAG
     done
