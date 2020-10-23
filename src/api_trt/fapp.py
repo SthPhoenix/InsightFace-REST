@@ -1,12 +1,10 @@
 import json
 import os
-from json import JSONEncoder
-import ujson
+import logging
 
 from typing import Optional, Set, List, Dict
 
 from fastapi import FastAPI
-from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
 from starlette.responses import StreamingResponse, RedirectResponse
@@ -16,24 +14,12 @@ from fastapi.openapi.docs import (
     get_swagger_ui_oauth2_redirect_html,
 )
 
-from concurrent.futures import ThreadPoolExecutor
-import asyncio
-
-loop = asyncio._get_running_loop()
-loop.set_default_executor(ThreadPoolExecutor(max_workers=1))
-
 from starlette.staticfiles import StaticFiles
 import pydantic
 
 from modules.processing import Processing
 from modules.utils.helpers import parse_size, tobool
 
-import logging
-logging.basicConfig(
-    level='DEBUG',
-    format='%(asctime)s %(levelname)s - %(message)s',
-    datefmt='[%H:%M:%S]',
-)
 
 
 
@@ -41,6 +27,8 @@ __version__ = "0.5"
 
 # TODO Refactor reading variables
 dir_path = os.path.dirname(os.path.realpath(__file__))
+
+log_level = os.getenv('LOG_LEVEL' , 'INFO')
 
 port = os.getenv('PORT', 18080)
 
@@ -72,6 +60,13 @@ select_largest = tobool(os.getenv("SELECT_LARGEST", True))
 keep_all = tobool(os.getenv("KEEP_ALL", True))
 min_face_size = int(os.getenv("MIN_FACE_SIZE", 20))
 mtcnn_factor = float(os.getenv("MTCNN_FACTOR", 0.709))
+
+logging.basicConfig(
+    level=log_level,
+    format='%(asctime)s %(levelname)s - %(message)s',
+    datefmt='[%H:%M:%S]',
+)
+
 
 
 processing = Processing(det_name=det_name, rec_name=rec_name, ga_name=ga_name, device=device,
