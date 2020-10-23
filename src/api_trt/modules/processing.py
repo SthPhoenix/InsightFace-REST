@@ -117,7 +117,7 @@ class Processing:
                                   mtcnn_factor=mtcnn_factor, max_size=self.max_size, backend_name=backend_name
                                   )
 
-    def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6, return_face_data: bool = False,
+    async def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6, return_face_data: bool = False,
               extract_embedding: bool = True, extract_ga: bool = True, api_ver: str = "1"):
 
         if not max_size:
@@ -128,7 +128,7 @@ class Processing:
         serializer = Serializer()
         for image in images:
             try:
-                faces = self.model.get(image, max_size=max_size, threshold=threshold, return_face_data=return_face_data,
+                faces = await self.model.get(image, max_size=max_size, threshold=threshold, return_face_data=return_face_data,
                                        extract_embedding=extract_embedding, extract_ga=extract_ga)
                 _faces_dict = []
 
@@ -143,14 +143,14 @@ class Processing:
 
         return output
 
-    def draw(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6, return_face_data: bool = False,
+    async def draw(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6, return_face_data: bool = False,
              extract_embedding: bool = True, extract_ga: bool = True):
 
         if not max_size:
             max_size = self.max_size
 
         image = get_image(images)[0]
-        faces = self.model.get(image, max_size=max_size, threshold=threshold, return_face_data=return_face_data,
+        faces = await self.model.get(image, max_size=max_size, threshold=threshold, return_face_data=return_face_data,
                                extract_embedding=False, extract_ga=extract_ga)
         for face in faces:
             pt1 = tuple(map(int, face.bbox[0:2]))
