@@ -128,13 +128,12 @@ class FaceAnalysis:
         img = ImageData(img, max_size=max_size)
         img.resize_image(mode='pad')
         t1 = time.time()
-        logging.info(f'Preparing image took: {t1 - t0}')
+        logging.debug(f'Preparing image took: {t1 - t0}')
 
         t0 = time.time()
         boxes, probs, landmarks = self.det_model.detect(img.transformed_image, threshold=threshold)
         t1 = time.time()
-        logging.info(f'Detection took: {t1 - t0}')
-        logging.info(f'{threshold}')
+        logging.debug(f'Detection took: {t1 - t0}')
         await asyncio.sleep(0)
         ret = []
         if not isinstance(boxes, type(None)):
@@ -173,10 +172,9 @@ class FaceAnalysis:
 
                 ret.append(face)
             t1 = time.time()
-            logging.info(f'All embeddings took: {t1 - t0}')
-            logging.info(f'{landmarks.shape}')
+            logging.debug(f'Embedding {len(boxes)} faces took: {t1 - t0}')
             await asyncio.sleep(0)
 
         tf = time.time()
-        logging.info(f'Full processing took: {tf - ts}')
+        logging.debug(f'Full processing took: {tf - ts}')
         return ret
