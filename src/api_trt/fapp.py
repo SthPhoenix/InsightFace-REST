@@ -6,6 +6,7 @@ import ujson
 from typing import Optional, Set, List, Dict
 
 from fastapi import FastAPI
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
 from starlette.responses import StreamingResponse, RedirectResponse
@@ -14,6 +15,12 @@ from fastapi.openapi.docs import (
     get_swagger_ui_html,
     get_swagger_ui_oauth2_redirect_html,
 )
+
+from concurrent.futures import ThreadPoolExecutor
+import asyncio
+
+loop = asyncio._get_running_loop()
+loop.set_default_executor(ThreadPoolExecutor(max_workers=1))
 
 from starlette.staticfiles import StaticFiles
 import pydantic
@@ -170,7 +177,7 @@ async def extract(data: BodyExtract):
     """
 
     images = jsonable_encoder(data.images)
-    output = processing.embed(images, max_size=data.max_size, return_face_data=data.return_face_data,
+    output = await processing.embed(images, max_size=data.max_size, return_face_data=data.return_face_data,
                               extract_embedding=data.extract_embedding, threshold=data.threshold, extract_ga=data.extract_ga,
                               api_ver=data.api_ver)
 
