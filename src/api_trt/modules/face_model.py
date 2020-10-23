@@ -11,9 +11,7 @@ from insightface.utils import face_align
 from modules.model_zoo.getter import get_model
 from modules.imagedata import ImageData
 
-from .utils.helpers import to_chunks
-
-
+import asyncio
 
 
 Face = collections.namedtuple("Face", ['bbox', 'landmark', 'det_score', 'embedding', 'gender', 'age', 'embedding_norm',
@@ -116,7 +114,7 @@ class FaceAnalysis:
         return dets
 
     # Process single image
-    def get(self, img, extract_embedding: bool = True, extract_ga: bool = True,
+    async def get(self, img, extract_embedding: bool = True, extract_ga: bool = True,
             return_face_data: bool = True, max_size: List[int] = None, threshold: float = 0.6):
 
         ts = time.time()
@@ -137,6 +135,7 @@ class FaceAnalysis:
         t1 = time.time()
         logging.info(f'Detection took: {t1 - t0}')
         logging.info(f'{threshold}')
+        await asyncio.sleep(0)
         ret = []
         if not isinstance(boxes, type(None)):
             t0 = time.time()
@@ -176,6 +175,7 @@ class FaceAnalysis:
             t1 = time.time()
             logging.info(f'All embeddings took: {t1 - t0}')
             logging.info(f'{landmarks.shape}')
+            await asyncio.sleep(0)
 
         tf = time.time()
         logging.info(f'Full processing took: {tf - ts}')
