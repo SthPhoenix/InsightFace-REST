@@ -3,6 +3,9 @@
 IMAGE='insightface-rest'
 TAG='v0.5.6'
 
+# Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
+log_level=DEBUG
+
 # When starting multiple containers this will be port assigned to first container
 START_PORT=18081
 
@@ -14,7 +17,7 @@ n_gpu=1
 # per instance.
 # Take note: larger number won't speed up single image inference time, it'll increase
 # concurrent throughput.
-n_workers=1
+n_workers=2
 
 # Maximum image size (W,H). If your input images has fixed image size set this
 # value proportional or equal to it. Otherwise select value based on your
@@ -58,10 +61,12 @@ detect_ga=True
 # Create directory to store downloaded models
 mkdir -p models
 
-echo "Starting $((n_gpu)) containers on $n_gpu GPUs ($n_workers workers per GPU)";
-echo "Containers port range: $START_PORT - $(($START_PORT + ($n_gpu) - 1))"
 
 docker build -t $IMAGE:$TAG -f src/Dockerfile_trt src/.
+
+echo "Starting $((n_gpu * n_workers)) workers on $n_gpu GPUs ($n_workers workers per GPU)";
+echo "Containers port range: $START_PORT - $(($START_PORT + ($n_gpu) - 1))"
+
 
 p=0
 
@@ -77,6 +82,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
     docker run  -p $port:18080\
         --gpus $device\
         -d\
+        -e LOG_LEVEL=$log_level\
         -e PYTHONUNBUFFERED=0\
         -e PORT=18080\
         -e NUM_WORKERS=$n_workers\
