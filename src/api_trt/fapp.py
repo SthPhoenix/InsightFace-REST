@@ -205,7 +205,7 @@ async def draw(data: BodyExtract):
     """
 
     images = jsonable_encoder(data.images)
-    output = processing.draw(images, max_size=data.max_size, threshold=data.threshold,
+    output = await processing.draw(images, max_size=data.max_size, threshold=data.threshold,
                              return_face_data=data.return_face_data,
                              extract_embedding=data.extract_embedding, extract_ga=data.extract_ga)
     output.seek(0)
