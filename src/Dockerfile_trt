@@ -15,6 +15,5 @@ RUN $PIP_INSTALL aiofiles
 
 COPY api_trt /app
 
-ENTRYPOINT [ "uvicorn" ]
-
-CMD [ "fapp:app", "--reload", "--port", "18080","--host","0.0.0.0","--workers","20"]
+ENTRYPOINT [ "bash" ]
+CMD ["entrypoint.sh"]
