@@ -29,6 +29,7 @@ except:
     convert_onnx = None
 
 
+# Map model names to corresponding functions
 models = {
     'arcface_r100_v1': arcface_r100_v1,
     'genderage_v1': genderage_v1,
@@ -39,8 +40,22 @@ models = {
 }
 
 
+def prepare_backend(model_name, backend_name, im_size: List[int] = None,
+                    force_fp16: bool = False,
+                    config: Configs = None):
 
-def prepare_backend(model_name, backend_name, im_size: List[int] = None, config: Configs = None,  force_fp16: bool = False):
+    '''
+    Check if ONNX, MXNet and TensorRT models exist and download/create them otherwise.
+
+    :param model_name: Name of required model. Must be one of keys in `models` dict.
+    :param backend_name: Name of inference backend. (onnx, trt)
+    :param im_size: Desired maximum size of image in W,H form. Will be overriden if model doesn't support reshaping.
+    :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful. TensorRT specific.
+    :param config:  Configs class instance
+    :return: ONNX model serialized to string, or path to TensorRT engine
+    '''
+
+
     if im_size is None:
         im_size = [640, 480]
 
@@ -93,7 +108,18 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None, config:
         return trt_path
 
 
-def get_model(model_name: str, backend_name: str, im_size: List[int] = None, root_dir: str = "/models", **kwargs):
+def get_model(model_name: str, backend_name: str, im_size: List[int] = None, force_fp16: bool = False, root_dir: str = "/models", **kwargs):
+    '''
+    Returns inference backend instance with loaded model.
+
+    :param model_name: Name of required model. Must be one of keys in `models` dict.
+    :param backend_name: Name of inference backend. (onnx, mxnet, trt)
+    :param im_size: Desired maximum size of image in W,H form. Will be overriden if model doesn't support reshaping.
+    :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful. TensorRT specific.
+    :param root_dir: Root directory where models will be stored.
+    :param kwargs: Placeholder
+    :return: Inference backend with loaded model.
+    '''
 
     if im_size is None:
         im_size = [640, 480]
@@ -126,7 +152,7 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, roo
 
     backend = backends[backend_name]
 
-    model_path = prepare_backend(model_name, backend_name, im_size=im_size, config=config)
+    model_path = prepare_backend(model_name, backend_name, im_size=im_size, config=config,force_fp16=force_fp16)
 
     outputs = config.get_outputs_order(model_name)
     model = models[model_name](model_path=model_path, backend=backend, outputs=outputs)
