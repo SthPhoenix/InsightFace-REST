@@ -40,7 +40,7 @@ models = {
 
 
 
-def prepare_backend(model_name, backend_name, im_size: List[int] = None, config: Configs = None,  allow_fp16: bool = False):
+def prepare_backend(model_name, backend_name, im_size: List[int] = None, config: Configs = None,  force_fp16: bool = False):
     if im_size is None:
         im_size = [640, 480]
 
@@ -87,7 +87,7 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None, config:
                 temp_onnx_model = onnx_path
 
             logging.info(f"Building TRT engine for {model_name}...")
-            convert_onnx(temp_onnx_model, engine_file_path=trt_path, allow_fp16=allow_fp16)
+            convert_onnx(temp_onnx_model, engine_file_path=trt_path, force_fp16=force_fp16)
             os.remove(temp_onnx_model)
             logging.info('Building TRT engine complete!')
         return trt_path
