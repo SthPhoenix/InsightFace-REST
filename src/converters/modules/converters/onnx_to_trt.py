@@ -13,6 +13,16 @@ EXPLICIT_BATCH = 1 << (int)(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
 
 
 def _build_engine_onnx(onnx_path: str, force_fp16: bool = False, max_batch_size: int = 1, im_size: Tuple[int] = None):
+    '''
+    Builds TensorRT engine from provided ONNX file
+
+    :param onnx_path: Path to ONNX file on disk
+    :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful.
+    :param max_batch_size: Define maximum batch size supported by engine. If >1 creates optimization profile.
+    :param im_size: Required if max_batch_size > 1. Used for creation of optimization profile.
+    :return: TensorRT engine
+    '''
+
     with trt.Builder(TRT_LOGGER) as builder, \
             builder.create_network(EXPLICIT_BATCH) as network, \
             builder.create_builder_config() as config, \
@@ -42,6 +52,16 @@ def _build_engine_onnx(onnx_path: str, force_fp16: bool = False, max_batch_size:
 
 def convert_onnx(onnx_path: str, engine_file_path: str, force_fp16: bool = False, max_batch_size: int = 1,
                  im_size: Tuple[int] = None):
+    '''
+    Creates TensorRT engine and serializes it to disk
+
+    :param onnx_path: Path to ONNX file on disk
+    :param engine_file_path: Path where TensorRT engine should be saved.
+    :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful.
+    :param max_batch_size: Define maximum batch size supported by engine. If >1 creates optimization profile.
+    :param im_size: Required if max_batch_size > 1. Used for creation of optimization profile.
+    :return: None
+    '''
 
     engine = _build_engine_onnx(onnx_path=onnx_path,
                                 force_fp16=force_fp16, max_batch_size=max_batch_size,
