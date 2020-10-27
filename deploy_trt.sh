@@ -17,7 +17,7 @@ n_gpu=1
 # per instance.
 # Take note: larger number won't speed up single image inference time, it'll increase
 # concurrent throughput.
-n_workers=2
+n_workers=1
 
 # Maximum image size (W,H). If your input images has fixed image size set this
 # value proportional or equal to it. Otherwise select value based on your
