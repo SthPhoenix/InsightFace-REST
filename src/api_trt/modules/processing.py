@@ -156,6 +156,12 @@ class Processing:
             pt1 = tuple(map(int, face.bbox[0:2]))
             pt2 = tuple(map(int, face.bbox[2:4]))
             cv2.rectangle(image, pt1, pt2, (0, 255, 0), 1)
+            lms = face.landmark
+            cv2.circle(image, (lms[0][0], lms[0][1]), 1, (0, 0, 255), 4)
+            cv2.circle(image, (lms[1][0], lms[1][1]), 1, (0, 255, 255), 4)
+            cv2.circle(image, (lms[2][0], lms[2][1]), 1, (255, 0, 255), 4)
+            cv2.circle(image, (lms[3][0], lms[3][1]), 1, (0, 255, 0), 4)
+            cv2.circle(image, (lms[4][0], lms[4][1]), 1, (255, 0, 0), 4)
 
         is_success, buffer = cv2.imencode(".jpg", image)
         io_buf = io.BytesIO(buffer)
