@@ -15,7 +15,7 @@ def retinaface_r50_v1(model_path, backend, outputs):
 
 
 def retinaface_mnet025_v1(model_path, backend, outputs):
-    model = get_retinaface(model_path, backend, outputs, rac="net3l")
+    model = get_retinaface(model_path, backend, outputs, rac="net3")
     return model
 
 
