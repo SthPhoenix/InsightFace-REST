@@ -1,14 +1,14 @@
 import os
 import tensorrt as trt
 import sys
-from typing import  Tuple
+from typing import Tuple
 import logging
 
 # Based on code from NVES_R's response at
 # https://forums.developer.nvidia.com/t/segmentation-fault-when-creating-the-trt-builder-in-python-works-fine-with-trtexec/111376
 
 
-TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
+TRT_LOGGER = trt.Logger(trt.Logger.VERBOSE)
 EXPLICIT_BATCH = 1 << (int)(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
 
 
@@ -47,7 +47,10 @@ def _build_engine_onnx(onnx_path: str, force_fp16: bool = False, max_batch_size:
                     print(parser.get_error(error))
                 sys.exit(1)
 
-            return builder.build_engine(network, config=config)
+            if max_batch_size != 1:
+                return builder.build_engine(network, config=config)
+            else:
+                return builder.build_cuda_engine(network)
 
 
 def convert_onnx(onnx_path: str, engine_file_path: str, force_fp16: bool = False, max_batch_size: int = 1,
