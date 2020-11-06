@@ -34,8 +34,14 @@ model_name = 'retinaface_mnet025_v1'
 #model_name = 'retinaface_r50_v1'
 #model_name = 'centerface'
 
+# Following model requires manual downloading from
+# https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov
+# and unpacking it to models/mxnet/mnet_cov2
+# model_name = 'mnet_cov2'
+
+
 backend = 'trt'
-im_size = [640, 480]
+im_size = [640, 640]
 
 detector = get_model(model_name, backend, im_size=im_size, root_dir='/models')
 detector.prepare(nms=0.35)
@@ -47,7 +53,7 @@ input_shape = detector.input_shape[2:][::-1]
 logging.info(f"Images will be resized to WxH : {input_shape}")
 
 tt0 = time.time()
-image = cv2.imread('test_images2/china.jpg', cv2.IMREAD_COLOR)
+image = cv2.imread('test_images/lumia.jpg', cv2.IMREAD_COLOR)
 image = ImageData(image, input_shape)
 image.resize_image(mode='pad')
 tt1 = time.time()
@@ -76,12 +82,24 @@ t1 = time.time()
 print(f'Took {t1 - t0} s. ({iters / (t1 - t0)} im/sec)')
 print(f"Total faces detected: {det_count}")
 
+mask_thresh = 0.2
+
 for det in detections[0]:
-    if det[4] > 0.5:
+
+    if det[4] > 0.6:
         color = (0, 255, 0)
     else:
         color = (0, 0, 255)
-    # print(res[4])
+
+    # Testing mnet_cov2 model.
+    if detector.masks == True:
+        mask_score = det[5]
+        logging.info(f'Mask score: {mask_score}')
+        if mask_score >= mask_thresh:
+            color = (0, 255, 0)
+        else:
+            color = (0, 0, 255)
+
     pt1 = tuple(map(int, det[0:2]))
     pt2 = tuple(map(int, det[2:4]))
     cv2.rectangle(image.transformed_image, pt1, pt2, color, 1)
