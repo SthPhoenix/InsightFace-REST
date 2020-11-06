@@ -211,8 +211,9 @@ def landmark_pred(boxes, landmark_deltas):
 
 
 class RetinaFace:
-    def __init__(self, inference_backend: Union[DIO, DIT], rac='net3l'):
+    def __init__(self, inference_backend: Union[DIO, DIT], rac='net3l', masks: bool =False, **kwargs):
         self.rac = rac
+        self.masks=masks
         self.model = inference_backend
         self.input_shape = (1, 3, 480, 640)
 
@@ -267,6 +268,7 @@ class RetinaFace:
     def postprocess(self, net_out, threshold):
         proposals_list = []
         scores_list = []
+        mask_scores_list = []
         landmarks_list = []
         t0 = time.time()
         for _idx, s in enumerate(self._feat_stride_fpn):
@@ -276,12 +278,17 @@ class RetinaFace:
                 idx = _idx * 3
             else:
                 idx = _idx * 2
+            if self.masks:
+                idx = _idx * 4
+
+            A = self._num_anchors['stride%s' % s]
+
             scores = net_out[idx]
-            scores = scores[:, self._num_anchors['stride%s' % s]:, :, :]
+            scores = scores[:, A:, :, :]
             idx += 1
             bbox_deltas = net_out[idx]
             height, width = bbox_deltas.shape[2], bbox_deltas.shape[3]
-            A = self._num_anchors['stride%s' % s]
+
             K = height * width
             key = (height, width, stride)
             if key in self.anchor_plane_cache:
@@ -312,6 +319,14 @@ class RetinaFace:
             proposals_list.append(proposals)
             scores_list.append(scores)
 
+            if self.masks:
+                type_scores = net_out[idx + 2]
+                mask_scores = type_scores[:, A*2:, :, :]
+                mask_scores = clip_pad(mask_scores,(height, width))
+                mask_scores = mask_scores.transpose((0, 2, 3, 1)).reshape((-1, 1))
+                mask_scores = mask_scores[order]
+                mask_scores_list.append(mask_scores)
+
             if self.use_landmarks:
                 idx += 1
                 landmark_deltas = net_out[idx]
@@ -329,16 +344,23 @@ class RetinaFace:
             if self.use_landmarks:
                 landmarks = np.zeros((0, 5, 2))
             return np.zeros((0, 5)), landmarks
+
         scores = np.vstack(scores_list)
+
         scores_ravel = scores.ravel()
         order = scores_ravel.argsort()[::-1]
         proposals = proposals[order, :]
         scores = scores[order]
+
         if self.use_landmarks:
             landmarks = np.vstack(landmarks_list)
             landmarks = landmarks[order].astype(np.float32, copy=False)
-
-        pre_det = np.hstack((proposals[:, 0:4], scores)).astype(np.float32, copy=False)
+        if self.masks:
+            mask_scores = np.vstack(mask_scores_list)
+            mask_scores = mask_scores[order]
+            pre_det = np.hstack((proposals[:, 0:4], scores, mask_scores)).astype(np.float32, copy=False)
+        else:
+            pre_det = np.hstack((proposals[:, 0:4], scores)).astype(np.float32, copy=False)
         keep = nms(pre_det, thresh=self.nms_threshold)
         det = np.hstack((pre_det, proposals[:, 4:]))
         det = det[keep, :]
