@@ -16,6 +16,22 @@ retina_outputs = ['face_rpn_cls_prob_reshape_stride32',
                   'face_rpn_bbox_pred_stride8',
                   'face_rpn_landmark_pred_stride8']
 
+
+anticonv_outputs =  [
+                  'face_rpn_cls_prob_reshape_stride32',
+                  'face_rpn_bbox_pred_stride32',
+                  'face_rpn_landmark_pred_stride32',
+                  'face_rpn_type_prob_reshape_stride32',
+                  'face_rpn_cls_prob_reshape_stride16',
+                  'face_rpn_bbox_pred_stride16',
+                  'face_rpn_landmark_pred_stride16',
+                  'face_rpn_type_prob_reshape_stride16',
+                  'face_rpn_cls_prob_reshape_stride8',
+                  'face_rpn_bbox_pred_stride8',
+                  'face_rpn_landmark_pred_stride8',
+                  'face_rpn_type_prob_reshape_stride8'
+                  ]
+
 centerface_outputs = ['537', '538', '539', '540']
 
 mxnet_models = {
@@ -50,6 +66,14 @@ mxnet_models = {
         'outputs': retina_outputs,
         'reshape': True,
         'in_package': True
+    },
+    'mnet_cov2': {
+        'symbol': 'mnet_cov2-symbol.json',
+        'params': 'mnet_cov2-0000.params',
+        'shape': (1, 3, 480, 640),
+        'outputs': anticonv_outputs,
+        'reshape': True,
+        'in_package': False
     },
     'arcface_r100_v1': {
         'symbol': 'model-symbol.json',
