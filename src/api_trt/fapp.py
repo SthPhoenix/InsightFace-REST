@@ -39,6 +39,7 @@ rec_name = os.getenv("REC_NAME", "arcface_r100_v1")
 det_name = os.getenv("DET_NAME", "retinaface_mnet025_v2")
 ga_name = os.getenv("GA_NAME", "genderage_v1")
 
+force_fp16 = tobool(os.getenv('FORCE_FP16', False))
 ga_ignore = tobool(os.getenv('GA_IGNORE', False))
 rec_ignore = tobool(os.getenv('REC_IGNORE', False))
 
@@ -70,8 +71,8 @@ logging.basicConfig(
 
 
 processing = Processing(det_name=det_name, rec_name=rec_name, ga_name=ga_name, device=device,
-                        max_size=max_size,select_largest=select_largest, keep_all=keep_all, min_face_size=min_face_size,
-                        mtcnn_factor=mtcnn_factor, backend_name=backend_name)
+                        max_size=max_size, select_largest=select_largest, keep_all=keep_all, min_face_size=min_face_size,
+                        mtcnn_factor=mtcnn_factor, backend_name=backend_name, force_fp16=force_fp16)
 
 app = FastAPI(
     title="InsightFace-REST",
@@ -205,3 +206,12 @@ async def draw(data: BodyExtract):
                              extract_embedding=data.extract_embedding, extract_ga=data.extract_ga)
     output.seek(0)
     return StreamingResponse(output, media_type="image/png")
+
+
+@app.get('/status')
+def status():
+    """
+    Placeholder for health check and configs endpoint. Currently returns 'ok' if container started successfully.
+
+    """
+    return 'ok'
