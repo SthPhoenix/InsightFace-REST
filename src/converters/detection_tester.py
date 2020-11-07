@@ -30,21 +30,21 @@ logging.basicConfig(
 )
 
 iters = 10
-model_name = 'retinaface_mnet025_v1'
+model_name = 'retinaface_mnet025_v2'
 #model_name = 'retinaface_r50_v1'
 #model_name = 'centerface'
 
 # Following model requires manual downloading from
 # https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov
 # and unpacking it to models/mxnet/mnet_cov2
-# model_name = 'mnet_cov2'
+model_name = 'mnet_cov2'
 
 
 backend = 'trt'
-im_size = [640, 640]
+im_size = [1280, 1280]
 
-detector = get_model(model_name, backend, im_size=im_size, root_dir='/models')
-detector.prepare(nms=0.35)
+detector = get_model(model_name, backend, im_size=im_size, root_dir='/models', force_fp16=False)
+detector.prepare(nms=0.4)
 
 # Since dynamic shapes are not yet implemented, images during inference
 # must be resized to exact shape which was used for TRT building.
@@ -53,7 +53,7 @@ input_shape = detector.input_shape[2:][::-1]
 logging.info(f"Images will be resized to WxH : {input_shape}")
 
 tt0 = time.time()
-image = cv2.imread('test_images/lumia.jpg', cv2.IMREAD_COLOR)
+image = cv2.imread('test_images/gas_mask.jpg', cv2.IMREAD_COLOR)
 image = ImageData(image, input_shape)
 image.resize_image(mode='pad')
 tt1 = time.time()
@@ -73,7 +73,7 @@ det_count = 0
 t0 = time.time()
 for i in range(iters):
     tf0 = time.time()
-    detections = detector.detect(image.transformed_image, threshold=0.35)
+    detections = detector.detect(image.transformed_image, threshold=0.6)
     tf1 = time.time()
     det_count = len(detections[0])
     logging.debug(f"Full detection  took: {tf1 - tf0}")
@@ -94,7 +94,7 @@ for det in detections[0]:
     # Testing mnet_cov2 model.
     if detector.masks == True:
         mask_score = det[5]
-        logging.info(f'Mask score: {mask_score}')
+        logging.info(f'Mask score: {mask_score}. Face score: {det[4]}')
         if mask_score >= mask_thresh:
             color = (0, 255, 0)
         else:

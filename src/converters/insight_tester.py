@@ -32,7 +32,7 @@ iters = 10
 model_name = 'arcface_r100_v1'
 backend = 'trt'  # or 'onnx'
 
-model = get_model(model_name, backend, root_dir='/models')
+model = get_model(model_name, backend, root_dir='/models', force_fp16=False)
 model.prepare()
 
 logging.info('Loading original MXNet model for comparison')
