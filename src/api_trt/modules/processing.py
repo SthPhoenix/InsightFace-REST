@@ -106,7 +106,7 @@ class Processing:
     def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
                  ga_name: str = 'genderage_v1', device: str = 'cuda', max_size: List[int] = None,
                  select_largest: bool = True, keep_all: bool = True, min_face_size: int = 20,
-                 mtcnn_factor: float = 0.700, backend_name: str = 'trt'):
+                 mtcnn_factor: float = 0.700, backend_name: str = 'trt', force_fp16: bool = False):
 
         if max_size is None:
             max_size = [640, 480]
@@ -114,7 +114,8 @@ class Processing:
         self.max_size = max_size
         self.model = FaceAnalysis(det_name=det_name, rec_name=rec_name, ga_name=ga_name, device=device,
                                   select_largest=select_largest, keep_all=keep_all, min_face_size=min_face_size,
-                                  mtcnn_factor=mtcnn_factor, max_size=self.max_size, backend_name=backend_name
+                                  mtcnn_factor=mtcnn_factor, max_size=self.max_size, backend_name=backend_name,
+                                  force_fp16=force_fp16
                                   )
 
     async def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6, return_face_data: bool = False,
