@@ -86,12 +86,16 @@ class Serializer:
                           bbox=face.bbox.tolist(),
                           norm=None,
                           gender=face.gender,
-                          age=face.age
+                          age=face.age,
+                          mask_prob=None
                           )
 
         if face.embedding_norm:
             _face_dict.update(vec=face.normed_embedding.tolist(),
                               norm=float(face.embedding_norm))
+
+        if face.mask_prob:
+            _face_dict.update(mask_prob=float(face.mask_prob))
 
         if return_face_data:
             _face_dict.update({
@@ -156,7 +160,11 @@ class Processing:
         for face in faces:
             pt1 = tuple(map(int, face.bbox[0:2]))
             pt2 = tuple(map(int, face.bbox[2:4]))
-            cv2.rectangle(image, pt1, pt2, (0, 255, 0), 1)
+            color = (0, 255, 0)
+            if face.mask_prob:
+                if face.mask_prob >= 0.2:
+                    color = (0, 255, 255)
+            cv2.rectangle(image, pt1, pt2, color, 1)
             lms = face.landmark
             cv2.circle(image, (lms[0][0], lms[0][1]), 1, (0, 0, 255), 4)
             cv2.circle(image, (lms[1][0], lms[1][1]), 1, (0, 255, 255), 4)
