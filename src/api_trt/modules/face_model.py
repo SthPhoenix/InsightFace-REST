@@ -15,7 +15,7 @@ import asyncio
 
 
 Face = collections.namedtuple("Face", ['bbox', 'landmark', 'det_score', 'embedding', 'gender', 'age', 'embedding_norm',
-                                       'normed_embedding', 'facedata', 'scale', 'num_det'])
+                                       'normed_embedding', 'facedata', 'scale', 'num_det', 'mask_prob'])
 
 Face.__new__.__defaults__ = (None,) * len(Face._fields)
 
@@ -41,8 +41,14 @@ class Detector:
         bboxes, landmarks = self.retina.detect(data, threshold=threshold)
         boxes = bboxes[:, 0:4]
         probs = bboxes[:, 4]
+        mask_probs = None
+        try:
+            if self.retina.masks == True:
+                mask_probs = bboxes[:, 5]
+        except:
+            pass
         t1 = time.time()
-        return boxes, probs, landmarks
+        return boxes, probs, landmarks, mask_probs
 
 
 # Wrapper for facenet_pytorch.MTCNN
@@ -59,7 +65,7 @@ class DetectorMTCNN:
     def detect(self, data, threshold=0.6):
         img_rgb = cv2.cvtColor(data, cv2.COLOR_BGR2RGB)
         boxes, probs, landmarks = self.mtcnn.detect(img_rgb, landmarks=True)
-        return boxes, probs, landmarks
+        return boxes, probs, landmarks, None
 
 
 class FaceAnalysis:
@@ -108,8 +114,7 @@ class FaceAnalysis:
         # TODO implement sorting of bounding boxes with respect to size and position
         return boxes, probs, landmarks
 
-        # Translate bboxes and landmarks from resized to original image size
-
+    # Translate bboxes and landmarks from resized to original image size
     def reproject_points(self, dets, scale: float):
         if scale != 1.0:
             dets = dets / scale
@@ -122,6 +127,7 @@ class FaceAnalysis:
         ts = time.time()
 
         t0 = time.time()
+
         # If detector has input_shape attribute, use it instead of provided value
         try:
             max_size = self.det_model.retina.input_shape[2:][::-1]
@@ -133,7 +139,7 @@ class FaceAnalysis:
         logging.debug(f'Preparing image took: {t1 - t0}')
 
         t0 = time.time()
-        boxes, probs, landmarks = self.det_model.detect(img.transformed_image, threshold=threshold)
+        boxes, probs, landmarks, mask_probs = self.det_model.detect(img.transformed_image, threshold=threshold)
         t1 = time.time()
         logging.debug(f'Detection took: {t1 - t0}')
         await asyncio.sleep(0)
@@ -145,6 +151,11 @@ class FaceAnalysis:
                 bbox = self.reproject_points(boxes[i], img.scale_factor)
                 landmark = self.reproject_points(landmarks[i], img.scale_factor)
                 det_score = probs[i]
+                if not isinstance(mask_probs, type(None)):
+                    mask_prob = mask_probs[i]
+                else:
+                    mask_prob = None
+
                 # Crop faces from original image instead of resized to improve quality
                 _crop = face_align.norm_crop(img.orig_image, landmark=landmark)
                 facedata = None
@@ -167,10 +178,8 @@ class FaceAnalysis:
                         gender = int(gender)
 
                 face = Face(bbox=bbox, landmark=landmark, det_score=det_score, embedding=embedding, gender=gender,
-                            age=age,
-                            normed_embedding=normed_embedding, embedding_norm=embedding_norm, facedata=facedata,
-                            num_det=i,
-                            scale=img.scale_factor)
+                            age=age, normed_embedding=normed_embedding, embedding_norm=embedding_norm,
+                            facedata=facedata, num_det=i, scale=img.scale_factor, mask_prob=mask_prob)
 
                 ret.append(face)
             t1 = time.time()
