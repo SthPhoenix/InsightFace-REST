@@ -53,7 +53,7 @@ input_shape = detector.input_shape[2:][::-1]
 logging.info(f"Images will be resized to WxH : {input_shape}")
 
 tt0 = time.time()
-image = cv2.imread('test_images/gas_mask.jpg', cv2.IMREAD_COLOR)
+image = cv2.imread('test_images/lumia.jpg', cv2.IMREAD_COLOR)
 image = ImageData(image, input_shape)
 image.resize_image(mode='pad')
 tt1 = time.time()
