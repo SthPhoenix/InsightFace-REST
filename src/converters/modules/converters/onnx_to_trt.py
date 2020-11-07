@@ -8,7 +8,7 @@ import logging
 # https://forums.developer.nvidia.com/t/segmentation-fault-when-creating-the-trt-builder-in-python-works-fine-with-trtexec/111376
 
 
-TRT_LOGGER = trt.Logger(trt.Logger.VERBOSE)
+TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
 EXPLICIT_BATCH = 1 << (int)(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
 
 
@@ -29,6 +29,7 @@ def _build_engine_onnx(onnx_path: str, force_fp16: bool = False, max_batch_size:
             trt.OnnxParser(network, TRT_LOGGER) as parser:
 
         if builder.platform_has_fast_fp16 or force_fp16 is True:
+            logging.info('Building TensorRT engine with FP16 support.')
             builder.fp16_mode = True
             builder.strict_type_constraints = True
 
