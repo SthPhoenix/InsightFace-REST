@@ -82,7 +82,7 @@ app = FastAPI(
     redoc_url=None
 )
 
-example_img = 'test_images/TH.png'
+example_img = 'test_images/Stallone.jpg'
 
 
 class Images(BaseModel):
