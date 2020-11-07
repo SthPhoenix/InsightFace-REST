@@ -1,10 +1,10 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.5.6'
+TAG='v0.5.7'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
-log_level=DEBUG
+log_level=INFO
 
 # When starting multiple containers this will be port assigned to first container
 START_PORT=18081
@@ -28,10 +28,16 @@ n_workers=1
 # runtime.
 max_size=640,640
 
+# Force FP16 mode for building TensorRT engines, even if it's not supported.
+# Please check that your GPU supports FP16, otherwise performance may drop.
+# For GPUs supporting it gives about 2x performance boost.
+force_fp16=False
+
+
 # DET MODELS:
 ## retinaface_mnet025_v1, retinaface_mnet025_v2, retinaface_r50_v1, centerface
 ## ATTENTION: mtcnn model is not supported yet for TensorRT backend.
-det_model=retinaface_mnet025_v2
+det_model=retinaface_mnet025_v1
 
 # REC MODELS:
 ## arcface_r100_v1
@@ -87,6 +93,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e PORT=18080\
         -e NUM_WORKERS=$n_workers\
         -e INFERENCE_BACKEND=trt\
+        -e FORCE_FP16=$force_fp16\
         -e DET_NAME=$det_model\
         -e REC_NAME=$rec_model\
         -e REC_IGNORE=$rec_ignore\
@@ -100,6 +107,10 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e DEF_API_VER='1'\
         -v $PWD/models:/models\
         -v $PWD/src/api_trt:/app\
+        --health-cmd='curl -f http://localhost:18080/status || exit 1'\
+        --health-interval=1m\
+        --health-timeout=10s\
+        --health-retries=3\
         --name=$name\
         $IMAGE:$TAG
 done
