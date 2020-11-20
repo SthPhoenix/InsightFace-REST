@@ -60,6 +60,8 @@ return_face_data=False
 extract_embeddings=True
 ## Estimate gender/age
 detect_ga=True
+##Face detection probability threshold
+det_thresh=0.6
 
 
 # DEPLOY CONTAINERS
@@ -95,6 +97,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e INFERENCE_BACKEND=trt\
         -e FORCE_FP16=$force_fp16\
         -e DET_NAME=$det_model\
+        -e DET_THRESH=$det_thresh\
         -e REC_NAME=$rec_model\
         -e REC_IGNORE=$rec_ignore\
         -e GA_NAME=$ga_model\
@@ -107,7 +110,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e DEF_API_VER='1'\
         -v $PWD/models:/models\
         -v $PWD/src/api_trt:/app\
-        --health-cmd='curl -f http://localhost:18080/status || exit 1'\
+        --health-cmd='curl -f http://localhost:18080/info || exit 1'\
         --health-interval=1m\
         --health-timeout=10s\
         --health-retries=3\
