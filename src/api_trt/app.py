@@ -17,7 +17,7 @@ from fastapi.openapi.docs import (
 from modules.processing import Processing
 from env_parser import EnvConfigs
 
-__version__ = "0.5.7"
+__version__ = "0.5.8"
 
 # TODO Refactor reading variables
 dir_path = os.path.dirname(os.path.realpath(__file__))
