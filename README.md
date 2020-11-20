@@ -1,14 +1,3 @@
-## UPDATE 2020-11-07
-
-- Added support for RetinaFaceAntiCov model (mnet_cov2, must be manually
-  [downloaded](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov)
-  and unpacked to `models/mxnet/mnet_cov2`)
-- Added FP16 support for TensorRT (`force_fp16` flag in `deploy_trt.sh`)
-
-## UPDATE 2020-10-22
-
-- Added TensorRT version of InsightFace-REST API
-
 # InsightFace-REST
 
 InsightFace REST API for easy deployment of face recognition services.
@@ -135,7 +124,9 @@ Conversion scripts:
 
 Conversion scripts:
 - Added support for building TensorRT engine with batch input.
-- Added support for RetinaFaceAntiCov v2
+- Added support for RetinaFaceAntiCov model (mnet_cov2, must be manually
+  [downloaded](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov)
+  and unpacked to `models/mxnet/mnet_cov2`)
 
 REST API:
 - Added support for RetinaFaceAntiCov v2
