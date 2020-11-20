@@ -49,11 +49,11 @@ def allocate_buffers(engine):
 
 # This function is generalized for multiple inputs/outputs.
 # inputs and outputs are expected to be lists of HostDeviceMem objects.
-def do_inference(context, bindings, inputs, outputs, stream, batch_size=1):
+def do_inference(context, bindings, inputs, outputs, stream):
     # Transfer input data to the GPU.
     [cuda.memcpy_htod_async(inp.device, inp.host, stream) for inp in inputs]
     # Run inference.
-    context.execute_async(batch_size=batch_size, bindings=bindings, stream_handle=stream.handle)
+    context.execute_async_v2(bindings=bindings, stream_handle=stream.handle)
     # Transfer predictions back from the GPU.
     [cuda.memcpy_dtoh_async(out.host, out.device, stream) for out in outputs]
     # Synchronize the stream
@@ -85,13 +85,13 @@ class TrtModel(object):
         if self.engine is None:
             self.build()
 
-        input = np.asarray([input])
+        input = np.asarray(input)
         batch_size = input.shape[0]
         allocate_place = np.prod(input.shape)
         self.inputs[0].host[:allocate_place] = input.flatten(order='C').astype(np.float32)
         trt_outputs = do_inference(
             self.context, bindings=self.bindings,
-            inputs=self.inputs, outputs=self.outputs, stream=self.stream, batch_size=batch_size)
+            inputs=self.inputs, outputs=self.outputs, stream=self.stream)
         #Reshape TRT outputs to original shape instead of flattened array
         if deflatten:
             trt_outputs = [output.reshape(shape) for output, shape in zip(trt_outputs, self.out_shapes)]
