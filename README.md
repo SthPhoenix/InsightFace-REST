@@ -20,16 +20,32 @@ and Dockerfiles for fast deployment.
 
 ## Prerequesites:
 
+1. Docker
+2. Nvidia-container-toolkit
+3. Nvidia GPU drivers (450.x.x and above)
 
-1. MXNet
-2. PyTorch
-3. OpenCV
-4. FastApi
-5. Docker
+
+## Run with Docker:
+
+1. Clone repo.
+2. Execute `deploy_trt.sh` from repo's root.
+3. Go to http://localhost:18081 to access documentation and try API
+
+If you have multiple GPU's with enough GPU memory you can try running multiple containers by
+editing *n_gpu* and *n_workers* parameters in `deploy_trt.sh`.
+
+> For pure MXNet based version, without TensorRT support you can check
+> depreciated [v0.5.0](https://github.com/SthPhoenix/InsightFace-REST/tree/v0.5.0)
+> branch
+
 
 
 ## Usage:
+> _This documentation might be outdated, please referer  
+> to builtin API documentation for latest version_
+
 ### `/extract` endpoint
+
 
 Extract endpoint accepts list of images and return faces bounding boxes with corresponding 
 embeddings.
@@ -95,18 +111,6 @@ Response is in following format:
 First level is list in order the images were sent, second level are faces detected per each image as 
 dictionary containing face embedding, bounding box, detection probability and detection number.  
 
-## Run with Docker:
-
-1. Clone repo.
-2. Execute `deploy.sh` from repo's root for MXNet version, or `deploy_trt.sh`
-   for TensorRT version
-3. Go to http://localhost:18081 to access documentation and try API
-
-If you have multiple GPU's with enough GPU memory you can try running multiple containers by
-editing *n_gpu* and *n_con* parameters in `deploy.sh` or `deploy_trt.sh`.
-
-You would need load balancer like HAProxy to work with multiple containers,
-example HAProxy config will be added later.
 
 ## Work in progress:
 - Add Triton Inference Server as execution backend
@@ -114,6 +118,18 @@ example HAProxy config will be added later.
 
 
 ## Changelist:
+
+### 2020-11-20
+
+REST API:
+- Pure MXNet version removed from master branch.
+- Added models bootstrapping before running workers, to prevent race condition for building TRT engine.
+- Applied changes from conversion scripts (see below)
+
+Conversion scripts:
+- Reshape ONNX models in memory to prevent writing temp files.
+- TRT engine builder now takes input name and shape, required for building
+  optimization profiles, from ONNX model intself.
 
 ### 2020-11-07
 
