@@ -37,7 +37,7 @@ model_name = 'retinaface_mnet025_v2'
 # Following model requires manual downloading from
 # https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov
 # and unpacking it to models/mxnet/mnet_cov2
-model_name = 'mnet_cov2'
+#model_name = 'mnet_cov2'
 
 
 backend = 'trt'
