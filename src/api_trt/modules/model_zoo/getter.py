@@ -42,6 +42,7 @@ models = {
 
 def prepare_backend(model_name, backend_name, im_size: List[int] = None,
                     force_fp16: bool = False,
+                    download_model: bool = True,
                     config: Configs = None):
     """
     Check if ONNX, MXNet and TensorRT models exist and download/create them otherwise.
@@ -50,6 +51,7 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
     :param backend_name: Name of inference backend. (onnx, trt)
     :param im_size: Desired maximum size of image in W,H form. Will be overridden if model doesn't support reshaping.
     :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful. TensorRT specific.
+    :param download_model: Download MXNet or ONNX model if it not exist.
     :param config:  Configs class instance
     :return: ONNX model serialized to string, or path to TensorRT engine
     """
@@ -69,7 +71,7 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
     onnx_dir, onnx_path = config.build_model_paths(model_name, 'onnx')
     trt_dir, trt_path = config.build_model_paths(model_name, 'plan')
 
-    if not os.path.exists(onnx_path):
+    if not os.path.exists(onnx_path) and download_model is True:
         prepare_folders([onnx_dir])
         if in_package:
             print(f"Downloading model: {model_name}...")
@@ -100,22 +102,22 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
             trt_path = trt_path.replace('.plan', '_fp16.plan')
         if not os.path.exists(trt_path):
             prepare_folders([trt_dir])
-            temp_onnx_model = onnx_path + '.temp'
             if reshape_allowed is True:
                 logging.info(f'Reshaping ONNX inputs to: {shape}')
-                reshape_onnx_input(onnx_path, temp_onnx_model, im_size=im_size)
+                model = onnx.load(onnx_path)
+                reshaped = reshape(model, h=im_size[1], w=im_size[0])
+                temp_onnx_model = reshaped.SerializeToString()
             else:
                 temp_onnx_model = onnx_path
 
             logging.info(f"Building TRT engine for {model_name}...")
             convert_onnx(temp_onnx_model, engine_file_path=trt_path, force_fp16=force_fp16)
-            os.remove(temp_onnx_model)
             logging.info('Building TRT engine complete!')
         return trt_path
 
 
 def get_model(model_name: str, backend_name: str, im_size: List[int] = None, force_fp16: bool = False,
-              root_dir: str = "/models", **kwargs):
+              root_dir: str = "/models", download_model: bool = True, **kwargs):
     """
     Returns inference backend instance with loaded model.
 
@@ -124,7 +126,8 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, for
     :param im_size: Desired maximum size of image in W,H form. Will be overridden if model doesn't support reshaping.
     :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful. TensorRT specific.
     :param root_dir: Root directory where models will be stored.
-    :param kwargs: Placeholder
+    :param download_model: Download MXNet or ONNX model. Might be disabled if TRT model was already created.
+    :param kwargs: Placeholder.
     :return: Inference backend with loaded model.
     """
 
@@ -155,7 +158,8 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, for
 
     backend = backends[backend_name]
 
-    model_path = prepare_backend(model_name, backend_name, im_size=im_size, config=config, force_fp16=force_fp16)
+    model_path = prepare_backend(model_name, backend_name, im_size=im_size, config=config, force_fp16=force_fp16,
+                                 download_model=download_model)
 
     outputs = config.get_outputs_order(model_name)
     model = models[model_name](model_path=model_path, backend=backend, outputs=outputs)
