@@ -34,7 +34,7 @@ class Detector:
 
         if det_name == 'centerface' and backend_name == 'mxnet':
             backend_name = 'onnx'
-        self.retina = get_model(det_name, backend_name=backend_name, force_fp16=force_fp16, im_size=max_size, root_dir='/models')
+        self.retina = get_model(det_name, backend_name=backend_name, force_fp16=force_fp16, im_size=max_size, root_dir='/models', download_model=False)
         self.retina.prepare(ctx_id=device2ctx[device], nms=0.35)
 
     def detect(self, data, threshold=0.3):
@@ -99,13 +99,13 @@ class FaceAnalysis:
                                       backend_name=backend_name, force_fp16=force_fp16)
 
         if rec_name is not None:
-            self.rec_model = get_model(rec_name, backend_name=backend_name,force_fp16=force_fp16)
+            self.rec_model = get_model(rec_name, backend_name=backend_name,force_fp16=force_fp16, download_model=False)
             self.rec_model.prepare(ctx_id = ctx)
         else:
             self.rec_model = None
 
         if ga_name is not None:
-            self.ga_model = get_model(ga_name, backend_name=backend_name,force_fp16=force_fp16)
+            self.ga_model = get_model(ga_name, backend_name=backend_name,force_fp16=force_fp16, download_model=False)
             self.ga_model.prepare(ctx_id = ctx)
         else:
             self.ga_model = None
