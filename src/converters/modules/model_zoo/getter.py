@@ -41,6 +41,7 @@ models = {
 
 
 def prepare_backend(model_name, backend_name, im_size: List[int] = None,
+                    max_batch_size: int = 1,
                     force_fp16: bool = False,
                     download_model: bool = True,
                     config: Configs = None):
@@ -50,21 +51,19 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
     :param model_name: Name of required model. Must be one of keys in `models` dict.
     :param backend_name: Name of inference backend. (onnx, trt)
     :param im_size: Desired maximum size of image in W,H form. Will be overridden if model doesn't support reshaping.
+    :param max_batch_size: Maximum batch size for inference, currently supported for ArcFace model only.
     :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful. TensorRT specific.
     :param download_model: Download MXNet or ONNX model if it not exist.
     :param config:  Configs class instance
     :return: ONNX model serialized to string, or path to TensorRT engine
     """
 
-    if im_size is None:
-        im_size = [640, 480]
-
     prepare_folders([config.mxnet_models_dir, config.onnx_models_dir, config.trt_engines_dir])
 
     in_package = config.in_official_package(model_name)
     reshape_allowed = config.mxnet_models[model_name].get('reshape')
     shape = config.get_shape(model_name)
-    if reshape_allowed is True:
+    if reshape_allowed is True and im_size is not None:
         shape = (1, 3) + tuple(im_size)[::-1]
 
     mxnet_symbol, mxnet_params = config.get_mxnet_model_paths(model_name)
@@ -97,26 +96,37 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
 
     if backend_name == "trt":
         if reshape_allowed is True:
-            trt_path = trt_path.replace('.plan', f'_{im_size[0]}_{im_size[1]}.plan')
+            trt_path = trt_path.replace('.plan', f'_{shape[3]}_{shape[2]}.plan')
+        if max_batch_size > 1:
+            trt_path = trt_path.replace('.plan', f'_batch{max_batch_size}.plan')
         if force_fp16 is True:
             trt_path = trt_path.replace('.plan', '_fp16.plan')
+
         if not os.path.exists(trt_path):
             prepare_folders([trt_dir])
-            if reshape_allowed is True:
+
+            if reshape_allowed is True or max_batch_size!=1:
                 logging.info(f'Reshaping ONNX inputs to: {shape}')
                 model = onnx.load(onnx_path)
-                reshaped = reshape(model, h=im_size[1], w=im_size[0])
+                onnx_batch_size = 1
+                if max_batch_size != 1:
+                    onnx_batch_size = -1
+                reshaped = reshape(model, n=onnx_batch_size, h=shape[2], w=shape[3])
                 temp_onnx_model = reshaped.SerializeToString()
+
             else:
                 temp_onnx_model = onnx_path
 
             logging.info(f"Building TRT engine for {model_name}...")
-            convert_onnx(temp_onnx_model, engine_file_path=trt_path, force_fp16=force_fp16)
+            convert_onnx(temp_onnx_model,
+                         engine_file_path=trt_path,
+                         max_batch_size=max_batch_size,
+                         force_fp16=force_fp16)
             logging.info('Building TRT engine complete!')
         return trt_path
 
 
-def get_model(model_name: str, backend_name: str, im_size: List[int] = None, force_fp16: bool = False,
+def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max_batch_size: int = 1, force_fp16: bool = False,
               root_dir: str = "/models", download_model: bool = True, **kwargs):
     """
     Returns inference backend instance with loaded model.
@@ -124,15 +134,13 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, for
     :param model_name: Name of required model. Must be one of keys in `models` dict.
     :param backend_name: Name of inference backend. (onnx, mxnet, trt)
     :param im_size: Desired maximum size of image in W,H form. Will be overridden if model doesn't support reshaping.
+    :param max_batch_size: Maximum batch size for inference, currently supported for ArcFace model only.
     :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful. TensorRT specific.
     :param root_dir: Root directory where models will be stored.
     :param download_model: Download MXNet or ONNX model. Might be disabled if TRT model was already created.
     :param kwargs: Placeholder.
     :return: Inference backend with loaded model.
     """
-
-    if im_size is None:
-        im_size = [640, 480]
 
     config = Configs(models_dir=root_dir)
 
@@ -158,7 +166,7 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, for
 
     backend = backends[backend_name]
 
-    model_path = prepare_backend(model_name, backend_name, im_size=im_size, config=config, force_fp16=force_fp16,
+    model_path = prepare_backend(model_name, backend_name, im_size=im_size, max_batch_size=max_batch_size, config=config, force_fp16=force_fp16,
                                  download_model=download_model)
 
     outputs = config.get_outputs_order(model_name)

@@ -42,6 +42,7 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
 
         if max_batch_size != 1:
             logging.warning('Batch size !=1 is used. Ensure your inference code supports it.')
+            builder.max_batch_size = max_batch_size
             profile = builder.create_optimization_profile()
             # Get input name and shape for building optimization profile
             input = network.get_input(0)

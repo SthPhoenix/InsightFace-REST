@@ -11,22 +11,34 @@ class Arcface:
     def __init__(self, rec_name: str='/models/trt-engines/arcface_r100_v1/arcface_r100_v1.plan'):
         self.rec_model = TrtModel(rec_name)
         self.input_shape = None
+        self.max_batch_size = 1
 
     # warmup
     def prepare(self, ctx_id=0):
         logging.info("Warming up ArcFace TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
-        self.rec_model.run(np.zeros(self.input_shape, np.float32))
-        logging.info(f"Engine warmup complete! Expecting input shape: {self.input_shape}")
+        self.max_batch_size = self.rec_model.max_batch_size
+        if self.input_shape[0] == -1:
+            self.input_shape = (1,) + self.input_shape[1:]
 
-    def get_embedding(self, face_img):
-        face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
-        face_img = np.transpose(face_img, (2, 0, 1))
-        face_img = np.expand_dims(face_img, axis=0)
-        assert face_img.shape == self.rec_model.input_shapes[0]
-        embedding = self.rec_model.run(face_img, deflatten=True)[0]
-        return embedding
+        self.rec_model.run(np.zeros(self.input_shape, np.float32))
+        logging.info(f"Engine warmup complete! Expecting input shape: {self.input_shape}. Max batch size: {self.max_batch_size}")
+
+    def get_embeddings(self, face_img):
+
+        if not isinstance(face_img, list):
+            face_img = [face_img]
+
+        for i, img in enumerate(face_img):
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = np.transpose(img, (2, 0, 1))
+            #img = np.expand_dims(img, axis=0)
+            face_img[i] = img
+        #assert face_img.shape == self.rec_model.input_shapes[0]
+        face_img = np.stack(face_img)
+        embeddings = self.rec_model.run(face_img, deflatten=True)[0]
+        return embeddings
 
 
 class FaceGenderage:

@@ -28,8 +28,13 @@ def allocate_buffers(engine):
     out_shapes = []
     input_shapes = []
     out_names = []
+    max_batch_size = engine.max_batch_size
     for binding in engine:
-        size = trt.volume(engine.get_binding_shape(binding)) * engine.max_batch_size
+        binding_shape = engine.get_binding_shape(binding)
+        #Fix -1 dimension for proper memory allocation for batch_size > 1
+        if binding_shape[0] == -1:
+            binding_shape = (1,) + binding_shape[1:]
+        size = trt.volume(binding_shape) * max_batch_size
         dtype = trt.nptype(engine.get_binding_dtype(binding))
         # Allocate host and device buffers
         host_mem = cuda.pagelocked_empty(size, dtype)
@@ -45,7 +50,7 @@ def allocate_buffers(engine):
             #Collect original output shapes and names from engine
             out_shapes.append(engine.get_binding_shape(binding))
             out_names.append(binding)
-    return inputs, outputs, bindings, stream, input_shapes, out_shapes, out_names
+    return inputs, outputs, bindings, stream, input_shapes, out_shapes, out_names, max_batch_size
 
 # This function is generalized for multiple inputs/outputs.
 # inputs and outputs are expected to be lists of HostDeviceMem objects.
@@ -72,13 +77,16 @@ class TrtModel(object):
         self.context = None
         self.input_shapes = None
         self.out_shapes = None
+        self.max_batch_size = 1
 
     def build(self):
         with open(self.engine_file, 'rb') as f, trt.Runtime(TRT_LOGGER) as runtime:
             self.engine = runtime.deserialize_cuda_engine(f.read())
-        self.inputs, self.outputs, self.bindings, self.stream, self.input_shapes, self.out_shapes, self.out_names = allocate_buffers(
+        self.inputs, self.outputs, self.bindings, self.stream, self.input_shapes, self.out_shapes, self.out_names, self.max_batch_size = allocate_buffers(
             self.engine)
+
         self.context = self.engine.create_execution_context()
+        self.context.active_optimization_profile = 0
 
     def run(self, input, deflatten: bool = True, as_dict=False):
         # lazy load implementation
@@ -89,15 +97,15 @@ class TrtModel(object):
         batch_size = input.shape[0]
         allocate_place = np.prod(input.shape)
         self.inputs[0].host[:allocate_place] = input.flatten(order='C').astype(np.float32)
+        self.context.set_binding_shape(0, input.shape)
         trt_outputs = do_inference(
             self.context, bindings=self.bindings,
             inputs=self.inputs, outputs=self.outputs, stream=self.stream)
         #Reshape TRT outputs to original shape instead of flattened array
         if deflatten:
             trt_outputs = [output.reshape(shape) for output, shape in zip(trt_outputs, self.out_shapes)]
-
         if as_dict:
             return {name: trt_outputs[i] for i, name in enumerate(self.out_names)}
 
-        return trt_outputs[:batch_size]
+        return [trt_outputs[0][:batch_size]]
 
