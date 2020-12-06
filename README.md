@@ -1,11 +1,26 @@
 # InsightFace-REST
 
-InsightFace REST API for easy deployment of face recognition services.
+InsightFace REST API for easy deployment of face recognition services using NVIDIA's TensorRT.
 Code is heavily based on API [code](https://github.com/deepinsight/insightface/tree/master/python-package)
 in official DeepInsight InsightFace [repository](https://github.com/deepinsight/insightface). 
 
 This repository provides source code for building face recognition REST API
-and Dockerfiles for fast deployment.
+and converting models to ONNX and TensorRT using Docker.
+
+
+## List of supported models:
+### Detection:
+  - retinaface_r50_v1 (from official package)
+  - retinaface_mnet025_v1 (from official package)
+  - retinaface_mnet025_v2 (from official package)
+  - [mnet_cov2](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov) (must be manually downloaded and unpacked to models dir)
+  - [centerface](https://github.com/Star-Clouds/CenterFace) (from Star-Clouds CenterFace repository)
+
+
+### Recognition:
+  - arcface_r100_v1 (from official package)
+  - r100-arcface-msfdrop75 ([SubCenter ArcFace R100](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace), must be manually downloaded and unpacked to models dir)
+
 
 ## Prerequesites:
 
@@ -106,7 +121,22 @@ dictionary containing face embedding, bounding box, detection probability and de
 - Add Cython postprocessing of Retinaface predictions.
 
 
+## Known issues:
+- Building TensorRT engine with batch inference is currently not supported for
+  TensorRT Docker images above 20.09 tag, due to bug in BatchNorm layers
+  parsing in TRT version >= 7.2.
+
 ## Changelist:
+
+### 2020-12-06
+
+REST-API:
+- Added draft support for batch inference of ArcFace model.
+
+Conversion scripts:
+- Added draft support for batch inference of ArcFace model.
+
+
 
 ### 2020-11-20
 
