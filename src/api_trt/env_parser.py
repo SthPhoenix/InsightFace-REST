@@ -9,14 +9,6 @@ class MyEncoder(JSONEncoder):
     def default(self, o):
         return o.__dict__
 
-class MTCNNConf:
-    def __init__(self):
-        # MTCNN parameters
-        self.select_largest = tobool(os.getenv("SELECT_LARGEST", True))
-        self.keep_all = tobool(os.getenv("KEEP_ALL", True))
-        self.min_face_size = int(os.getenv("MIN_FACE_SIZE", 20))
-        self.mtcnn_factor = float(os.getenv("MTCNN_FACTOR", 0.709))
-
 class Defaults:
     def __init__(self):
         # Global parameters
@@ -32,6 +24,7 @@ class Models:
         self.backend_name = os.getenv('INFERENCE_BACKEND', 'trt')
         self.device = os.getenv("DEVICE", 'cuda')
         self.rec_name = os.getenv("REC_NAME", "arcface_r100_v1")
+        self.rec_batch_size = int(os.getenv('REC_BATCH_SIZE', 1))
         self.det_name = os.getenv("DET_NAME", "retinaface_mnet025_v2")
         self.ga_name = os.getenv("GA_NAME", "genderage_v1")
         self.fp16 = tobool(os.getenv('FORCE_FP16', False))
@@ -53,6 +46,5 @@ class EnvConfigs:
 
         self.models = Models()
         self.defaults = Defaults()
-        self.mtcnn = MTCNNConf()
 
 

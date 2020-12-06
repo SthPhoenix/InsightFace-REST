@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.5.8'
+TAG='v0.5.9'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -36,7 +36,7 @@ force_fp16=False
 
 # DET MODELS:
 ## retinaface_mnet025_v1, retinaface_mnet025_v2, retinaface_r50_v1, centerface
-## ATTENTION: mtcnn model is not supported yet for TensorRT backend.
+## ATTENTION: mtcnn model is not supported for TensorRT backend.
 det_model=retinaface_mnet025_v1
 
 # REC MODELS:
@@ -44,6 +44,8 @@ det_model=retinaface_mnet025_v1
 rec_model=arcface_r100_v1
 ## Do not load recognition model:
 rec_ignore=False
+## Maximum batch size for recognition model
+rec_batch_size=2
 
 # GENDER/AGE MODELS:
 ## genderage_v1
@@ -100,6 +102,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e DET_THRESH=$det_thresh\
         -e REC_NAME=$rec_model\
         -e REC_IGNORE=$rec_ignore\
+        -e REC_BATCH_SIZE=$rec_batch_size\
         -e GA_NAME=$ga_model\
         -e GA_IGNORE=$ga_ignore\
         -e KEEP_ALL=True\

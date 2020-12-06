@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
 from starlette.staticfiles import StaticFiles
 from starlette.responses import StreamingResponse, RedirectResponse
+from fastapi.responses import UJSONResponse
 from fastapi.openapi.docs import (
     get_redoc_html,
     get_swagger_ui_html,
@@ -17,9 +18,8 @@ from fastapi.openapi.docs import (
 from modules.processing import Processing
 from env_parser import EnvConfigs
 
-__version__ = "0.5.8"
+__version__ = "0.5.9"
 
-# TODO Refactor reading variables
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # Read runtime settings from environment variables
@@ -34,10 +34,10 @@ logging.basicConfig(
 processing = Processing(det_name=configs.models.det_name, rec_name=configs.models.rec_name,
                         ga_name=configs.models.ga_name,
                         device=configs.models.device,
-                        max_size=configs.defaults.max_size, select_largest=configs.mtcnn.select_largest,
-                        keep_all=configs.mtcnn.keep_all,
-                        min_face_size=configs.mtcnn.min_face_size, mtcnn_factor=configs.mtcnn.mtcnn_factor,
-                        backend_name=configs.models.backend_name, force_fp16=configs.models.fp16)
+                        max_size=configs.defaults.max_size,
+                        max_rec_batch_size=configs.models.rec_batch_size,
+                        backend_name=configs.models.backend_name,
+                        force_fp16=configs.models.fp16)
 
 app = FastAPI(
     title="InsightFace-REST",
@@ -108,7 +108,7 @@ async def extract(data: BodyExtract):
                                     extract_ga=data.extract_ga,
                                     api_ver=data.api_ver)
 
-    return output
+    return UJSONResponse(output)
 
 
 @app.post('/draw_detections', tags=['Detection & recognition'])
