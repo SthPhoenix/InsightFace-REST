@@ -7,6 +7,26 @@ in official DeepInsight InsightFace [repository](https://github.com/deepinsight/
 This repository provides source code for building face recognition REST API
 and converting models to ONNX and TensorRT using Docker.
 
+## Contents
+
+[List of supported models](#list-of-supported-models)
+- [Detection](#detection)
+- [Recognition](#recognition)
+- [Other](#other)
+
+[Prerequesites](#prerequesites)
+
+[Running with Docker](#running-with-docker)
+
+[API usage](#api-usage)
+- [/extract](#extract-endpoint)
+
+[Work in progress](#work-in-progress)
+
+[Known issues](#known-issues)
+
+[Changelog](#changelog)
+
 
 ## List of supported models:
 
@@ -41,7 +61,7 @@ and converting models to ONNX and TensorRT using Docker.
 3. Nvidia GPU drivers (450.x.x and above)
 
 
-## Run with Docker:
+## Running with Docker:
 
 1. Clone repo.
 2. Execute `deploy_trt.sh` from repo's root.
@@ -56,7 +76,7 @@ editing *n_gpu* and *n_workers* parameters in `deploy_trt.sh`.
 
 
 
-## Usage:
+## API usage:
 > _This documentation might be outdated, please referer  
 > to builtin API documentation for latest version_
 > ![Swagger docs](misc/images/api_sample.jpg)
@@ -139,7 +159,7 @@ dictionary containing face embedding, bounding box, detection probability and de
   TensorRT Docker images above 20.09 tag, due to bug in BatchNorm layers
   parsing in TRT version >= 7.2.
 
-## Changelist:
+## Changelog:
 
 ### 2020-12-06
 
