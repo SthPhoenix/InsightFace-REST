@@ -9,18 +9,30 @@ and converting models to ONNX and TensorRT using Docker.
 
 
 ## List of supported models:
-### Detection:
-  - retinaface_r50_v1 (from official package)
-  - retinaface_mnet025_v1 (from official package)
-  - retinaface_mnet025_v2 (from official package)
-  - [mnet_cov2](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov) (must be manually downloaded and unpacked to models dir)
-  - [centerface](https://github.com/Star-Clouds/CenterFace) (from Star-Clouds CenterFace repository)
 
+### Detection:
+
+| Model                 | Auto download | Inference code | Source                                                                                          |
+|:----------------------|:--------------|:---------------|:------------------------------------------------------------------------------------------------|
+| retinaface_r50_v1     | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
+| retinaface_mnet025_v1 | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
+| retinaface_mnet025_v2 | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
+| mnet_cov2             | No            | Yes            | [mnet_cov2](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov) |
+| centerface            | No            | Yes            | [Star-Clouds/CenterFace](https://github.com/Star-Clouds/CenterFace)                             |
 
 ### Recognition:
-  - arcface_r100_v1 (from official package)
-  - r100-arcface-msfdrop75 ([SubCenter ArcFace R100](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace), must be manually downloaded and unpacked to models dir)
 
+| Model                  | Auto download | Inference code | Source                                                                                                    |
+|:-----------------------|:--------------|:---------------|:----------------------------------------------------------------------------------------------------------|
+| arcface_r100_v1        | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)                 |
+| r100-arcface-msfdrop75 | No            | Yes            | [SubCenter-ArcFace](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace) |
+
+### Other:
+
+| Model        | Auto download | Inference code | Source                                                                                          |
+|:-------------|:--------------|:---------------|:------------------------------------------------------------------------------------------------|
+| genderage_v1 | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
+| 2d106det     | No            | No             | [coordinateReg](https://github.com/deepinsight/insightface/tree/master/alignment/coordinateReg) |
 
 ## Prerequesites:
 
@@ -47,6 +59,7 @@ editing *n_gpu* and *n_workers* parameters in `deploy_trt.sh`.
 ## Usage:
 > _This documentation might be outdated, please referer  
 > to builtin API documentation for latest version_
+> ![Swagger docs](misc/images/api_sample.jpg)
 
 ### `/extract` endpoint
 
