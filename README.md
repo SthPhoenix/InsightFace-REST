@@ -1,11 +1,26 @@
 # InsightFace-REST
 
-InsightFace REST API for easy deployment of face recognition services using NVIDIA's TensorRT.
+This repository aims to provide convenient, easy deployable and scalable
+REST API for InsightFace face detection and recognition pipeline using
+FastAPI for serving and NVIDIA TensorRT for optimized inference.
+
 Code is heavily based on API [code](https://github.com/deepinsight/insightface/tree/master/python-package)
 in official DeepInsight InsightFace [repository](https://github.com/deepinsight/insightface). 
 
-This repository provides source code for building face recognition REST API
-and converting models to ONNX and TensorRT using Docker.
+This repository provides source code for building face recognition REST
+API and converting models to ONNX and TensorRT using Docker.
+
+![Draw detections example](misc/images/draw_detections.jpg)
+
+
+## Key features:
+- Ready for deployment on NVIDIA GPU enabled systems using Docker and
+  nvidia-docker2.
+- Fully automatic model bootstrapping, including downloading and
+  MXnet->ONNX->TensorRT conversion of official DeepInsight InsightFace models.
+- Up to 3x performance boost over MXNet inference with help of TensorRT
+  optimizations, FP16 inference and batch inference of detected faces
+  with ArcFace model.
 
 ## Contents
 
