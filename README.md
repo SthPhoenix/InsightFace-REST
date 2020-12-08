@@ -53,7 +53,7 @@ API and converting models to ONNX and TensorRT using Docker.
 | retinaface_mnet025_v1 | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
 | retinaface_mnet025_v2 | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
 | mnet_cov2             | No            | Yes            | [mnet_cov2](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov) |
-| centerface            | No            | Yes            | [Star-Clouds/CenterFace](https://github.com/Star-Clouds/CenterFace)                             |
+| centerface            | Yes           | Yes            | [Star-Clouds/CenterFace](https://github.com/Star-Clouds/CenterFace)                             |
 
 ### Recognition:
 
