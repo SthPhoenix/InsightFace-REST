@@ -109,6 +109,13 @@ mxnet_models = {
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'reshape': False
+    },
+    'r50-arcface-msfdrop75': {
+        'symbol': 'model-symbol.json',
+        'params': 'model-0000.params',
+        'in_package': False,
+        'shape': (1, 3, 112, 112),
+        'reshape': False
     }
 }
 

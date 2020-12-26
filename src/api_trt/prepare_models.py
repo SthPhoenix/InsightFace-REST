@@ -32,7 +32,7 @@ def prepare_models(root_dir: str = '/models'):
 
     for model in [rec_name, det_name, ga_name]:
         batch_size = 1
-        if model == 'arcface_r100_v1':
+        if model in ['arcface_r100_v1', 'r50-arcface-msfdrop75', 'r100-arcface-msfdrop75']:
             batch_size = rec_batch_size
         logging.info(f"Preparing '{model}' model...")
 

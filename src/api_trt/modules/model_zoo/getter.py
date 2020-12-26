@@ -32,6 +32,8 @@ except:
 # Map model names to corresponding functions
 models = {
     'arcface_r100_v1': arcface_r100_v1,
+    'r50-arcface-msfdrop75': r50_arcface_msfdrop75,
+    'r100-arcface-msfdrop75': r100_arcface_msfdrop75,
     'genderage_v1': genderage_v1,
     'retinaface_r50_v1': retinaface_r50_v1,
     'retinaface_mnet025_v1': retinaface_mnet025_v1,
