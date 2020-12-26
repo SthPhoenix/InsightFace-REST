@@ -4,8 +4,10 @@ This repository aims to provide convenient, easy deployable and scalable
 REST API for InsightFace face detection and recognition pipeline using
 FastAPI for serving and NVIDIA TensorRT for optimized inference.
 
-Code is heavily based on API [code](https://github.com/deepinsight/insightface/tree/master/python-package)
-in official DeepInsight InsightFace [repository](https://github.com/deepinsight/insightface). 
+Code is heavily based on API
+[code](https://github.com/deepinsight/insightface/tree/master/python-package)
+in official DeepInsight InsightFace
+[repository](https://github.com/deepinsight/insightface).
 
 This repository provides source code for building face recognition REST
 API and converting models to ONNX and TensorRT using Docker.
@@ -14,10 +16,12 @@ API and converting models to ONNX and TensorRT using Docker.
 
 
 ## Key features:
+
 - Ready for deployment on NVIDIA GPU enabled systems using Docker and
   nvidia-docker2.
 - Fully automatic model bootstrapping, including downloading and
-  MXnet->ONNX->TensorRT conversion of official DeepInsight InsightFace models.
+  MXnet->ONNX->TensorRT conversion of official DeepInsight InsightFace
+  models.
 - Up to 3x performance boost over MXNet inference with help of TensorRT
   optimizations, FP16 inference and batch inference of detected faces
   with ArcFace model.
@@ -61,6 +65,7 @@ API and converting models to ONNX and TensorRT using Docker.
 |:-----------------------|:--------------|:---------------|:----------------------------------------------------------------------------------------------------------|
 | arcface_r100_v1        | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)                 |
 | r100-arcface-msfdrop75 | No            | Yes            | [SubCenter-ArcFace](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace) |
+| r50-arcface-msfdrop75  | No            | Yes            | [SubCenter-ArcFace](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace) |
 
 ### Other:
 
@@ -82,16 +87,18 @@ API and converting models to ONNX and TensorRT using Docker.
 2. Execute `deploy_trt.sh` from repo's root.
 3. Go to http://localhost:18081 to access documentation and try API
 
-If you have multiple GPU's with enough GPU memory you can try running multiple containers by
-editing *n_gpu* and *n_workers* parameters in `deploy_trt.sh`.
+If you have multiple GPU's with enough GPU memory you can try running
+multiple containers by editing *n_gpu* and *n_workers* parameters in
+`deploy_trt.sh`.
 
 > For pure MXNet based version, without TensorRT support you can check
-> depreciated [v0.5.0](https://github.com/SthPhoenix/InsightFace-REST/tree/v0.5.0)
+> depreciated
+> [v0.5.0](https://github.com/SthPhoenix/InsightFace-REST/tree/v0.5.0)
 > branch
 
 
-
 ## API usage:
+
 > _This documentation might be outdated, please referer  
 > to builtin API documentation for latest version_
 > ![Swagger docs](misc/images/api_sample.jpg)
@@ -99,10 +106,11 @@ editing *n_gpu* and *n_workers* parameters in `deploy_trt.sh`.
 ### `/extract` endpoint
 
 
-Extract endpoint accepts list of images and return faces bounding boxes with corresponding 
-embeddings.
+Extract endpoint accepts list of images and return faces bounding boxes
+with corresponding embeddings.
 
 API accept JSON in following format:
+
 ```
 {
   "images":{
@@ -115,8 +123,8 @@ API accept JSON in following format:
 }
 ```
 
-Where `max_size` is maximum image dimension, images with dimensions greater than `max_size`
-will be downsized to provided value.
+Where `max_size` is maximum image dimension, images with dimensions
+greater than `max_size` will be downsized to provided value.
 
 If `max_size` is set to **0**, image won't be resized.
 
@@ -146,6 +154,7 @@ images = os.path.listdir(images_path)
 data = extract_vecs(images)
 
 ```
+
 Response is in following format:
 
 ```json
@@ -160,21 +169,35 @@ Response is in following format:
     ]
 ]
 ```
-First level is list in order the images were sent, second level are faces detected per each image as 
-dictionary containing face embedding, bounding box, detection probability and detection number.  
+
+First level is list in order the images were sent, second level are
+faces detected per each image as dictionary containing face embedding,
+bounding box, detection probability and detection number.
 
 
 ## Work in progress:
+
 - Add Triton Inference Server as execution backend
 - Add Cython postprocessing of Retinaface predictions.
 
 
 ## Known issues:
-- Building TensorRT engine with batch inference is currently not supported for
-  TensorRT Docker images above 20.09 tag, due to bug in BatchNorm layers
-  parsing in TRT version >= 7.2.
+
+- Building TensorRT engine with batch inference is currently not
+  supported for TensorRT Docker images above 20.09 tag, due to bug in
+  BatchNorm layers parsing in TRT version >= 7.2.
 
 ## Changelog:
+
+### 2020-12-26
+
+REST-API:
+- Base image updated to `TensorRT:20.12-py3`.
+- Added temporary fixes for TensortRT 7.2.2 ONNX parsing.
+- Added support for `r50-arcface-msfdrop75` face recognition model.
+
+Conversion scripts:
+- Same updates as for REST-API
 
 ### 2020-12-06
 
@@ -185,18 +208,18 @@ Conversion scripts:
 - Added draft support for batch inference of ArcFace model.
 
 
-
 ### 2020-11-20
 
 REST API:
 - Pure MXNet version removed from master branch.
-- Added models bootstrapping before running workers, to prevent race condition for building TRT engine.
+- Added models bootstrapping before running workers, to prevent race
+  condition for building TRT engine.
 - Applied changes from conversion scripts (see below)
 
 Conversion scripts:
 - Reshape ONNX models in memory to prevent writing temp files.
-- TRT engine builder now takes input name and shape, required for building
-  optimization profiles, from ONNX model intself.
+- TRT engine builder now takes input name and shape, required for
+  building optimization profiles, from ONNX model intself.
 
 ### 2020-11-07
 
@@ -208,9 +231,11 @@ Conversion scripts:
 
 REST API:
 - Added support for RetinaFaceAntiCov v2
-- Added support for FP16 precision (`force_fp16` flag in `deploy_trt.sh`)
+- Added support for FP16 precision (`force_fp16` flag in
+  `deploy_trt.sh`)
 
 ### 2020-10-22
+
 Conversion scripts:
 - Minor refactoring
 
@@ -220,26 +245,30 @@ REST API:
 - Added deployment script `deploy_trt.sh`
 - Added Centerface detector
 
-TensorRT version contains MXNet and ONNXRuntime compiled for CPU
-for testing and conversion purposes.
+TensorRT version contains MXNet and ONNXRuntime compiled for CPU for
+testing and conversion purposes.
 
 ### 2020-10-16
+
 Conversion scripts:
 - Added conversion of MXNet models to ONNX using Python
 - Added conversion of ONNX to TensorRT using Python
-- Added demo inference scripts for ArcFace and Retinaface using ONNX
-and TensorRT backends
+- Added demo inference scripts for ArcFace and Retinaface using ONNX and
+  TensorRT backends
 
 REST API:
 - no changes
 
 ### 2020-09-28
+
 - REST API code refactored to FastAPI
-- Detection/Recognition code is now based on official Insightface Python package.
+- Detection/Recognition code is now based on official Insightface Python
+  package.
 - TensorFlow MTCNN replaced with PyTorch version
 - Added RetinaFace detector
 - Added InsightFace gender/age detector
 - Added support for GPU inference
-- Resize function refactored for fixed image proportions (significant speed increase and memory usage optimization)
+- Resize function refactored for fixed image proportions (significant
+  speed increase and memory usage optimization)
 
 
