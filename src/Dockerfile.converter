@@ -1,9 +1,7 @@
-FROM nvcr.io/nvidia/tensorrt:20.09-py3
+FROM nvcr.io/nvidia/tensorrt:20.12-py3
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
-
-WORKDIR /app
 
 RUN apt-get update && apt-get install -y libgl1-mesa-glx protobuf-compiler libprotoc-dev libb64-0d
 ENV PIP_INSTALL="python -m pip --no-cache-dir install --upgrade"
@@ -12,7 +10,13 @@ RUN $PIP_INSTALL onnx==1.7.0
 RUN $PIP_INSTALL onnx-simplifier
 RUN $PIP_INSTALL nvidia-pyindex && pip install tritonclient[http,grpc]
 
+# Workaround for tensorrt:20.12-py3 image, which has broken support for BatchNorm layers
+RUN bash /opt/tensorrt/install_opensource.sh -b master
+# For some reason symlink libnvonnxparser.so.7 won't update to newly compiled version if old binary exists
+RUN rm /usr/lib/x86_64-linux-gnu/libnvonnxparser.so.7.2.2
+
+WORKDIR /app
+
 COPY converters /app
 
 ENTRYPOINT ["bash"]
-
