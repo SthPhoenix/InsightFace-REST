@@ -66,6 +66,8 @@ API and converting models to ONNX and TensorRT using Docker.
 | arcface_r100_v1        | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)                 |
 | r100-arcface-msfdrop75 | No            | Yes            | [SubCenter-ArcFace](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace) |
 | r50-arcface-msfdrop75  | No            | Yes            | [SubCenter-ArcFace](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace) |
+| glint360k_r100FC_1.0   | No            | Yes            | [Partial-FC](https://github.com/deepinsight/insightface/tree/master/recognition/partial_fc)               |
+| glint360k_r100FC_0.1   | No            | Yes            | [Partial-FC](https://github.com/deepinsight/insightface/tree/master/recognition/partial_fc)               |
 
 ### Other:
 
@@ -188,6 +190,12 @@ bounding box, detection probability and detection number.
   BatchNorm layers parsing in TRT version >= 7.2.
 
 ## Changelog:
+
+### 2020-12-26
+
+REST-API & conversion scripts:
+- Added support for `glint360k_r100FC_1.0` and `glint360k_r100FC_0.1`
+ face recognition models.
 
 ### 2020-12-26
 

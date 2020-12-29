@@ -16,21 +16,20 @@ retina_outputs = ['face_rpn_cls_prob_reshape_stride32',
                   'face_rpn_bbox_pred_stride8',
                   'face_rpn_landmark_pred_stride8']
 
-
-anticonv_outputs =  [
-                  'face_rpn_cls_prob_reshape_stride32',
-                  'face_rpn_bbox_pred_stride32',
-                  'face_rpn_landmark_pred_stride32',
-                  'face_rpn_type_prob_reshape_stride32',
-                  'face_rpn_cls_prob_reshape_stride16',
-                  'face_rpn_bbox_pred_stride16',
-                  'face_rpn_landmark_pred_stride16',
-                  'face_rpn_type_prob_reshape_stride16',
-                  'face_rpn_cls_prob_reshape_stride8',
-                  'face_rpn_bbox_pred_stride8',
-                  'face_rpn_landmark_pred_stride8',
-                  'face_rpn_type_prob_reshape_stride8'
-                  ]
+anticonv_outputs = [
+    'face_rpn_cls_prob_reshape_stride32',
+    'face_rpn_bbox_pred_stride32',
+    'face_rpn_landmark_pred_stride32',
+    'face_rpn_type_prob_reshape_stride32',
+    'face_rpn_cls_prob_reshape_stride16',
+    'face_rpn_bbox_pred_stride16',
+    'face_rpn_landmark_pred_stride16',
+    'face_rpn_type_prob_reshape_stride16',
+    'face_rpn_cls_prob_reshape_stride8',
+    'face_rpn_bbox_pred_stride8',
+    'face_rpn_landmark_pred_stride8',
+    'face_rpn_type_prob_reshape_stride8'
+]
 
 centerface_outputs = ['537', '538', '539', '540']
 
@@ -111,6 +110,20 @@ mxnet_models = {
         'reshape': False
     },
     'r50-arcface-msfdrop75': {
+        'symbol': 'model-symbol.json',
+        'params': 'model-0000.params',
+        'in_package': False,
+        'shape': (1, 3, 112, 112),
+        'reshape': False
+    },
+    'glint360k_r100FC_1.0': {
+        'symbol': 'model-symbol.json',
+        'params': 'model-0000.params',
+        'in_package': False,
+        'shape': (1, 3, 112, 112),
+        'reshape': False
+    },
+    'glint360k_r100FC_0.1': {
         'symbol': 'model-symbol.json',
         'params': 'model-0000.params',
         'in_package': False,
