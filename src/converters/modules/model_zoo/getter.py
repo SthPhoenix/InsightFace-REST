@@ -34,7 +34,7 @@ models = {
     'arcface_r100_v1': arcface_r100_v1,
     'r50-arcface-msfdrop75': r50_arcface_msfdrop75,
     'r100-arcface-msfdrop75': r100_arcface_msfdrop75,
-    '': glint360k_r100FC_1_0,
+    'glint360k_r100FC_1.0': glint360k_r100FC_1_0,
     'glint360k_r100FC_0.1': glint360k_r100FC_0_1,
     'genderage_v1': genderage_v1,
     'retinaface_r50_v1': retinaface_r50_v1,
