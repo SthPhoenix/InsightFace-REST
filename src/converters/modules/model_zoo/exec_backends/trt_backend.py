@@ -25,7 +25,7 @@ class Arcface:
         self.rec_model.run(np.zeros(self.input_shape, np.float32))
         logging.info(f"Engine warmup complete! Expecting input shape: {self.input_shape}. Max batch size: {self.max_batch_size}")
 
-    def get_embeddings(self, face_img):
+    def get_embedding(self, face_img):
 
         if not isinstance(face_img, list):
             face_img = [face_img]
