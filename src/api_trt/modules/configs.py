@@ -32,6 +32,7 @@ anticonv_outputs = [
 ]
 
 centerface_outputs = ['537', '538', '539', '540']
+dbface_outputs = ["hm", "tlrb", "landmark"]
 
 mxnet_models = {
     'retinaface_mnet025_v0': {
@@ -95,6 +96,14 @@ mxnet_models = {
         'outputs': centerface_outputs,
         'link': 'https://raw.githubusercontent.com/Star-Clouds/CenterFace/master/models/onnx/centerface_bnmerged.onnx'
     },
+
+    'dbface': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'outputs': dbface_outputs
+    },
+
     'coordinateReg': {
         'symbol': '2d106det-symbol.json',
         'params': '2d106det-0000.params',

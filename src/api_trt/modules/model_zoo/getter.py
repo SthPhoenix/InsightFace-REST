@@ -42,6 +42,7 @@ models = {
     'retinaface_mnet025_v2': retinaface_mnet025_v2,
     'mnet_cov2': mnet_cov2,
     'centerface': centerface,
+    'dbface': dbface,
 }
 
 
