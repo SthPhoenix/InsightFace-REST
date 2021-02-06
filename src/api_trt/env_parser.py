@@ -15,6 +15,7 @@ class Defaults:
         self.threshold = float(os.getenv('DET_THRESH', 0.6))
         self.max_size = parse_size(os.getenv('MAX_SIZE'))
         self.return_face_data = tobool(os.getenv('DEF_RETURN_FACE_DATA', False))
+        self.return_landmarks = tobool(os.getenv('DEF_RETURN_LANDMARKS', False))
         self.extract_embedding = tobool(os.getenv('DEF_EXTRACT_EMBEDDING', True))
         self.extract_ga = tobool(os.getenv('DEF_EXTRACT_GA', False))
         self.api_ver = os.getenv('DEF_API_VER', "1")

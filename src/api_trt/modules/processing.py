@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 import urllib
 import urllib.request
 import traceback
@@ -68,9 +68,9 @@ def get_image(data: Dict[str, list]):
 
 class Serializer:
 
-    def serialize(self, face: Face, return_face_data: bool = False, remove_empty: bool = False, api_ver: str = '1'):
+    def serialize(self, face: Face, return_face_data: bool = False, return_landmarks: bool = False, api_ver: str = '1'):
         serializer = self.get_serializer(api_ver)
-        return serializer(face, return_face_data=return_face_data, remove_empty=remove_empty)
+        return serializer(face, return_face_data=return_face_data, return_landmarks=return_landmarks)
 
     def get_serializer(self, api_ver):
         if api_ver == '1':
@@ -78,16 +78,17 @@ class Serializer:
         else:
             return self._serializer_v1
 
-    def _serializer_v1(self, face: Face, return_face_data: bool, remove_empty: bool):
+    def _serializer_v1(self, face: Face, return_face_data: bool, return_landmarks: bool =False):
         _face_dict = dict(status='Ok',
-                          vec=None,
                           det=face.num_det,
                           prob=float(face.det_score),
-                          bbox=face.bbox.tolist(),
-                          norm=None,
+                          bbox=face.bbox.astype(int).tolist(),
+                          landmarks=None,
                           gender=face.gender,
                           age=face.age,
-                          mask_prob=None
+                          mask_prob=None,
+                          norm=None,
+                          vec=None,
                           )
 
         if face.embedding_norm:
@@ -102,6 +103,11 @@ class Serializer:
                 'facedata': base64.b64encode(cv2.imencode('.jpg', face.facedata)[1].tostring()).decode(
                     'utf-8')
             })
+        if return_landmarks:
+            _face_dict.update({
+                'landmarks': face.landmark.astype(int).tolist()
+            })
+
         return _face_dict
 
 
@@ -124,7 +130,7 @@ class Processing:
                                   )
 
     async def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6, return_face_data: bool = False,
-              extract_embedding: bool = True, extract_ga: bool = True, api_ver: str = "1"):
+              extract_embedding: bool = True, extract_ga: bool = True, return_landmarks: bool = False, api_ver: str = "1"):
 
         if not max_size:
             max_size = self.max_size
@@ -139,7 +145,8 @@ class Processing:
                 _faces_dict = []
 
                 for idx, face in enumerate(faces):
-                    _face_dict = serializer.serialize(face=face, return_face_data=return_face_data, api_ver=api_ver)
+                    _face_dict = serializer.serialize(face=face, return_face_data=return_face_data,
+                                                      return_landmarks= return_landmarks, api_ver=api_ver)
                     _faces_dict.append(_face_dict)
             except Exception as e:
                 tb = traceback.format_exc()
