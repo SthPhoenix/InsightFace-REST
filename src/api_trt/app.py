@@ -19,7 +19,7 @@ from modules.processing import Processing
 from env_parser import EnvConfigs
 
 
-__version__ = "0.5.9.4"
+__version__ = "0.5.9.5"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
