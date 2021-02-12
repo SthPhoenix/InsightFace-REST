@@ -14,10 +14,15 @@ class Arcface:
         self.rec_model.run(self.outputs, {self.rec_model.get_inputs()[0].name: [np.zeros((3, 112, 112), np.float32)]})
 
     def get_embedding(self, face_img):
-        face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
-        face_img = np.transpose(face_img, (2, 0, 1))
-        face_img = np.expand_dims(face_img, axis=0)
-        face_img = face_img.astype(np.float32)
+        if not isinstance(face_img, list):
+            face_img = [face_img]
+
+        for i, img in enumerate(face_img):
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = np.transpose(img, (2, 0, 1))
+            face_img[i] = img.astype(np.float32)
+
+        face_img = np.stack(face_img)
         net_out = self.rec_model.run(self.outputs, {self.rec_model.get_inputs()[0].name: face_img})
         return net_out[0]
 
