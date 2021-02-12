@@ -93,6 +93,10 @@ If you have multiple GPU's with enough GPU memory you can try running
 multiple containers by editing *n_gpu* and *n_workers* parameters in
 `deploy_trt.sh`.
 
+Also if you want to test API in non-GPU environment you can run service
+with `deploy_cpu.sh` script. In this case ONNXRuntime will be used as
+inference backend.
+
 > For pure MXNet based version, without TensorRT support you can check
 > depreciated
 > [v0.5.0](https://github.com/SthPhoenix/InsightFace-REST/tree/v0.5.0)
@@ -190,6 +194,13 @@ bounding box, detection probability and detection number.
   BatchNorm layers parsing in TRT version >= 7.2.
 
 ## Changelog:
+
+### 2021-02-13
+
+REST-API:
+- Added Dockerfile for CPU-only inference with ONNXRuntime backend.
+- Added flag to return landmarks with `/extract` endpoint
+
 
 ### 2020-12-26
 
