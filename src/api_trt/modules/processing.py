@@ -78,11 +78,11 @@ class Serializer:
         else:
             return self._serializer_v1
 
-    def _serializer_v1(self, face: Face, return_face_data: bool, return_landmarks: bool =False):
+    def _serializer_v1(self, face: Face, return_face_data: bool, return_landmarks: bool = False):
         _face_dict = dict(status='Ok',
                           det=face.num_det,
-                          prob=float(face.det_score),
-                          bbox=face.bbox.astype(int).tolist(),
+                          prob=None,
+                          bbox=None,
                           landmarks=None,
                           gender=face.gender,
                           age=face.age,
@@ -94,6 +94,10 @@ class Serializer:
         if face.embedding_norm:
             _face_dict.update(vec=face.normed_embedding.tolist(),
                               norm=float(face.embedding_norm))
+        # Warkaround for embed_only flag
+        if face.det_score:
+            _face_dict.update(prob=float(face.det_score))
+            _face_dict.update(bbox=face.bbox.astype(int).tolist())
 
         if face.mask_prob:
             _face_dict.update(mask_prob=float(face.mask_prob))
@@ -103,7 +107,7 @@ class Serializer:
                 'facedata': base64.b64encode(cv2.imencode('.jpg', face.facedata)[1].tostring()).decode(
                     'utf-8')
             })
-        if return_landmarks:
+        if return_landmarks and face.det_score:
             _face_dict.update({
                 'landmarks': face.landmark.astype(int).tolist()
             })
@@ -129,8 +133,14 @@ class Processing:
                                   backend_name=backend_name, force_fp16=force_fp16
                                   )
 
-    async def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6, return_face_data: bool = False,
-              extract_embedding: bool = True, extract_ga: bool = True, return_landmarks: bool = False, api_ver: str = "1"):
+    def __iterate_faces(self, crops):
+        for face in crops:
+            face = Face(facedata=face)
+            yield face
+
+    async def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
+                    embed_only: bool = False, return_face_data: bool = False, extract_embedding: bool = True,
+                    extract_ga: bool = True, return_landmarks: bool = False, api_ver: str = "1"):
 
         if not max_size:
             max_size = self.max_size
@@ -138,15 +148,28 @@ class Processing:
         images = get_image(images)
         output = []
         serializer = Serializer()
+
+        if embed_only:
+            iterator = self.__iterate_faces(images)
+            faces = self.model.process_faces(iterator, extract_embedding=extract_embedding, extract_ga=extract_ga,
+                                             return_face_data=False)
+            _faces_dict = []
+            for face in faces:
+                _face_dict = serializer.serialize(face=face, return_face_data=False,
+                                                  return_landmarks=return_landmarks, api_ver=api_ver)
+                _faces_dict.append(_face_dict)
+            return _faces_dict
+
         for image in images:
             try:
-                faces = await self.model.get(image, max_size=max_size, threshold=threshold, return_face_data=return_face_data,
-                                       extract_embedding=extract_embedding, extract_ga=extract_ga)
+                faces = await self.model.get(image, max_size=max_size, threshold=threshold,
+                                             return_face_data=return_face_data,
+                                             extract_embedding=extract_embedding, extract_ga=extract_ga)
                 _faces_dict = []
 
                 for idx, face in enumerate(faces):
                     _face_dict = serializer.serialize(face=face, return_face_data=return_face_data,
-                                                      return_landmarks= return_landmarks, api_ver=api_ver)
+                                                      return_landmarks=return_landmarks, api_ver=api_ver)
                     _faces_dict.append(_face_dict)
             except Exception as e:
                 tb = traceback.format_exc()
@@ -156,15 +179,15 @@ class Processing:
 
         return output
 
-    async def draw(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6, return_face_data: bool = False,
-             extract_embedding: bool = True, extract_ga: bool = True):
+    async def draw(self, images: Dict[str, list], threshold: float = 0.6,
+                   draw_landmarks: bool = True):
 
-        if not max_size:
-            max_size = self.max_size
+        max_size = self.max_size
 
         image = get_image(images)[0]
-        faces = await self.model.get(image, max_size=max_size, threshold=threshold, return_face_data=return_face_data,
-                               extract_embedding=False, extract_ga=extract_ga)
+        faces = await self.model.get(image, max_size=max_size, threshold=threshold, return_face_data=False,
+                                     extract_embedding=False, extract_ga=False)
+
         for face in faces:
             pt1 = tuple(map(int, face.bbox[0:2]))
             pt2 = tuple(map(int, face.bbox[2:4]))
@@ -173,12 +196,14 @@ class Processing:
                 if face.mask_prob >= 0.2:
                     color = (0, 255, 255)
             cv2.rectangle(image, pt1, pt2, color, 1)
-            lms = face.landmark
-            cv2.circle(image, (lms[0][0], lms[0][1]), 1, (0, 0, 255), 4)
-            cv2.circle(image, (lms[1][0], lms[1][1]), 1, (0, 255, 255), 4)
-            cv2.circle(image, (lms[2][0], lms[2][1]), 1, (255, 0, 255), 4)
-            cv2.circle(image, (lms[3][0], lms[3][1]), 1, (0, 255, 0), 4)
-            cv2.circle(image, (lms[4][0], lms[4][1]), 1, (255, 0, 0), 4)
+
+            if draw_landmarks:
+                lms = face.landmark
+                cv2.circle(image, (lms[0][0], lms[0][1]), 1, (0, 0, 255), 4)
+                cv2.circle(image, (lms[1][0], lms[1][1]), 1, (0, 255, 255), 4)
+                cv2.circle(image, (lms[2][0], lms[2][1]), 1, (255, 0, 255), 4)
+                cv2.circle(image, (lms[3][0], lms[3][1]), 1, (0, 255, 0), 4)
+                cv2.circle(image, (lms[4][0], lms[4][1]), 1, (255, 0, 0), 4)
 
         is_success, buffer = cv2.imencode(".jpg", image)
         io_buf = io.BytesIO(buffer)

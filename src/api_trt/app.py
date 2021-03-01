@@ -19,7 +19,7 @@ from modules.processing import Processing
 from env_parser import EnvConfigs
 
 
-__version__ = "0.5.9.5"
+__version__ = "0.5.9.6"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -68,6 +68,10 @@ class BodyExtract(BaseModel):
                                                 example=configs.defaults.threshold,
                                                 description='Detector threshold')
 
+    embed_only: Optional[bool] = pydantic.Field(default=False,
+                                                example=False,
+                                                description='Treat input images as face crops and omit detection step')
+
     return_face_data: Optional[bool] = pydantic.Field(default=configs.defaults.return_face_data,
                                                       example=configs.defaults.return_face_data,
                                                       description='Return face crops encoded in base64')
@@ -88,6 +92,23 @@ class BodyExtract(BaseModel):
                                             description='Output data serialization format. Currently only version "1" \
                                             is supported')
 
+class BodyDraw(BaseModel):
+    images: Images
+
+    threshold: Optional[float] = pydantic.Field(default=configs.defaults.threshold,
+                                                example=configs.defaults.threshold,
+                                                description='Detector threshold')
+
+    draw_landmarks: Optional[bool] = pydantic.Field(default=True,
+                                                      example=True,
+                                                      description='Return face landmarks')
+
+    api_ver: Optional[str] = pydantic.Field(default=configs.defaults.api_ver,
+                                            example=configs.defaults.api_ver,
+                                            description='Output data serialization format. Currently only version "1" \
+                                            is supported')
+
+
 
 @app.post('/extract', tags=['Detection & recognition'])
 async def extract(data: BodyExtract):
@@ -98,6 +119,7 @@ async def extract(data: BodyExtract):
        - **images**: dict containing either links or data lists. (*required*)
        - **max_size**: Resize all images to this proportions. Default: [640,480] (*optional*)
        - **threshold**: Detection threshold. Default: 0.6 (*optional*)
+       - **embed_only**: Treat input images as face crops, omit detection step. Default: False (*optional*)
        - **return_face_data**: Return face crops encoded in base64. Default: False (*optional*)
        - **return_landmarks**: Return face landmarks. Default: False (*optional*)
        - **extract_embedding**: Extract face embeddings (otherwise only detect faces). Default: True (*optional*)
@@ -111,16 +133,15 @@ async def extract(data: BodyExtract):
 
     images = jsonable_encoder(data.images)
     output = await processing.embed(images, max_size=data.max_size, return_face_data=data.return_face_data,
-                                    extract_embedding=data.extract_embedding, threshold=data.threshold,
-                                    extract_ga=data.extract_ga,
-                                    return_landmarks=data.return_landmarks,
-                                    api_ver=data.api_ver)
+                                    embed_only=data.embed_only, extract_embedding=data.extract_embedding,
+                                    threshold=data.threshold, extract_ga=data.extract_ga,
+                                    return_landmarks=data.return_landmarks, api_ver=data.api_ver)
 
     return UJSONResponse(output)
 
 
 @app.post('/draw_detections', tags=['Detection & recognition'])
-async def draw(data: BodyExtract):
+async def draw(data: BodyDraw):
     """
     Return image with drawn faces for testing purposes, accepts data in same format as extract endpoint,
     but processes only first image.
@@ -128,9 +149,7 @@ async def draw(data: BodyExtract):
        - **images**: dict containing either links or data lists. (*required*)
        - **max_size**: Resize all images to this proportions. Default: [640,480] (*optional*)
        - **threshold**: Detection threshold. Default: 0.6 (*optional*)
-       - **return_face_data**: Return face crops encoded in base64. Default: False (*optional*)
-       - **extract_embedding**: Extract face embeddings (otherwise only detect faces). Default: True (*optional*)
-       - **extract_ga**: Extract gender/age. Default: False (*optional*)
+       - **draw_landmarks**: Draw faces landmarks Default: True (*optional*)
        - **api_ver**: Output data serialization format. Currently only version "1" is supported (*optional*)
        \f
 
@@ -140,9 +159,8 @@ async def draw(data: BodyExtract):
     """
 
     images = jsonable_encoder(data.images)
-    output = await processing.draw(images, max_size=data.max_size, threshold=data.threshold,
-                                   return_face_data=data.return_face_data,
-                                   extract_embedding=data.extract_embedding, extract_ga=data.extract_ga)
+    output = await processing.draw(images, threshold=data.threshold,
+                                   draw_landmarks=data.draw_landmarks)
     output.seek(0)
     return StreamingResponse(output, media_type="image/png")
 
