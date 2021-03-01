@@ -195,6 +195,15 @@ bounding box, detection probability and detection number.
 
 ## Changelog:
 
+### 2021-03-01 v0.5.9.6
+
+REST-API:
+- Add flag `embed_only` to `/extract` endpoint. When set to `true`
+  input images are processed as face crops, omitting detection phase.
+  Expects 112x112 face crops.
+- Added flag `draw_landmarks` to `/draw_detections` endpoint.
+
+
 ### 2021-02-13
 
 REST-API:
