@@ -27,7 +27,7 @@ def allocate_buffers(engine):
     out_shapes = []
     input_shapes = []
     out_names = []
-    max_batch_size = engine.max_batch_size
+    max_batch_size = engine.get_profile_shape(0, 0)[2][0]
     for binding in engine:
         binding_shape = engine.get_binding_shape(binding)
         #Fix -1 dimension for proper memory allocation for batch_size > 1

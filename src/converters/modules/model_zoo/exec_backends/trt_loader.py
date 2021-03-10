@@ -1,7 +1,6 @@
 import pycuda.driver as cuda
 import pycuda.autoinit
 import numpy as np
-import glob
 
 import tensorrt as trt
 
@@ -28,7 +27,7 @@ def allocate_buffers(engine):
     out_shapes = []
     input_shapes = []
     out_names = []
-    max_batch_size = engine.max_batch_size
+    max_batch_size = engine.get_profile_shape(0, 0)[2][0]
     for binding in engine:
         binding_shape = engine.get_binding_shape(binding)
         #Fix -1 dimension for proper memory allocation for batch_size > 1
@@ -107,5 +106,5 @@ class TrtModel(object):
         if as_dict:
             return {name: trt_outputs[i] for i, name in enumerate(self.out_names)}
 
-        return [trt_outputs[0][:batch_size]]
+        return [trt_output[:batch_size] for trt_output in trt_outputs]
 
