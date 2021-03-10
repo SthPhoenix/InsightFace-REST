@@ -59,6 +59,9 @@ class FaceAnalysis:
 
         self.max_size = max_size
         self.max_rec_batch_size = max_rec_batch_size
+        if backend_name != 'trt' and max_rec_batch_size != 1:
+            logging.warning('Batch processing supported only for TensorRT backend. Fallback to 1.')
+            self.max_rec_batch_size = 1
 
         assert det_name is not None
 
@@ -104,7 +107,8 @@ class FaceAnalysis:
                 t0 = time.time()
                 embeddings = self.rec_model.get_embedding(crops)
                 t1 = time.time()
-                logging.debug(f'Embedding {total} faces took: {t1 - t0}')
+                took = t1-t0
+                logging.debug(f'Embedding {total} faces took: {took} ({took/total} per face)')
 
             if extract_ga:
                 t0 = time.time()
