@@ -189,11 +189,21 @@ bounding box, detection probability and detection number.
 
 ## Known issues:
 
-- Building TensorRT engine with batch inference is currently not
-  supported for TensorRT Docker images above 20.09 tag, due to bug in
-  BatchNorm layers parsing in TRT version >= 7.2.
+- There are no known issues at the moment.
 
 ## Changelog:
+
+### 2021-03-01 v0.5.9.7
+
+REST-API & conversion scripts:
+- Fixed issue with building TensorRT engine with batch > 1 and FP16
+  support, which caused FP32 inference instead of FP16.
+- Moved to tensorrt:21.02 base image and removed workarounds for 20.12
+  image.
+- Changed behaviour of `force_fp16` flag. Now model with FP16 precision
+  is build only when set to `True`. Otherwise FP32 will be used even on
+  GPUs with fast FP16 support.
+
 
 ### 2021-03-01 v0.5.9.6
 
