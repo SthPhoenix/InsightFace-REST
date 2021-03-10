@@ -18,8 +18,7 @@ from fastapi.openapi.docs import (
 from modules.processing import Processing
 from env_parser import EnvConfigs
 
-
-__version__ = "0.5.9.6"
+__version__ = "0.5.9.7"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -147,15 +146,10 @@ async def draw(data: BodyDraw):
     but processes only first image.
 
        - **images**: dict containing either links or data lists. (*required*)
-       - **max_size**: Resize all images to this proportions. Default: [640,480] (*optional*)
        - **threshold**: Detection threshold. Default: 0.6 (*optional*)
        - **draw_landmarks**: Draw faces landmarks Default: True (*optional*)
        - **api_ver**: Output data serialization format. Currently only version "1" is supported (*optional*)
        \f
-
-       :return:
-       List[List[dict]]
-
     """
 
     images = jsonable_encoder(data.images)
