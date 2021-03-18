@@ -80,7 +80,7 @@ API and converting models to ONNX and TensorRT using Docker.
 
 1. Docker
 2. Nvidia-container-toolkit
-3. Nvidia GPU drivers (455.x.x and above)
+3. Nvidia GPU drivers (460.x.x and above)
 
 
 ## Running with Docker:
@@ -183,6 +183,7 @@ bounding box, detection probability and detection number.
 
 ## Work in progress:
 
+- Add examples of indexing and searching faces.
 - Add Triton Inference Server as execution backend
 - Add Cython postprocessing of Retinaface predictions.
 
