@@ -25,6 +25,7 @@ API and converting models to ONNX and TensorRT using Docker.
 - Up to 3x performance boost over MXNet inference with help of TensorRT
   optimizations, FP16 inference and batch inference of detected faces
   with ArcFace model.
+- Inference on CPU with ONNX-Runtime.
 
 ## Contents
 
@@ -76,7 +77,7 @@ API and converting models to ONNX and TensorRT using Docker.
 | genderage_v1 | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
 | 2d106det     | No            | No             | [coordinateReg](https://github.com/deepinsight/insightface/tree/master/alignment/coordinateReg) |
 
-## Prerequesites:
+## Requirements:
 
 1. Docker
 2. Nvidia-container-toolkit
