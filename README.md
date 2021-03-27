@@ -195,6 +195,18 @@ bounding box, detection probability and detection number.
 
 ## Changelog:
 
+### 2021-03-27 v0.5.9.8
+
+REST-API
+- Added v2 output format: more verbose and more suitable for logging.
+  Use `'api_ver':'2'` in request body. In future versions this parameter
+  will be moved to path, like `/v2/extract`, and will be default output
+  format.
+
+REST-API & conversion scripts:
+- MXNet version in dockerfiles locked to 1.6.0, since version 1.8.0
+  causes missing libopenblas.0 exception.
+
 ### 2021-03-01 v0.5.9.7
 
 REST-API & conversion scripts:
