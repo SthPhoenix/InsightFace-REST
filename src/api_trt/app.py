@@ -18,7 +18,7 @@ from fastapi.openapi.docs import (
 from modules.processing import Processing
 from env_parser import EnvConfigs
 
-__version__ = "0.5.9.7"
+__version__ = "0.5.9.8"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -91,6 +91,7 @@ class BodyExtract(BaseModel):
                                             description='Output data serialization format. Currently only version "1" \
                                             is supported')
 
+
 class BodyDraw(BaseModel):
     images: Images
 
@@ -99,14 +100,13 @@ class BodyDraw(BaseModel):
                                                 description='Detector threshold')
 
     draw_landmarks: Optional[bool] = pydantic.Field(default=True,
-                                                      example=True,
-                                                      description='Return face landmarks')
+                                                    example=True,
+                                                    description='Return face landmarks')
 
     api_ver: Optional[str] = pydantic.Field(default=configs.defaults.api_ver,
                                             example=configs.defaults.api_ver,
                                             description='Output data serialization format. Currently only version "1" \
                                             is supported')
-
 
 
 @app.post('/extract', tags=['Detection & recognition'])
@@ -131,10 +131,10 @@ async def extract(data: BodyExtract):
     """
 
     images = jsonable_encoder(data.images)
-    output = await processing.embed(images, max_size=data.max_size, return_face_data=data.return_face_data,
-                                    embed_only=data.embed_only, extract_embedding=data.extract_embedding,
-                                    threshold=data.threshold, extract_ga=data.extract_ga,
-                                    return_landmarks=data.return_landmarks, api_ver=data.api_ver)
+    output = await processing.extract(images, max_size=data.max_size, return_face_data=data.return_face_data,
+                                      embed_only=data.embed_only, extract_embedding=data.extract_embedding,
+                                      threshold=data.threshold, extract_ga=data.extract_ga,
+                                      return_landmarks=data.return_landmarks, api_ver=data.api_ver)
 
     return UJSONResponse(output)
 
