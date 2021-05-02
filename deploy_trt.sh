@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.5.9.8'
+TAG='v0.5.9.9'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -45,7 +45,7 @@ rec_model=arcface_r100_v1
 ## Do not load recognition model:
 rec_ignore=False
 ## Maximum batch size for recognition model
-rec_batch_size=2
+rec_batch_size=1
 
 # GENDER/AGE MODELS:
 ## genderage_v1
