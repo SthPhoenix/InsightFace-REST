@@ -79,6 +79,7 @@ mxnet_models = {
         'symbol': 'model-symbol.json',
         'params': 'model-0000.params',
         'shape': (1, 3, 112, 112),
+        'allow_batching': True,
         'reshape': False,
         'in_package': True
     },
@@ -86,6 +87,7 @@ mxnet_models = {
         'symbol': 'model-symbol.json',
         'params': 'model-0000.params',
         'shape': (1, 3, 112, 112),
+        'allow_batching': True,
         'reshape': False,
         'in_package': True
     },
@@ -116,13 +118,15 @@ mxnet_models = {
         'params': 'model-0000.params',
         'in_package': False,
         'shape': (1, 3, 112, 112),
-        'reshape': False
+        'allow_batching': True,
+        'reshape': False,
     },
     'r50-arcface-msfdrop75': {
         'symbol': 'model-symbol.json',
         'params': 'model-0000.params',
         'in_package': False,
         'shape': (1, 3, 112, 112),
+        'allow_batching': True,
         'reshape': False
     },
     'glint360k_r100FC_1.0': {
@@ -130,6 +134,7 @@ mxnet_models = {
         'params': 'model-0000.params',
         'in_package': False,
         'shape': (1, 3, 112, 112),
+        'allow_batching': True,
         'reshape': False
     },
     'glint360k_r100FC_0.1': {
@@ -137,6 +142,16 @@ mxnet_models = {
         'params': 'model-0000.params',
         'in_package': False,
         'shape': (1, 3, 112, 112),
+        'allow_batching': True,
+        'reshape': False
+    },
+    # You can put your own pretrained ArcFace model to /models/mxnet/custom_rec_model
+    'custom_rec_model': {
+        'symbol': 'model-symbol.json',
+        'params': 'model-0000.params',
+        'in_package': False,
+        'shape': (1, 3, 112, 112),
+        'allow_batching': True,
         'reshape': False
     }
 }
