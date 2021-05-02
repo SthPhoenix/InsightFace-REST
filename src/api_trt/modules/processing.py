@@ -222,7 +222,7 @@ class Processing:
                     extract_ga: bool = True, return_landmarks: bool = False):
 
         output = dict(took={}, data=[])
-
+        t0 = time.time()
         for image_data in images:
             _faces_dict = dict(status=None, took=None, faces=[])
             try:
@@ -251,8 +251,6 @@ class Processing:
                 _faces_dict['traceback'] = tb
 
             output['data'].append(_faces_dict)
-        took = time.time() - t0
-        output['took'] = took
         return output
 
     async def extract(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
