@@ -79,12 +79,13 @@ def bx_lm(box, landmark, scores, threshold, xs, ys):
 
 @njit()
 def prepare_image(img):
-    #mean = np.array([0.408, 0.447, 0.47], dtype=np.float32)
-    #std = np.array([0.289, 0.274, 0.278], dtype=np.float32)
-    #img = ((img / 255.0 - mean) / std).astype(np.float32)
-    img = ((img / 255.0)).astype(np.float32)
+    mean = np.array([0.408, 0.447, 0.47], dtype=np.float32)
+    std = np.array([0.289, 0.274, 0.278], dtype=np.float32)
+    img = ((img / 255.0 - mean) / std).astype(np.float32)
+    #img = ((img / 255.0)).astype(np.float32)
     img = img.transpose((2, 0, 1))
     img = np.expand_dims(img, 0)
+
     return img
 
 
