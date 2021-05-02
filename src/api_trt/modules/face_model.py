@@ -61,7 +61,7 @@ class FaceAnalysis:
 
         self.max_size = max_size
         self.max_rec_batch_size = max_rec_batch_size
-        if backend_name != 'trt' and max_rec_batch_size != 1:
+        if backend_name not in ('trt', 'triton') and max_rec_batch_size != 1:
             logging.warning('Batch processing supported only for TensorRT backend. Fallback to 1.')
             self.max_rec_batch_size = 1
 
@@ -80,14 +80,35 @@ class FaceAnalysis:
             self.rec_model = None
 
         if ga_name is not None:
-            self.ga_model = get_model(ga_name, backend_name=backend_name, force_fp16=force_fp16, download_model=False)
+            self.ga_model = get_model(ga_name, backend_name=backend_name, force_fp16=force_fp16,
+                                      max_batch_size=self.max_rec_batch_size, download_model=False)
             self.ga_model.prepare(ctx_id=ctx)
         else:
             self.ga_model = None
 
-    def sort_boxes(self, boxes, probs, landmarks, img):
-        # TODO implement sorting of bounding boxes with respect to size and position
-        return boxes, probs, landmarks
+    def sort_boxes(self, boxes, probs, landmarks, mask_probs, shape, max_num=0):
+        # Based on original InsightFace python package implementation
+        if max_num > 0 and boxes.shape[0] > max_num:
+            area = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
+            img_center = shape[0] // 2, shape[1] // 2
+            offsets = np.vstack([
+                (boxes[:, 0] + boxes[:, 2]) / 2 - img_center[1],
+                (boxes[:, 1] + boxes[:, 3]) / 2 - img_center[0]
+            ])
+            offset_dist_squared = np.sum(np.power(offsets, 2.0), 0)
+            values = area  # some extra weight on the centering
+            bindex = np.argsort(
+                values)[::-1]  # some extra weight on the centering
+            bindex = bindex[0:max_num]
+
+            boxes = boxes[bindex, :]
+            probs = probs[bindex]
+            if not isinstance(mask_probs, type(None)):
+                mask_probs = mask_probs[bindex, :]
+
+            landmarks = landmarks[bindex, :]
+
+        return boxes, probs, landmarks, mask_probs
 
     # Translate bboxes and landmarks from resized to original image size
     def reproject_points(self, dets, scale: float):
@@ -109,14 +130,15 @@ class FaceAnalysis:
                 t0 = time.time()
                 embeddings = self.rec_model.get_embedding(crops)
                 t1 = time.time()
-                took = t1-t0
-                logging.debug(f'Embedding {total} faces took: {took} ({took/total} per face)')
+                took = t1 - t0
+                logging.debug(f'Embedding {total} faces took: {took} ({took / total} per face)')
 
             if extract_ga:
                 t0 = time.time()
-                ga = [self.ga_model.get(face.facedata) for face in chunk]
+                ga = self.ga_model.get(crops)
                 t1 = time.time()
-                logging.debug(f'Extracting g/a for {total} faces took: {t1 - t0}')
+                took = t1 - t0
+                logging.debug(f'Extracting g/a for {total} faces took: {took} ({took / total} per face)')
 
             for i, crop in enumerate(crops):
                 embedding = None
@@ -139,12 +161,13 @@ class FaceAnalysis:
                     face = face._replace(facedata=None)
 
                 face = face._replace(embedding=embedding, embedding_norm=embedding_norm,
-                                         normed_embedding=normed_embedding, gender=gender, age=age)
+                                     normed_embedding=normed_embedding, gender=gender, age=age)
                 yield face
 
     # Process single image
     async def get(self, img, extract_embedding: bool = True, extract_ga: bool = True,
-                  return_face_data: bool = True, max_size: List[int] = None, threshold: float = 0.6):
+                  return_face_data: bool = True, max_size: List[int] = None, threshold: float = 0.6,
+                  limit_faces: int = 0):
 
         ts = time.time()
         t0 = time.time()
@@ -168,6 +191,10 @@ class FaceAnalysis:
         await asyncio.sleep(0)
         if not isinstance(boxes, type(None)):
             t0 = time.time()
+            if limit_faces > 0:
+                boxes, probs, landmarks, mask_probs = self.sort_boxes(boxes, probs, landmarks, mask_probs,
+                                                                      shape=img.transformed_image.shape,
+                                                                      max_num=limit_faces)
             for i in range(len(boxes)):
                 # Translate points to original image size
                 bbox = self.reproject_points(boxes[i], img.scale_factor)
