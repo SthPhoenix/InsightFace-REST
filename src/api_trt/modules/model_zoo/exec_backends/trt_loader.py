@@ -1,5 +1,4 @@
 import pycuda.driver as cuda
-import pycuda.autoinit
 import numpy as np
 
 import tensorrt as trt
@@ -67,6 +66,7 @@ def do_inference(context, bindings, inputs, outputs, stream):
 
 class TrtModel(object):
     def __init__(self, model):
+        import pycuda.autoinit
         self.engine_file = model
         self.engine = None
         self.inputs = None
