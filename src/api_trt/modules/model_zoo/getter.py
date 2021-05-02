@@ -92,6 +92,9 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
             else:
                 logging.error("You have requested non standard model, but haven't provided download link or "
                               "MXNet model. Place model to proper folder and change configs.py accordingly.")
+    if backend_name == 'triton':
+        return model_name
+
 
     if backend_name == 'onnx':
         model = onnx.load(onnx_path)
