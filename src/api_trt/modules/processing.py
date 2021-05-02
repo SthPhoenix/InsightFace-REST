@@ -10,11 +10,14 @@ import logging
 
 import numpy as np
 import cv2
+from turbojpeg import TurboJPEG
 
 from .face_model import FaceAnalysis, Face
 
+jpeg = TurboJPEG()
 
-def dl_image(path, headers=None):
+
+async def dl_image(path, headers=None):
     if headers is None:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
@@ -29,14 +32,26 @@ def dl_image(path, headers=None):
                 path,
                 headers=headers
             )
+
             resp = urllib.request.urlopen(req)
-            _image = np.asarray(bytearray(resp.read()), dtype="uint8")
-            _image = cv2.imdecode(_image, cv2.IMREAD_COLOR)
+            __bin = bytearray(resp.read())
+            try:
+                _image = jpeg.decode(__bin)
+            except:
+                logging.debug('TurboJPEG failed, fallback to cv2.imdecode')
+                _image = np.asarray(__bin, dtype="uint8")
+                _image = cv2.imdecode(_image, cv2.IMREAD_COLOR)
         else:
             if not os.path.exists(path):
                 im_data.update(traceback=f"File: '{path}' not found")
                 return im_data
-            _image = cv2.imread(path, cv2.IMREAD_COLOR)
+            try:
+                in_file = open(path, 'rb')
+                _image = jpeg.decode(in_file.read())
+                in_file.close()
+            except:
+                logging.debug('TurboJPEG failed, fallback to cv2.imdecode')
+                _image = cv2.imread(path, cv2.IMREAD_COLOR)
     except Exception:
         tb = traceback.format_exc()
         print(tb)
@@ -46,14 +61,21 @@ def dl_image(path, headers=None):
     return im_data
 
 
-def decode_image(b64encoded):
+async def decode_image(b64encoded):
     im_data = dict(data=None,
                    traceback=None)
     try:
-        __bin = b64encoded.split("base64,")[-1]
+        __bin = b64encoded.split(",")[-1]
         __bin = base64.b64decode(__bin)
-        __bin = np.fromstring(__bin, np.uint8)
-        _image = cv2.imdecode(__bin, cv2.IMREAD_COLOR)
+        t0 = time.time()
+        try:
+            _image = jpeg.decode(__bin)
+        except:
+            logging.debug('TurboJPEG failed, fallback to cv2.imdecode')
+            __bin = np.fromstring(__bin, np.uint8)
+            _image = cv2.imdecode(__bin, cv2.IMREAD_COLOR)
+        t1 = time.time()
+        logging.info(f'Decoding took: {t1 - t0}')
     except Exception:
         tb = traceback.format_exc()
         print(tb)
@@ -63,18 +85,18 @@ def decode_image(b64encoded):
     return im_data
 
 
-def get_images(data: Dict[str, list]):
+async def get_images(data: Dict[str, list]):
     images = []
     if data.get('urls') is not None:
         urls = data['urls']
         for url in urls:
-            _image = dl_image(url)
+            _image = await dl_image(url)
             images.append(_image)
     elif data.get('data') is not None:
         b64_images = data['data']
         images = []
         for b64_img in b64_images:
-            _image = decode_image(b64_img)
+            _image = await decode_image(b64_img)
             images.append(_image)
 
     return images
@@ -82,7 +104,7 @@ def get_images(data: Dict[str, list]):
 
 class Serializer:
 
-    def serialize(self, data, return_face_data: bool = False, return_landmarks: bool = False, api_ver: str = '1'):
+    def serialize(self, data, api_ver: str = '1'):
         serializer = self.get_serializer(api_ver)
         return serializer(data)
 
@@ -168,7 +190,7 @@ class Processing:
                 yield face
 
     def embed_crops(self, images, extract_embedding: bool = True, extract_ga: bool = True):
-        serializer = Serializer()
+
         t0 = time.time()
         output = dict(took=None, data=[], status="ok")
 
@@ -195,12 +217,11 @@ class Processing:
         output['took'] = took
         return output
 
-    async def embed(self, images: Dict, max_size: List[int] = None, threshold: float = 0.6,
-                    return_face_data: bool = False, extract_embedding: bool = True,
+    async def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
+                    limit_faces: int = 0, return_face_data: bool = False, extract_embedding: bool = True,
                     extract_ga: bool = True, return_landmarks: bool = False):
 
-        t0 = time.time()
-        output = dict(took=None, data=[])
+        output = dict(took={}, data=[])
 
         for image_data in images:
             _faces_dict = dict(status=None, took=None, faces=[])
@@ -213,7 +234,7 @@ class Processing:
                     image = image_data.get('data')
                     faces = await self.model.get(image, max_size=max_size, threshold=threshold,
                                                  return_face_data=return_face_data,
-                                                 extract_embedding=extract_embedding, extract_ga=extract_ga)
+                                                 extract_embedding=extract_embedding, extract_ga=extract_ga, limit_faces=limit_faces)
 
                     for idx, face in enumerate(faces):
                         _face_dict = serialize_face(face=face, return_face_data=return_face_data,
@@ -222,6 +243,7 @@ class Processing:
                     took_image = time.time() - t1
                     _faces_dict['took'] = took_image
                     _faces_dict['status'] = 'ok'
+
             except Exception as e:
                 tb = traceback.format_exc()
                 print(tb)
@@ -234,16 +256,20 @@ class Processing:
         return output
 
     async def extract(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
-                      embed_only: bool = False, return_face_data: bool = False, extract_embedding: bool = True,
-                      extract_ga: bool = True, return_landmarks: bool = False, api_ver: str = "1"):
+                      limit_faces: int = 0, embed_only: bool = False, return_face_data: bool = False,
+                      extract_embedding: bool = True, extract_ga: bool = True, return_landmarks: bool = False,
+                      verbose_timings=True, api_ver: str = "1"):
 
         if not max_size:
             max_size = self.max_size
 
+        t0 = time.time()
+
         tl0 = time.time()
-        images = get_images(images)
+        images = await get_images(images)
         tl1 = time.time()
-        logging.debug('Reading images took: {tl1 - tl0} s.')
+        took_loading = tl1 - tl0
+        logging.debug(f'Reading images took: {took_loading} s.')
         serializer = Serializer()
 
         if embed_only:
@@ -251,26 +277,46 @@ class Processing:
             return _faces_dict
 
         else:
-            output = await self.embed(images, return_face_data=return_face_data, threshold=threshold,
-                                      extract_embedding=extract_embedding, extract_ga=extract_ga,
-                                      return_landmarks=return_landmarks
+            te0 = time.time()
+            output = await self.embed(images, max_size=max_size, return_face_data=return_face_data, threshold=threshold,
+                                      limit_faces=limit_faces, extract_embedding=extract_embedding,
+                                      extract_ga=extract_ga, return_landmarks=return_landmarks
                                       )
+            took_embed = time.time() - te0
+            took = time.time() - t0
+            output['took']['total'] = took
+            if verbose_timings:
+                output['took']['read_imgs'] = took_loading
+                output['took']['embed_all'] = took_embed
 
             return serializer.serialize(output, api_ver=api_ver)
 
-    async def draw(self, images: Dict[str, list], threshold: float = 0.6,
-                   draw_landmarks: bool = True):
+    async def draw(self, images: Union[Dict[str, list], bytes], threshold: float = 0.6,
+                   draw_landmarks: bool = True, draw_scores: bool = True, draw_sizes: bool = True, limit_faces=0,
+                   multipart=False):
 
-        max_size = self.max_size
+        if not multipart:
+            images = await get_images(images)
+            image = images[0].get('data')
+        else:
+            __bin = np.fromstring(images, np.uint8)
+            image = cv2.imdecode(__bin, cv2.IMREAD_COLOR)
 
-        image = get_images(images)[0].get('data')
-        faces = await self.model.get(image, max_size=max_size, threshold=threshold, return_face_data=False,
-                                     extract_embedding=False, extract_ga=False)
+        faces = await self.model.get(image, threshold=threshold, return_face_data=False,
+                                     extract_embedding=False, extract_ga=False, limit_faces=limit_faces)
+
+        total = f'faces: {len(faces)}'
+        bottom = image.shape[0]
+        cv2.putText(image, total, (5, bottom - 5), 0, 1, (0, 0, 0), 3, 16)
+        cv2.putText(image, total, (5, bottom - 5), 0, 1, (0, 255, 0), 1, 16)
 
         for face in faces:
             pt1 = tuple(map(int, face.bbox[0:2]))
             pt2 = tuple(map(int, face.bbox[2:4]))
             color = (0, 255, 0)
+            x, y = pt1
+            r, b = pt2
+            w = r - x
             if face.mask_prob:
                 if face.mask_prob >= 0.2:
                     color = (0, 255, 255)
@@ -278,11 +324,27 @@ class Processing:
 
             if draw_landmarks:
                 lms = face.landmark
-                cv2.circle(image, (lms[0][0], lms[0][1]), 1, (0, 0, 255), 4)
-                cv2.circle(image, (lms[1][0], lms[1][1]), 1, (0, 255, 255), 4)
-                cv2.circle(image, (lms[2][0], lms[2][1]), 1, (255, 0, 255), 4)
-                cv2.circle(image, (lms[3][0], lms[3][1]), 1, (0, 255, 0), 4)
-                cv2.circle(image, (lms[4][0], lms[4][1]), 1, (255, 0, 0), 4)
+                pt_size = int(w * 0.05)
+                cv2.circle(image, (lms[0][0], lms[0][1]), 1, (0, 0, 255), pt_size)
+                cv2.circle(image, (lms[1][0], lms[1][1]), 1, (0, 255, 255), pt_size)
+                cv2.circle(image, (lms[2][0], lms[2][1]), 1, (255, 0, 255), pt_size)
+                cv2.circle(image, (lms[3][0], lms[3][1]), 1, (0, 255, 0), pt_size)
+                cv2.circle(image, (lms[4][0], lms[4][1]), 1, (255, 0, 0), pt_size)
+
+            if draw_scores:
+                text = f"{face.det_score:.3f}"
+                pos = (x + 3, y - 5)
+                textcolor = (0, 0, 0)
+                thickness = 1
+                border = int(thickness / 2)
+                cv2.rectangle(image, (x - border, y - 21, w + thickness, 21), color, -1, 16)
+                cv2.putText(image, text, pos, 0, 0.5, (0, 255, 0), 3, 16)
+                cv2.putText(image, text, pos, 0, 0.5, textcolor, 1, 16)
+            if draw_sizes:
+                text = f"w:{w}"
+                pos = (x + 3, b - 5)
+                cv2.putText(image, text, pos, 0, 0.5, (0, 0, 0), 3, 16)
+                cv2.putText(image, text, pos, 0, 0.5, (0, 255, 0), 1, 16)
 
         is_success, buffer = cv2.imencode(".jpg", image)
         io_buf = io.BytesIO(buffer)
