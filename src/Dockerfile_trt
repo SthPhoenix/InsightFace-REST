@@ -3,12 +3,14 @@ FROM nvcr.io/nvidia/tensorrt:21.02-py3
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-RUN apt-get update && apt-get install -y libgl1-mesa-glx protobuf-compiler libprotoc-dev libb64-0d
+RUN apt-get update && apt-get install -y libgl1-mesa-glx protobuf-compiler libprotoc-dev libb64-0d libturbojpeg
 ENV PIP_INSTALL="python -m pip --no-cache-dir install --upgrade"
-RUN $PIP_INSTALL mxnet==1.6.0 insightface fastapi uvicorn ujson numba aiofiles
+RUN $PIP_INSTALL mxnet insightface fastapi uvicorn ujson numba aiofiles
 RUN $PIP_INSTALL onnx==1.7.0
 RUN $PIP_INSTALL onnx-simplifier
 RUN $PIP_INSTALL nvidia-pyindex && pip install tritonclient[http,grpc]
+RUN $PIP_INSTALL git+git://github.com/lilohuang/PyTurboJPEG.git
+
 
 WORKDIR /app
 COPY api_trt /app
