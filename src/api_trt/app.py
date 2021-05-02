@@ -1,9 +1,10 @@
 import os
 import logging
+import time
 from typing import Optional, List
 
 import pydantic
-from fastapi import FastAPI
+from fastapi import FastAPI, File, Form, UploadFile
 from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
 from starlette.staticfiles import StaticFiles
@@ -18,7 +19,7 @@ from fastapi.openapi.docs import (
 from modules.processing import Processing
 from env_parser import EnvConfigs
 
-__version__ = "0.5.9.8"
+__version__ = "0.5.9.9"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -83,13 +84,26 @@ class BodyExtract(BaseModel):
                                                        example=configs.defaults.extract_embedding,
                                                        description='Extract face embeddings (otherwise only detect \
                                                        faces)')
+
     extract_ga: Optional[bool] = pydantic.Field(default=configs.defaults.extract_ga,
                                                 example=configs.defaults.extract_ga,
                                                 description='Extract gender/age')
+
+    limit_faces: Optional[int] = pydantic.Field(default=0,
+                                                example=0,
+                                                description='Maximum number of faces to be processed')
+
+    min_face_size: Optional[int] = pydantic.Field(default=0,
+                                                  example=0,
+                                                  description='Ignore faces smaller than this size')
+
+    verbose_timings: Optional[bool] = pydantic.Field(default=False,
+                                                     example=True,
+                                                     description='Return all timings.')
+
     api_ver: Optional[str] = pydantic.Field(default=configs.defaults.api_ver,
                                             example=configs.defaults.api_ver,
-                                            description='Output data serialization format. Currently only version "1" \
-                                            is supported')
+                                            description='Output data serialization format.')
 
 
 class BodyDraw(BaseModel):
@@ -103,10 +117,21 @@ class BodyDraw(BaseModel):
                                                     example=True,
                                                     description='Return face landmarks')
 
-    api_ver: Optional[str] = pydantic.Field(default=configs.defaults.api_ver,
-                                            example=configs.defaults.api_ver,
-                                            description='Output data serialization format. Currently only version "1" \
-                                            is supported')
+    draw_scores: Optional[bool] = pydantic.Field(default=True,
+                                                 example=True,
+                                                 description='Draw detection scores')
+
+    draw_sizes: Optional[bool] = pydantic.Field(default=True,
+                                                example=True,
+                                                description='Draw face sizes')
+
+    limit_faces: Optional[int] = pydantic.Field(default=0,
+                                                example=0,
+                                                description='Maximum number of faces to be processed')
+
+    min_face_size: Optional[int] = pydantic.Field(default=0,
+                                                  example=0,
+                                                  description='Ignore faces smaller than this size')
 
 
 @app.post('/extract', tags=['Detection & recognition'])
@@ -123,40 +148,66 @@ async def extract(data: BodyExtract):
        - **return_landmarks**: Return face landmarks. Default: False (*optional*)
        - **extract_embedding**: Extract face embeddings (otherwise only detect faces). Default: True (*optional*)
        - **extract_ga**: Extract gender/age. Default: False (*optional*)
+       - **limit_faces**: Maximum number of faces to be processed.  0 for unlimited number. Default: 0 (*optional*)
+       - **verbose_timings**: Return all timings. Default: False (*optional*)
        - **api_ver**: Output data serialization format. Currently only version "1" is supported (*optional*)
        \f
 
        :return:
        List[List[dict]]
     """
-
     images = jsonable_encoder(data.images)
     output = await processing.extract(images, max_size=data.max_size, return_face_data=data.return_face_data,
                                       embed_only=data.embed_only, extract_embedding=data.extract_embedding,
                                       threshold=data.threshold, extract_ga=data.extract_ga,
-                                      return_landmarks=data.return_landmarks, api_ver=data.api_ver)
-
+                                      limit_faces=data.limit_faces, return_landmarks=data.return_landmarks,
+                                      verbose_timings=data.verbose_timings, api_ver=data.api_ver)
     return UJSONResponse(output)
 
 
 @app.post('/draw_detections', tags=['Detection & recognition'])
 async def draw(data: BodyDraw):
     """
-    Return image with drawn faces for testing purposes, accepts data in same format as extract endpoint,
-    but processes only first image.
+    Return image with drawn faces for testing purposes.
 
        - **images**: dict containing either links or data lists. (*required*)
        - **threshold**: Detection threshold. Default: 0.6 (*optional*)
        - **draw_landmarks**: Draw faces landmarks Default: True (*optional*)
-       - **api_ver**: Output data serialization format. Currently only version "1" is supported (*optional*)
+       - **draw_scores**: Draw detection scores Default: True (*optional*)
+       - **draw_sizes**: Draw face sizes Default: True (*optional*)
+       - **limit_faces**: Maximum number of faces to be processed.  0 for unlimited number. Default: 0 (*optional*)
        \f
     """
 
     images = jsonable_encoder(data.images)
     output = await processing.draw(images, threshold=data.threshold,
-                                   draw_landmarks=data.draw_landmarks)
+                                   draw_landmarks=data.draw_landmarks, draw_scores=data.draw_scores,
+                                   limit_faces=data.limit_faces, draw_sizes=data.draw_sizes)
     output.seek(0)
     return StreamingResponse(output, media_type="image/png")
+
+
+@app.post('/multipart/draw_detections', tags=['Detection & recognition'])
+async def draw_upl(file: bytes = File(...), threshold: float = Form(0.6), draw_landmarks: bool = Form(True),
+                   draw_scores: bool = Form(True), draw_sizes: bool = Form(True), limit_faces: int = Form(0)):
+    """
+    Return image with drawn faces for testing purposes.
+
+       - **images**: dict containing either links or data lists. (*required*)
+       - **threshold**: Detection threshold. Default: 0.6 (*optional*)
+       - **draw_landmarks**: Draw faces landmarks Default: True (*optional*)
+       - **draw_scores**: Draw detection scores Default: True (*optional*)
+       - **draw_sizes**: Draw face sizes Default: True (*optional*)
+       - **limit_faces**: Maximum number of faces to be processed.  0 for unlimited number. Default: 0 (*optional*)
+       \f
+    """
+
+    output = await processing.draw(file, threshold=threshold,
+                                   draw_landmarks=draw_landmarks, draw_scores=draw_scores, draw_sizes=draw_sizes,
+                                   limit_faces=limit_faces,
+                                   multipart=True)
+    output.seek(0)
+    return StreamingResponse(output, media_type='image/jpg')
 
 
 @app.get('/info', tags=['Utility'])
