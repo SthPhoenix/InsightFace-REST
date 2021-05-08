@@ -322,7 +322,6 @@ class Processing:
 
             if draw_landmarks:
                 lms = face.landmark.astype(int)
-                print(lms)
                 pt_size = int(w * 0.05)
                 cv2.circle(image, (lms[0][0], lms[0][1]), 1, (0, 0, 255), pt_size)
                 cv2.circle(image, (lms[1][0], lms[1][1]), 1, (0, 255, 255), pt_size)
