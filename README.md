@@ -195,6 +195,19 @@ bounding box, detection probability and detection number.
 
 ## Changelog:
 
+### 2021-05-08 v0.5.9.9
+
+REST-API
+- Added JPEG decoding using PyTurboJPEG -  increased decoding speed for large 
+  JPEGs for about 2x.
+- Support for batch inference of `genderage` model.
+- Support for limiting number of faces for recognition using `limit_faces` parameter 
+  in `extract` endpoint.
+- New `/multipart/draw_detections` endpoint, supporting image upload using multipart 
+  form data.
+- Support for printing face sizes and scores on image by `draw_detections` endpoints.
+- More verbose timings for `extract` endpoint for debug and logging purposes.
+
 ### 2021-03-27 v0.5.9.8
 
 REST-API
