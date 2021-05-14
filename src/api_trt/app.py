@@ -60,7 +60,9 @@ class Images(BaseModel):
 
 class BodyExtract(BaseModel):
     images: Images
-
+    max_size: Optional[List[int]] = pydantic.Field(default=configs.defaults.max_size,
+                                                   example=configs.defaults.max_size,
+                                                   description='Resize all images to this proportions')
 
     threshold: Optional[float] = pydantic.Field(default=configs.defaults.threshold,
                                                 example=configs.defaults.threshold,
