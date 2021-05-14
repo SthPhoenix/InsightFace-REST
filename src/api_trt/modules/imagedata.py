@@ -28,7 +28,7 @@ class ImageData:
             self.scale_factor = min(cw / w, ch / h)
             # If image is too small, it may contain only single face, which leads to decreased detection accuracy,
             # so we reduce scale factor by some factor
-            if self.scale_factor > 5:
+            if self.scale_factor > 3:
                 self.scale_factor = self.scale_factor * 0.7
 
             self.transformed_image = cv2.resize(self.transformed_image, (0, 0), fx=self.scale_factor, fy=self.scale_factor,

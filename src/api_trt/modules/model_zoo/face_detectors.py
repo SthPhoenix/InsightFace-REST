@@ -1,7 +1,7 @@
 from .detectors.retinaface import RetinaFace
 from .detectors.centerface import CenterFace
 from .detectors.dbface import DBFace
-
+from .detectors.scrfd import SCRFD
 
 def get_retinaface(model_path, backend, outputs, rac, masks=False):
 
@@ -40,5 +40,7 @@ def dbface(model_path, backend, outputs):
     model = DBFace(inference_backend=inference_backend)
     return model
 
-
-
+def scrfd_10g_bnkps(model_path, backend, outputs):
+    inference_backend = backend.DetectorInfer(model=model_path, output_order=outputs)
+    model = SCRFD(inference_backend=inference_backend)
+    return model

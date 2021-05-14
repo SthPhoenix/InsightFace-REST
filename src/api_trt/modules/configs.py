@@ -33,6 +33,7 @@ anticonv_outputs = [
 
 centerface_outputs = ['537', '538', '539', '540']
 dbface_outputs = ["hm", "tlrb", "landmark"]
+scrfd_outputs = ['448', '471', '494', '451', '474', '497', '454', '477', '500']
 
 mxnet_models = {
     'retinaface_mnet025_v0': {
@@ -106,6 +107,13 @@ mxnet_models = {
         'outputs': dbface_outputs
     },
 
+    'scrfd_10g_bnkps': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'outputs': scrfd_outputs
+    },
+
     'coordinateReg': {
         'symbol': '2d106det-symbol.json',
         'params': '2d106det-0000.params',
@@ -145,6 +153,16 @@ mxnet_models = {
         'allow_batching': True,
         'reshape': False
     },
+
+    'glintr100': {
+        'symbol': 'model-symbol.json',
+        'params': 'model-0000.params',
+        'in_package': False,
+        'shape': (1, 3, 112, 112),
+        'allow_batching': True,
+        'reshape': False
+    },
+
     # You can put your own pretrained ArcFace model to /models/mxnet/custom_rec_model
     'custom_rec_model': {
         'symbol': 'model-symbol.json',

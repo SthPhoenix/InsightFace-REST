@@ -60,9 +60,7 @@ class Images(BaseModel):
 
 class BodyExtract(BaseModel):
     images: Images
-    max_size: Optional[List[int]] = pydantic.Field(default=configs.defaults.max_size,
-                                                   example=configs.defaults.max_size,
-                                                   description='Resize all images to this proportions')
+
 
     threshold: Optional[float] = pydantic.Field(default=configs.defaults.threshold,
                                                 example=configs.defaults.threshold,
@@ -102,7 +100,7 @@ class BodyExtract(BaseModel):
                                                      description='Return all timings.')
 
     api_ver: Optional[str] = pydantic.Field(default=configs.defaults.api_ver,
-                                            example=configs.defaults.api_ver,
+                                            example='2',
                                             description='Output data serialization format.')
 
 
@@ -141,7 +139,6 @@ async def extract(data: BodyExtract):
     parameters in following format:
 
        - **images**: dict containing either links or data lists. (*required*)
-       - **max_size**: Resize all images to this proportions. Default: [640,480] (*optional*)
        - **threshold**: Detection threshold. Default: 0.6 (*optional*)
        - **embed_only**: Treat input images as face crops, omit detection step. Default: False (*optional*)
        - **return_face_data**: Return face crops encoded in base64. Default: False (*optional*)

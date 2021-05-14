@@ -27,6 +27,32 @@ class Arcface:
         net_out = self.rec_model.run(self.outputs, {self.rec_model.get_inputs()[0].name: face_img})
         return net_out[0]
 
+class Cosface:
+    def __init__(self, rec_name='/models/onnx/glintr100/glintr100.onnx'):
+        self.rec_model = onnxruntime.InferenceSession(rec_name)
+        self.input_shape = None
+        self.max_batch_size = 1
+        self.input_mean = 127.5
+        self.input_std = 127.5
+        self.outputs = [e.name for e in self.rec_model.get_outputs()]
+
+    # warmup
+    def prepare(self, **kwargs):
+        logging.info("Warming up ArcFace ONNX Runtime engine...")
+        self.rec_model.run(self.outputs, {self.rec_model.get_inputs()[0].name: [np.zeros((3, 112, 112), np.float32)]})
+
+    def get_embedding(self, face_img):
+        if not isinstance(face_img, list):
+            face_img = [face_img]
+
+        for i, img in enumerate(face_img):
+            input_size = tuple(img.shape[0:2][::-1])
+            blob = cv2.dnn.blobFromImage(img, 1.0 / self.input_std, input_size,
+                                         (self.input_mean, self.input_mean, self.input_mean), swapRB=True)[0]
+            face_img[i] = blob
+        face_img = np.stack(face_img)
+        net_out = self.rec_model.run(self.outputs, {self.rec_model.get_inputs()[0].name: face_img})
+        return net_out[0]
 
 class FaceGenderage:
 

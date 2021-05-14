@@ -176,6 +176,7 @@ class Processing:
             max_size = [640, 480]
 
         self.max_rec_batch_size = max_rec_batch_size
+        self.det_name = det_name
 
         self.max_size = max_size
         self.model = FaceAnalysis(det_name=det_name, rec_name=rec_name, ga_name=ga_name, device=device,
@@ -303,14 +304,13 @@ class Processing:
         faces = await self.model.get(image, threshold=threshold, return_face_data=False,
                                      extract_embedding=False, extract_ga=False, limit_faces=limit_faces)
 
-        total = f'faces: {len(faces)}'
-        bottom = image.shape[0]
-        cv2.putText(image, total, (5, bottom - 5), 0, 1, (0, 0, 0), 3, 16)
-        cv2.putText(image, total, (5, bottom - 5), 0, 1, (0, 255, 0), 1, 16)
+
+
 
         for face in faces:
-            pt1 = tuple(map(int, face.bbox[0:2]))
-            pt2 = tuple(map(int, face.bbox[2:4]))
+            bbox = face.bbox.astype(int)
+            pt1 = tuple(bbox[0:2])
+            pt2 = tuple(bbox[2:4])
             color = (0, 255, 0)
             x, y = pt1
             r, b = pt2
@@ -343,6 +343,11 @@ class Processing:
                 pos = (x + 3, b - 5)
                 cv2.putText(image, text, pos, 0, 0.5, (0, 0, 0), 3, 16)
                 cv2.putText(image, text, pos, 0, 0.5, (0, 255, 0), 1, 16)
+
+        total = f'faces: {len(faces)} ({self.det_name})'
+        bottom = image.shape[0]
+        cv2.putText(image, total, (5, bottom - 5), 0, 1, (0, 0, 0), 3, 16)
+        cv2.putText(image, total, (5, bottom - 5), 0, 1, (0, 255, 0), 1, 16)
 
         is_success, buffer = cv2.imencode(".jpg", image)
         io_buf = io.BytesIO(buffer)

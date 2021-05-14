@@ -24,20 +24,30 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
         else:
             mode = 'centerface'
 
+        input_name = model.graph.input[0].name
+        dyn_size = False
+        if model.graph.input[0].type.tensor_type.shape.dim[2].dim_param == '?':
+            dyn_size = True
+
+        if input_name == 'input.1' and dyn_size is True:
+            mode = 'scrfd'
+
     d = model.graph.input[0].type.tensor_type.shape.dim
     d[0].dim_value = n
     if mode != 'arcface':
         d[2].dim_value = h
         d[3].dim_value = w
     divisor = 4
-    for output in model.graph.output:
-        if mode == 'retinaface':
-            divisor = int(output.name.split('stride')[-1])
-        d = output.type.tensor_type.shape.dim
-        d[0].dim_value = n
-        if mode != 'arcface':
-            d[2].dim_value = math.ceil(h / divisor)
-            d[3].dim_value = math.ceil(w / divisor)
+    if mode != 'scrfd':
+        for output in model.graph.output:
+            if mode == 'retinaface':
+                divisor = int(output.name.split('stride')[-1])
+            d = output.type.tensor_type.shape.dim
+            d[0].dim_value = n
+            if mode != 'arcface':
+                d[2].dim_value = math.ceil(h / divisor)
+                d[3].dim_value = math.ceil(w / divisor)
+
     return model
 
 
