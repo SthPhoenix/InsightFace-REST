@@ -1,5 +1,12 @@
 # InsightFace-REST
 
+> IMPORTANT NOTICE: Due to update of Deepinsight InsightFace python package to version 0.2 auto download of InsightFace 
+> models is no longer available for now. 
+> Please manually download models and unpack them into `/models/mxnet`. 
+> 
+> Download link available at official InsightFace repository: [python-package](https://github.com/deepinsight/insightface/tree/master/python-package)
+
+
 This repository aims to provide convenient, easy deployable and scalable
 REST API for InsightFace face detection and recognition pipeline using
 FastAPI for serving and NVIDIA TensorRT for optimized inference.
@@ -54,28 +61,31 @@ API and converting models to ONNX and TensorRT using Docker.
 
 | Model                 | Auto download | Inference code | Source                                                                                          |
 |:----------------------|:--------------|:---------------|:------------------------------------------------------------------------------------------------|
-| retinaface_r50_v1     | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
-| retinaface_mnet025_v1 | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
-| retinaface_mnet025_v2 | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
+| retinaface_r50_v1     | No*           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
+| retinaface_mnet025_v1 | No*           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
+| retinaface_mnet025_v2 | No*           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
 | mnet_cov2             | No            | Yes            | [mnet_cov2](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov) |
 | centerface            | Yes           | Yes            | [Star-Clouds/CenterFace](https://github.com/Star-Clouds/CenterFace)                             |
-
+| scrfd_10g_bnkps       | No            | Yes            | [SCRFD](https://github.com/deepinsight/insightface/tree/master/detection/scrfd)                 |
 ### Recognition:
 
 | Model                  | Auto download | Inference code | Source                                                                                                    |
 |:-----------------------|:--------------|:---------------|:----------------------------------------------------------------------------------------------------------|
-| arcface_r100_v1        | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)                 |
+| arcface_r100_v1        | No*           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)                 |
 | r100-arcface-msfdrop75 | No            | Yes            | [SubCenter-ArcFace](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace) |
 | r50-arcface-msfdrop75  | No            | Yes            | [SubCenter-ArcFace](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace) |
 | glint360k_r100FC_1.0   | No            | Yes            | [Partial-FC](https://github.com/deepinsight/insightface/tree/master/recognition/partial_fc)               |
 | glint360k_r100FC_0.1   | No            | Yes            | [Partial-FC](https://github.com/deepinsight/insightface/tree/master/recognition/partial_fc)               |
+| glintr100              | No            | Yes            | [Arcface-torch](https://github.com/deepinsight/insightface/tree/master/recognition/arcface_torch)               |
 
 ### Other:
 
 | Model        | Auto download | Inference code | Source                                                                                          |
 |:-------------|:--------------|:---------------|:------------------------------------------------------------------------------------------------|
-| genderage_v1 | Yes           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
+| genderage_v1 | No*           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
 | 2d106det     | No            | No             | [coordinateReg](https://github.com/deepinsight/insightface/tree/master/alignment/coordinateReg) |
+
+> `*` - please refer to important notice at the top of the page
 
 ## Requirements:
 
