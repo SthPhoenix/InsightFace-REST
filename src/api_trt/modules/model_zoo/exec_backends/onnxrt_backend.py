@@ -72,11 +72,11 @@ class FaceGenderage:
     def get(self, face_img):
         if not isinstance(face_img, list):
             face_img = [face_img]
-
-        for i, img in enumerate(face_img):
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            img = np.transpose(img, (2, 0, 1))
-            face_img[i] = img.astype(np.float32)
+        if not face_img[0].shape == (3, 112, 112):
+            for i, img in enumerate(face_img):
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                img = np.transpose(img, (2, 0, 1))
+                face_img[i] = img.astype(np.float32)
         face_img = np.stack(face_img)
 
         _ga = []
