@@ -45,6 +45,7 @@ models = {
     'centerface': centerface,
     'dbface': dbface,
     'scrfd_10g_bnkps': scrfd_10g_bnkps,
+    'scrfd_2.5g_bnkps': scrfd_10g_bnkps,
 }
 
 

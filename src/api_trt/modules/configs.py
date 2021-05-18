@@ -34,6 +34,7 @@ anticonv_outputs = [
 centerface_outputs = ['537', '538', '539', '540']
 dbface_outputs = ["hm", "tlrb", "landmark"]
 scrfd_outputs = ['448', '471', '494', '451', '474', '497', '454', '477', '500']
+scrfd_2_5g_outputs = ['446', '466', '486', '449', '469', '489', '452', '472', '492']
 
 mxnet_models = {
     'retinaface_mnet025_v0': {
@@ -114,6 +115,13 @@ mxnet_models = {
         'outputs': scrfd_outputs
     },
 
+    'scrfd_2.5g_bnkps': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'outputs': scrfd_2_5g_outputs
+    },
+
     'coordinateReg': {
         'symbol': '2d106det-symbol.json',
         'params': '2d106det-0000.params',
@@ -155,8 +163,6 @@ mxnet_models = {
     },
 
     'glintr100': {
-        'symbol': 'model-symbol.json',
-        'params': 'model-0000.params',
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
