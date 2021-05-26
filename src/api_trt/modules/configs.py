@@ -16,7 +16,7 @@ retina_outputs = ['face_rpn_cls_prob_reshape_stride32',
                   'face_rpn_bbox_pred_stride8',
                   'face_rpn_landmark_pred_stride8']
 
-anticonv_outputs = [
+anticov_outputs = [
     'face_rpn_cls_prob_reshape_stride32',
     'face_rpn_bbox_pred_stride32',
     'face_rpn_landmark_pred_stride32',
@@ -33,8 +33,10 @@ anticonv_outputs = [
 
 centerface_outputs = ['537', '538', '539', '540']
 dbface_outputs = ["hm", "tlrb", "landmark"]
-scrfd_outputs = ['448', '471', '494', '451', '474', '497', '454', '477', '500']
-scrfd_2_5g_outputs = ['446', '466', '486', '449', '469', '489', '452', '472', '492']
+scrfd_10g_bnkps_outputs = ['448', '471', '494', '451', '474', '497', '454', '477', '500']
+scrfd_2_5g_bnkps_outputs = ['446', '466', '486', '449', '469', '489', '452', '472', '492']
+scrfd_2_5g_gnkps_outputs = ['448', '488', '528', '451', '491', '531', '454', '494', '534']
+
 
 mxnet_models = {
     'retinaface_mnet025_v0': {
@@ -73,7 +75,7 @@ mxnet_models = {
         'symbol': 'mnet_cov2-symbol.json',
         'params': 'mnet_cov2-0000.params',
         'shape': (1, 3, 480, 640),
-        'outputs': anticonv_outputs,
+        'outputs': anticov_outputs,
         'reshape': True,
         'in_package': False
     },
@@ -112,15 +114,50 @@ mxnet_models = {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
-        'outputs': scrfd_outputs
+        'outputs': scrfd_10g_bnkps_outputs
     },
 
     'scrfd_2.5g_bnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
-        'outputs': scrfd_2_5g_outputs
+        'outputs': scrfd_2_5g_bnkps_outputs
     },
+
+    # 'scrfd_500m_bnkps': {
+    #     'in_package': False,
+    #     'shape': (1, 3, 640, 640),
+    #     'reshape': True,
+    #     'outputs': scrfd_500m_bnkps_outputs
+    # },
+
+    # 'scrfd_34g_gnkps': {
+    #     'in_package': False,
+    #     'shape': (1, 3, 640, 640),
+    #     'reshape': True,
+    #     'outputs': scrfd_34g_gnkps_outputs
+    # },
+    #
+    # 'scrfd_10g_gnkps': {
+    #     'in_package': False,
+    #     'shape': (1, 3, 640, 640),
+    #     'reshape': True,
+    #     'outputs': scrfd_10g_bnkps_outputs
+    # },
+
+    'scrfd_2.5g_gnkps': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'outputs': scrfd_2_5g_gnkps_outputs
+    },
+
+    # 'scrfd_500m_gnkps': {
+    #     'in_package': False,
+    #     'shape': (1, 3, 640, 640),
+    #     'reshape': True,
+    #     'outputs': scrfd_2_5g_bnkps_outputs
+    # },
 
     'coordinateReg': {
         'symbol': '2d106det-symbol.json',

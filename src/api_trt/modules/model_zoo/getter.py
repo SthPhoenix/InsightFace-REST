@@ -44,8 +44,13 @@ models = {
     'mnet_cov2': mnet_cov2,
     'centerface': centerface,
     'dbface': dbface,
-    'scrfd_10g_bnkps': scrfd_10g_bnkps,
-    'scrfd_2.5g_bnkps': scrfd_10g_bnkps,
+    'scrfd_10g_bnkps': scrfd,
+    'scrfd_2.5g_bnkps': scrfd,
+    'scrfd_500m_bnkps': scrfd,
+    'scrfd_34g_gnkps': scrfd,
+    'scrfd_10g_gnkps': scrfd,
+    'scrfd_2.5g_gnkps': scrfd,
+    'scrfd_500m_gnkps': scrfd,
 }
 
 
