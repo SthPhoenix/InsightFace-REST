@@ -59,33 +59,59 @@ API and converting models to ONNX and TensorRT using Docker.
 
 ### Detection:
 
-| Model                 | Auto download | Inference code | Source                                                                                          |
-|:----------------------|:--------------|:---------------|:------------------------------------------------------------------------------------------------|
-| retinaface_r50_v1     | No*           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
-| retinaface_mnet025_v1 | No*           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
-| retinaface_mnet025_v2 | No*           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
-| mnet_cov2             | No            | Yes            | [mnet_cov2](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov) |
-| centerface            | Yes           | Yes            | [Star-Clouds/CenterFace](https://github.com/Star-Clouds/CenterFace)                             |
-| scrfd_10g_bnkps       | No            | Yes            | [SCRFD](https://github.com/deepinsight/insightface/tree/master/detection/scrfd)                 |
+
+| Model                 | Auto download | Inference code | Source                     | ONNX File |
+|:----------------------|:--------------:|:---------------:|:-------------------------|:---------:|
+| retinaface_r50_v1     | No*           | Yes            | [official package][1]      |[link][dl1]|
+| retinaface_mnet025_v1 | No*           | Yes            | [official package][1]      |[link][dl2]|
+| retinaface_mnet025_v2 | No*           | Yes            | [official package][1]      |[link][dl3]|
+| mnet_cov2             | No*           | Yes            | [mnet_cov2][2]             |[link][dl4]|
+| centerface            | Yes           | Yes            | [Star-Clouds/CenterFace][3]|[link][dl5]|
+| scrfd_10g_bnkps       | No*           | Yes            | [SCRFD][4]                 |[link][dl6]|
+| scrfd_2.5g_bnkps      | No*           | Yes            | [SCRFD][4]                 |[link][dl7]|
+
 ### Recognition:
 
-| Model                  | Auto download | Inference code | Source                                                                                                    |
-|:-----------------------|:--------------|:---------------|:----------------------------------------------------------------------------------------------------------|
-| arcface_r100_v1        | No*           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)                 |
-| r100-arcface-msfdrop75 | No            | Yes            | [SubCenter-ArcFace](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace) |
-| r50-arcface-msfdrop75  | No            | Yes            | [SubCenter-ArcFace](https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace) |
-| glint360k_r100FC_1.0   | No            | Yes            | [Partial-FC](https://github.com/deepinsight/insightface/tree/master/recognition/partial_fc)               |
-| glint360k_r100FC_0.1   | No            | Yes            | [Partial-FC](https://github.com/deepinsight/insightface/tree/master/recognition/partial_fc)               |
-| glintr100              | No            | Yes            | [Arcface-torch](https://github.com/deepinsight/insightface/tree/master/recognition/arcface_torch)               |
-
+| Model                  | Auto download | Inference code | Source                | ONNX File  |
+|:-----------------------|:--------------:|:---------------:|:--------------------|:----------:|
+| arcface_r100_v1        | No*           | Yes            | [official package][1] |[link][dl8] |
+| r100-arcface-msfdrop75 | No            | Yes            | [SubCenter-ArcFace][5]| None       |
+| r50-arcface-msfdrop75  | No            | Yes            | [SubCenter-ArcFace][5]| None       |
+| glint360k_r100FC_1.0   | No            | Yes            | [Partial-FC][6]       | None       |
+| glint360k_r100FC_0.1   | No            | Yes            | [Partial-FC][6]       | None       |
+| glintr100              | No*           | Yes            | [official package][1] |[link][dl13]|
 ### Other:
 
-| Model        | Auto download | Inference code | Source                                                                                          |
-|:-------------|:--------------|:---------------|:------------------------------------------------------------------------------------------------|
-| genderage_v1 | No*           | Yes            | [official package](https://github.com/deepinsight/insightface/tree/master/python-package)       |
-| 2d106det     | No            | No             | [coordinateReg](https://github.com/deepinsight/insightface/tree/master/alignment/coordinateReg) |
+| Model        | Auto download | Inference code | Source                | ONNX File  |
+|:-------------|:--------------:|:---------------:|:--------------------|:----------:|
+| genderage_v1 | No*           | Yes            | [official package][1] |[link][dl14]|
+| 2d106det     | No            | No             | [coordinateReg][8]    | None       |
+
+
+[1]: https://github.com/deepinsight/insightface/tree/master/python-package
+[2]: https://github.com/deepinsight/insightface/tree/master/detection/RetinaFaceAntiCov
+[3]: https://github.com/Star-Clouds/CenterFace
+[4]: https://github.com/deepinsight/insightface/tree/master/detection/scrfd
+[5]: https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace
+[6]: https://github.com/deepinsight/insightface/tree/master/recognition/partial_fc
+[7]: https://github.com/deepinsight/insightface/tree/master/recognition/arcface_torch
+[8]: https://github.com/deepinsight/insightface/tree/master/alignment/coordinateReg
+
+[dl1]: https://drive.google.com/file/d/1peUaq0TtNBhoXUbMqsCyQdL7t5JuhHMH/view?usp=sharing
+[dl2]: https://drive.google.com/file/d/12H4TXtGlAr1boEGtUukteolpQ9wfUTWe/view?usp=sharing
+[dl3]: https://drive.google.com/file/d/1hzgOejAfCAB8WyfF24UkfiHD2FJbaCPi/view?usp=sharing
+[dl4]: https://drive.google.com/file/d/1xPc3n_Y0jKyBONRx71UqCfcHjOGOLc2g/view?usp=sharing
+[dl5]: https://drive.google.com/file/d/10tXAXhiq06VNdTAdYt5-pjkGn7zOFMk4/view?usp=sharing
+[dl6]: https://drive.google.com/file/d/1OAXx8U8SIsBhmYYGKmD-CLXrYz_YIV-3/view?usp=sharing
+[dl7]: https://drive.google.com/file/d/1qnKTHMkuoWsCJ6iJeiFExGy5PSi8JKPL/view?usp=sharing
+[dl8]: https://drive.google.com/file/d/1sj170K3rbo5iOdjvjHw-hKWvXgH4dld3/view?usp=sharing
+[dl13]: https://drive.google.com/file/d/1TR_ImGvuY7Dt22a9BOAUAlHasFfkrJp-/view?usp=sharing
+[dl14]: https://drive.google.com/file/d/1MnkqBzQHLlIaI7gEoa9dd6CeknXMCyZH/view?usp=sharing
 
 > `*` - please refer to important notice at the top of the page
+> 
+> For now you can manually download provided ONNX files and put them under `models` folder at following path:
+> `models/onnx/{model_name}/{model_name}.onnx`
 
 ## Requirements:
 
