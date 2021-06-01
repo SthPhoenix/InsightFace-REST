@@ -25,12 +25,16 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
             mode = 'centerface'
 
         input_name = model.graph.input[0].name
+        out_shape = model.graph.output[0].type.tensor_type.shape.dim[1].dim_value
+
         dyn_size = False
         if model.graph.input[0].type.tensor_type.shape.dim[2].dim_param == '?':
             dyn_size = True
 
         if input_name == 'input.1' and dyn_size is True:
             mode = 'scrfd'
+        elif input_name == 'input.1' and out_shape == 512:
+            mode = 'arcface'
 
     d = model.graph.input[0].type.tensor_type.shape.dim
     d[0].dim_value = n
