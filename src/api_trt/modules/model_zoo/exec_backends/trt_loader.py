@@ -4,6 +4,7 @@ import numpy as np
 import tensorrt as trt
 
 TRT_LOGGER = trt.Logger()
+trt.init_libnvinfer_plugins(None, "")
 
 # Simple helper data class that's a little nicer to use than a 2-tuple.
 class HostDeviceMem(object):
