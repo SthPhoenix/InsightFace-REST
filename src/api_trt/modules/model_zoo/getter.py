@@ -103,7 +103,6 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
     if backend_name == 'triton':
         return model_name
 
-
     if backend_name == 'onnx':
         model = onnx.load(onnx_path)
         if reshape_allowed is True:
@@ -122,7 +121,7 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
         if not os.path.exists(trt_path):
             prepare_folders([trt_dir])
 
-            if reshape_allowed is True or max_batch_size!=1:
+            if reshape_allowed is True or max_batch_size != 1:
                 logging.info(f'Reshaping ONNX inputs to: {shape}')
                 model = onnx.load(onnx_path)
                 onnx_batch_size = 1
@@ -143,8 +142,9 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
         return trt_path
 
 
-def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max_batch_size: int = 1, force_fp16: bool = False,
-              root_dir: str = "/models", download_model: bool = True, **kwargs):
+def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max_batch_size: int = 1,
+              force_fp16: bool = False,
+              root_dir: str = "/models", download_model: bool = True, triton_uri=None, **kwargs):
     """
     Returns inference backend instance with loaded model.
 
@@ -184,9 +184,10 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
 
     backend = backends[backend_name]
 
-    model_path = prepare_backend(model_name, backend_name, im_size=im_size, max_batch_size=max_batch_size, config=config, force_fp16=force_fp16,
+    model_path = prepare_backend(model_name, backend_name, im_size=im_size, max_batch_size=max_batch_size,
+                                 config=config, force_fp16=force_fp16,
                                  download_model=download_model)
 
     outputs = config.get_outputs_order(model_name)
-    model = models[model_name](model_path=model_path, backend=backend, outputs=outputs)
+    model = models[model_name](model_path=model_path, backend=backend, outputs=outputs, triton_uri=triton_uri)
     return model

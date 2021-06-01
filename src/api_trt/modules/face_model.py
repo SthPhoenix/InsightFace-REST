@@ -28,12 +28,12 @@ device2ctx = {
 # Wrapper for insightface detection model
 class Detector:
     def __init__(self, device: str = 'cuda', det_name: str = 'retinaface_r50_v1', max_size=None,
-                 backend_name: str = 'trt', force_fp16: bool = False):
+                 backend_name: str = 'trt', force_fp16: bool = False, triton_uri=None):
         if max_size is None:
             max_size = [640, 480]
 
         self.retina = get_model(det_name, backend_name=backend_name, force_fp16=force_fp16, im_size=max_size,
-                                root_dir='/models', download_model=False)
+                                root_dir='/models', download_model=False, triton_uri=triton_uri)
         self.retina.prepare(ctx_id=device2ctx[device], nms=0.35)
 
     def detect(self, data, threshold=0.3):
@@ -54,7 +54,7 @@ class FaceAnalysis:
     def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
                  ga_name: str = 'genderage_v1', device: str = 'cuda',
                  max_size=None, max_rec_batch_size: int = 1,
-                 backend_name: str = 'mxnet', force_fp16: bool = False):
+                 backend_name: str = 'mxnet', force_fp16: bool = False, triton_uri=None):
 
         if max_size is None:
             max_size = [640, 640]
@@ -70,18 +70,20 @@ class FaceAnalysis:
         ctx = device2ctx[device]
 
         self.det_model = Detector(det_name=det_name, device=device, max_size=self.max_size,
-                                  backend_name=backend_name, force_fp16=force_fp16)
+                                  backend_name=backend_name, force_fp16=force_fp16, triton_uri=triton_uri)
 
         if rec_name is not None:
             self.rec_model = get_model(rec_name, backend_name=backend_name, force_fp16=force_fp16,
-                                       max_batch_size=self.max_rec_batch_size, download_model=False)
+                                       max_batch_size=self.max_rec_batch_size, download_model=False,
+                                       triton_uri=triton_uri)
             self.rec_model.prepare(ctx_id=ctx)
         else:
             self.rec_model = None
 
         if ga_name is not None:
             self.ga_model = get_model(ga_name, backend_name=backend_name, force_fp16=force_fp16,
-                                      max_batch_size=self.max_rec_batch_size, download_model=False)
+                                      max_batch_size=self.max_rec_batch_size, download_model=False,
+                                      triton_uri=triton_uri)
             self.ga_model.prepare(ctx_id=ctx)
         else:
             self.ga_model = None

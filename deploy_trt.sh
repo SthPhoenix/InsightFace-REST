@@ -53,6 +53,10 @@ ga_model=genderage_v1
 ## Do not load genderage model:
 ga_ignore=False
 
+# Triton Inference Server GRPC uri:port (optional)
+# Should be updated when INFERENCE_BACKEND=triton
+triton_uri='localhost:8000'
+
 # Default settings for inference requests, can be overridden inside
 # request body.
 
@@ -105,6 +109,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e REC_BATCH_SIZE=$rec_batch_size\
         -e GA_NAME=$ga_model\
         -e GA_IGNORE=$ga_ignore\
+        -e TRITON_URI=$triton_uri\
         -e KEEP_ALL=True\
         -e MAX_SIZE=$max_size\
         -e DEF_RETURN_FACE_DATA=$return_face_data\

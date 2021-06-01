@@ -31,6 +31,7 @@ class Models:
         self.fp16 = tobool(os.getenv('FORCE_FP16', False))
         self.ga_ignore = tobool(os.getenv('GA_IGNORE', False))
         self.rec_ignore = tobool(os.getenv('REC_IGNORE', False))
+        self.triton_uri = os.getenv("TRITON_URI", None)
 
         if self.rec_ignore:
             self.rec_name = None

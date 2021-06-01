@@ -170,7 +170,7 @@ class Processing:
     def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
                  ga_name: str = 'genderage_v1', device: str = 'cuda', max_size: List[int] = None,
                  backend_name: str = 'trt', max_rec_batch_size: int = 1,
-                 force_fp16: bool = False):
+                 force_fp16: bool = False, triton_uri=None):
 
         if max_size is None:
             max_size = [640, 480]
@@ -181,7 +181,7 @@ class Processing:
         self.max_size = max_size
         self.model = FaceAnalysis(det_name=det_name, rec_name=rec_name, ga_name=ga_name, device=device,
                                   max_size=self.max_size, max_rec_batch_size=self.max_rec_batch_size,
-                                  backend_name=backend_name, force_fp16=force_fp16
+                                  backend_name=backend_name, force_fp16=force_fp16, triton_uri=triton_uri
                                   )
 
     def __iterate_faces(self, crops):
@@ -223,7 +223,7 @@ class Processing:
                     extract_ga: bool = True, return_landmarks: bool = False):
 
         output = dict(took={}, data=[])
-        t0 = time.time()
+
         for image_data in images:
             _faces_dict = dict(status=None, took=None, faces=[])
             try:
@@ -235,7 +235,8 @@ class Processing:
                     image = image_data.get('data')
                     faces = await self.model.get(image, max_size=max_size, threshold=threshold,
                                                  return_face_data=return_face_data,
-                                                 extract_embedding=extract_embedding, extract_ga=extract_ga, limit_faces=limit_faces)
+                                                 extract_embedding=extract_embedding, extract_ga=extract_ga,
+                                                 limit_faces=limit_faces)
 
                     for idx, face in enumerate(faces):
                         _face_dict = serialize_face(face=face, return_face_data=return_face_data,
@@ -303,9 +304,6 @@ class Processing:
 
         faces = await self.model.get(image, threshold=threshold, return_face_data=False,
                                      extract_embedding=False, extract_ga=False, limit_faces=limit_faces)
-
-
-
 
         for face in faces:
             bbox = face.bbox.astype(int)
