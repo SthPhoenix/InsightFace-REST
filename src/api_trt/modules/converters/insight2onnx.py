@@ -25,16 +25,6 @@ print('onnx version:', onnx.__version__)
 # https://github.com/onnx/models/issues/156#issuecomment-690847276
 # And MXNet export _op_translations fixes from https://github.com/zheshipinyinMc/arcface_retinaface_mxnet2onnx
 
-def add_dyn_batch(model_in, model_out):
-    model = onnx.load(model_in)
-    d = model.graph.input[0].type.tensor_type.shape.dim
-    d[0].dim_value = -1
-    for output in model.graph.output:
-        d = output.type.tensor_type.shape.dim
-        d[0].dim_value = -1
-    onnx.save_model(model, model_out)
-
-
 def mxnet_fixgamma_params(input_param: str, layers: List[str]):
     '''
     Replace gamma weights with zeros if fix_gamma is True.
