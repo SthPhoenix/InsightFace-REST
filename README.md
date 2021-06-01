@@ -117,7 +117,7 @@ API and converting models to ONNX and TensorRT using Docker.
 
 1. Docker
 2. Nvidia-container-toolkit
-3. Nvidia GPU drivers (460.x.x and above)
+3. Nvidia GPU drivers (465.x.x and above)
 
 
 ## Running with Docker:
