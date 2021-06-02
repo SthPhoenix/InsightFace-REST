@@ -9,7 +9,7 @@ from .trt_loader import TrtModel
 
 class Arcface:
 
-    def __init__(self, rec_name: str = '/models/trt-engines/arcface_r100_v1/arcface_r100_v1.plan'):
+    def __init__(self, rec_name: str = '/models/trt-engines/arcface_r100_v1/arcface_r100_v1.plan',**kwargs):
         self.rec_model = TrtModel(rec_name)
         self.input_shape = None
         self.max_batch_size = 1
@@ -41,7 +41,7 @@ class Arcface:
 
 
 class Cosface:
-    def __init__(self, rec_name='/models/onnx/glintr100/glintr100.onnx'):
+    def __init__(self, rec_name='/models/onnx/glintr100/glintr100.onnx',**kwargs):
         self.rec_model = TrtModel(rec_name)
         self.input_shape = None
         self.max_batch_size = 1
@@ -78,7 +78,7 @@ class Cosface:
 
 class FaceGenderage:
 
-    def __init__(self, rec_name: str = '/models/trt-engines/genderage_v1/genderage_v1.plan'):
+    def __init__(self, rec_name: str = '/models/trt-engines/genderage_v1/genderage_v1.plan',**kwargs):
         self.rec_model = TrtModel(rec_name)
         self.input_shape = None
 
@@ -122,7 +122,7 @@ class FaceGenderage:
 class DetectorInfer:
 
     def __init__(self, model='/models/trt-engines/centerface/centerface.plan',
-                 output_order=None):
+                 output_order=None,**kwargs):
         self.rec_model = TrtModel(model)
         self.model_name = os.path.basename(model)
         self.input_shape = None
