@@ -5,7 +5,7 @@ import logging
 
 
 class Arcface:
-    def __init__(self, rec_name='/models/onnx/arcface_r100_v1/arcface_r100_v1.onnx'):
+    def __init__(self, rec_name='/models/onnx/arcface_r100_v1/arcface_r100_v1.onnx',**kwargs):
         self.rec_model = onnxruntime.InferenceSession(rec_name)
         self.outputs = [e.name for e in self.rec_model.get_outputs()]
 
@@ -28,7 +28,7 @@ class Arcface:
         return net_out[0]
 
 class Cosface:
-    def __init__(self, rec_name='/models/onnx/glintr100/glintr100.onnx'):
+    def __init__(self, rec_name='/models/onnx/glintr100/glintr100.onnx',**kwargs):
         self.rec_model = onnxruntime.InferenceSession(rec_name)
         self.input_shape = None
         self.max_batch_size = 1
@@ -56,7 +56,7 @@ class Cosface:
 
 class FaceGenderage:
 
-    def __init__(self, rec_name='/models/onnx/genderage_v1/genderage_v1.onnx', outputs=None):
+    def __init__(self, rec_name='/models/onnx/genderage_v1/genderage_v1.onnx', outputs=None,**kwargs):
         self.rec_model = onnxruntime.InferenceSession(rec_name)
         self.input = self.rec_model.get_inputs()[0]
         if outputs is None:
@@ -96,7 +96,7 @@ class FaceGenderage:
 class DetectorInfer:
 
     def __init__(self, model='/models/onnx/centerface/centerface.onnx',
-                 output_order=None):
+                 output_order=None,**kwargs):
         self.rec_model = onnxruntime.InferenceSession(model)
         self.input = self.rec_model.get_inputs()[0]
 
