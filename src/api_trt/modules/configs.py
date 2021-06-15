@@ -33,9 +33,12 @@ anticov_outputs = [
 
 centerface_outputs = ['537', '538', '539', '540']
 dbface_outputs = ["hm", "tlrb", "landmark"]
-scrfd_10g_bnkps_outputs = ['448', '471', '494', '451', '474', '497', '454', '477', '500']
+scrfd_500m_bnkps_outputs = ['443', '468', '493', '446', '471', '496', '449', '474', '499']
 scrfd_2_5g_bnkps_outputs = ['446', '466', '486', '449', '469', '489', '452', '472', '492']
+scrfd_10g_bnkps_outputs = ['448', '471', '494', '451', '474', '497', '454', '477', '500']
+scrfd_500m_gnkps_outputs = ['447', '512', '577', '450', '515', '580', '453', '518', '583']
 scrfd_2_5g_gnkps_outputs = ['448', '488', '528', '451', '491', '531', '454', '494', '534']
+scrfd_10g_gnkps_outputs = ['451', '504', '557', '454', '507', '560', '457', '510', '563']
 
 
 mxnet_models = {
@@ -110,11 +113,11 @@ mxnet_models = {
         'outputs': dbface_outputs
     },
 
-    'scrfd_10g_bnkps': {
+    'scrfd_500m_bnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
-        'outputs': scrfd_10g_bnkps_outputs
+        'outputs': scrfd_500m_bnkps_outputs
     },
 
     'scrfd_2.5g_bnkps': {
@@ -124,26 +127,19 @@ mxnet_models = {
         'outputs': scrfd_2_5g_bnkps_outputs
     },
 
-    # 'scrfd_500m_bnkps': {
-    #     'in_package': False,
-    #     'shape': (1, 3, 640, 640),
-    #     'reshape': True,
-    #     'outputs': scrfd_500m_bnkps_outputs
-    # },
+    'scrfd_10g_bnkps': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'outputs': scrfd_10g_bnkps_outputs
+    },
 
-    # 'scrfd_34g_gnkps': {
-    #     'in_package': False,
-    #     'shape': (1, 3, 640, 640),
-    #     'reshape': True,
-    #     'outputs': scrfd_34g_gnkps_outputs
-    # },
-    #
-    # 'scrfd_10g_gnkps': {
-    #     'in_package': False,
-    #     'shape': (1, 3, 640, 640),
-    #     'reshape': True,
-    #     'outputs': scrfd_10g_bnkps_outputs
-    # },
+    'scrfd_500m_gnkps': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'outputs': scrfd_500m_gnkps_outputs
+    },
 
     'scrfd_2.5g_gnkps': {
         'in_package': False,
@@ -152,12 +148,12 @@ mxnet_models = {
         'outputs': scrfd_2_5g_gnkps_outputs
     },
 
-    # 'scrfd_500m_gnkps': {
-    #     'in_package': False,
-    #     'shape': (1, 3, 640, 640),
-    #     'reshape': True,
-    #     'outputs': scrfd_2_5g_bnkps_outputs
-    # },
+    'scrfd_10g_gnkps': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'outputs': scrfd_10g_gnkps_outputs
+    },
 
     'coordinateReg': {
         'symbol': '2d106det-symbol.json',
@@ -216,6 +212,9 @@ mxnet_models = {
         'reshape': False
     }
 }
+scrfd_10g_gnkps_outputs = ['451', '504', '557', '454', '507', '560', '457', '510', '563']
+
+
 
 models_repo = 'https://drive.google.com/drive/folders/109D__GLXHPmiW9tIgsCadTdjcXB0u0vK'
 

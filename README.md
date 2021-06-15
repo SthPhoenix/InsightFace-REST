@@ -69,6 +69,10 @@ API and converting models to ONNX and TensorRT using Docker.
 | centerface            | Yes           | Yes            | [Star-Clouds/CenterFace][3]|[link][dl5]|
 | scrfd_10g_bnkps       | No*           | Yes            | [SCRFD][4]                 |[link][dl6]|
 | scrfd_2.5g_bnkps      | No*           | Yes            | [SCRFD][4]                 |[link][dl7]|
+| scrfd_500m_bnkps      | No*           | Yes            | [SCRFD][4]                 |[link][dl15]|
+| scrfd_10g_gnkps       | No*           | Yes            | [SCRFD][4]**               |[link][dl16]|
+| scrfd_2.5g_gnkps      | No*           | Yes            | [SCRFD][4]**               |[link][dl17]|
+| scrfd_500m_gnkps      | No*           | Yes            | [SCRFD][4]**               |[link][dl18]|
 
 ### Recognition:
 
@@ -107,11 +111,28 @@ API and converting models to ONNX and TensorRT using Docker.
 [dl8]: https://drive.google.com/file/d/1sj170K3rbo5iOdjvjHw-hKWvXgH4dld3/view?usp=sharing
 [dl13]: https://drive.google.com/file/d/1TR_ImGvuY7Dt22a9BOAUAlHasFfkrJp-/view?usp=sharing
 [dl14]: https://drive.google.com/file/d/1MnkqBzQHLlIaI7gEoa9dd6CeknXMCyZH/view?usp=sharing
+[dl15]: https://drive.google.com/file/d/13mY-c6NIShu_-4AdCo3Z3YIYja4HfNaA/view?usp=sharing
+[dl16]: https://drive.google.com/file/d/1v9nhtPWMLSedueeL6c3nJEoIFlSNSCvh/view?usp=sharing
+[dl17]: https://drive.google.com/file/d/1F__ILEeCTzeR71BAV-vInuyBezYmNMsB/view?usp=sharing
+[dl18]: https://drive.google.com/file/d/13OoTQlyDI2BkuA5oJUtuuvMlxvkM_-h7/view?usp=sharing
 
-> `*` - please refer to important notice at the top of the page
-> 
+ `*` - please refer to important notice at the top of the page
+
 > For now you can manually download provided ONNX files and put them under `models` folder at following path:
 > `models/onnx/{model_name}/{model_name}.onnx`
+
+`**` - custom models retrained for this repo. Original SCRFD models have bug (deepinsight/insightface#1518) with 
+detecting large faces occupying >40% of image. These models are retrained with Group Normalization instead of 
+Batch Normalization, which fixes bug, though at cost of some accuracy. 
+
+Models accuracy on WiderFace benchmark:
+
+| Model              | Easy   | Medium   | Hard  |
+| -------------------| -------|----------| ----- |
+|  scrfd_10g_gnkps   | 95.51  | 94.12    | 82.14 |
+|  scrfd_2.5g_gnkps  | 93.57  | 91.70    | 76.08 |
+|  scrfd_500m_gnkps  | 88.70  | 86.11    | 63.57 |
+
 
 ## Requirements:
 
