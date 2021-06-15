@@ -121,7 +121,8 @@ API and converting models to ONNX and TensorRT using Docker.
 > For now you can manually download provided ONNX files and put them under `models` folder at following path:
 > `models/onnx/{model_name}/{model_name}.onnx`
 
-`**` - custom models retrained for this repo. Original SCRFD models have bug (deepinsight/insightface#1518) with 
+`**` - custom models retrained for this repo. Original SCRFD models have bug 
+([deepinsight/insightface#1518](https://github.com/deepinsight/insightface/issues/1518)) with 
 detecting large faces occupying >40% of image. These models are retrained with Group Normalization instead of 
 Batch Normalization, which fixes bug, though at cost of some accuracy. 
 
