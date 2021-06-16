@@ -74,7 +74,7 @@ model_version = '1'
 
 class Arcface:
 
-    def __init__(self, rec_name = 'arcface_r100_v1', model_version='1', triton_uri='10.0.15.109:8002', **kwargs):
+    def __init__(self, rec_name = 'arcface_r100_v1', model_version='1', triton_uri='localhost:8001', **kwargs):
         self.model_name = rec_name
         self.model_version = model_version
         self.url = triton_uri
@@ -135,7 +135,7 @@ class Arcface:
 
 
 class Cosface:
-    def __init__(self, rec_name = 'arcface_r100_v1', triton_uri='10.0.15.109:8002', model_version='1',**kwargs):
+    def __init__(self, rec_name = 'arcface_r100_v1', triton_uri='localhost:8001', model_version='1',**kwargs):
         self.model_name = rec_name
         self.model_version = model_version
         self.url = triton_uri
@@ -196,7 +196,7 @@ class Cosface:
 
 class DetectorInfer:
 
-    def __init__(self, model = 'retinaface_r50_v1', output_order=None, triton_uri='10.0.15.109:8002', model_version='1',**kwargs):
+    def __init__(self, model = 'retinaface_r50_v1', output_order=None, triton_uri='localhost:8001', model_version='1',**kwargs):
         self.model_name = model
         self.model_version = model_version
         self.url = triton_uri
