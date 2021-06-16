@@ -48,7 +48,9 @@ mxnet_models = {
         'shape': (1, 3, 480, 640),
         'outputs': retina_outputs,
         'reshape': True,
-        'in_package': False
+        'in_package': False,
+        'link': '1PFDlZF8CYEr7TVnjGo_qVKVVlLP-7_du',
+        'dl_type': 'google'
     },
     'retinaface_mnet025_v1': {
         'symbol': 'mnet10-symbol.json',
@@ -56,7 +58,9 @@ mxnet_models = {
         'shape': (1, 3, 480, 640),
         'outputs': retina_outputs,
         'reshape': True,
-        'in_package': True,
+        'in_package': False,
+        'link': '12H4TXtGlAr1boEGtUukteolpQ9wfUTWe',
+        'dl_type': 'google'
     },
     'retinaface_mnet025_v2': {
         'symbol': 'mnet12-symbol.json',
@@ -64,7 +68,9 @@ mxnet_models = {
         'shape': (1, 3, 480, 640),
         'outputs': retina_outputs,
         'reshape': True,
-        'in_package': True,
+        'in_package': False,
+        'link': '1hzgOejAfCAB8WyfF24UkfiHD2FJbaCPi',
+        'dl_type': 'google'
     },
     'retinaface_r50_v1': {
         'symbol': 'R50-symbol.json',
@@ -72,7 +78,9 @@ mxnet_models = {
         'shape': (1, 3, 480, 640),
         'outputs': retina_outputs,
         'reshape': True,
-        'in_package': True
+        'in_package': False,
+        'link': '1peUaq0TtNBhoXUbMqsCyQdL7t5JuhHMH',
+        'dl_type': 'google'
     },
     'mnet_cov2': {
         'symbol': 'mnet_cov2-symbol.json',
@@ -80,7 +88,9 @@ mxnet_models = {
         'shape': (1, 3, 480, 640),
         'outputs': anticov_outputs,
         'reshape': True,
-        'in_package': False
+        'in_package': False,
+        'link': '1xPc3n_Y0jKyBONRx71UqCfcHjOGOLc2g',
+        'dl_type': 'google'
     },
     'arcface_r100_v1': {
         'symbol': 'model-symbol.json',
@@ -88,7 +98,9 @@ mxnet_models = {
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
         'reshape': False,
-        'in_package': True
+        'in_package': False,
+        'link': '1sj170K3rbo5iOdjvjHw-hKWvXgH4dld3',
+        'dl_type': 'google'
     },
     'genderage_v1': {
         'symbol': 'model-symbol.json',
@@ -96,7 +108,9 @@ mxnet_models = {
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
         'reshape': False,
-        'in_package': True
+        'in_package': False,
+        'link': '1MnkqBzQHLlIaI7gEoa9dd6CeknXMCyZH',
+        'dl_type': 'google'
     },
     'centerface': {
         'in_package': False,
@@ -110,49 +124,62 @@ mxnet_models = {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
-        'outputs': dbface_outputs
+        'outputs': dbface_outputs,
+        'dl_type': 'google'
     },
 
     'scrfd_500m_bnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
-        'outputs': scrfd_500m_bnkps_outputs
+        'outputs': scrfd_500m_bnkps_outputs,
+        'link': '13mY-c6NIShu_-4AdCo3Z3YIYja4HfNaA',
+        'dl_type': 'google'
     },
 
     'scrfd_2.5g_bnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
-        'outputs': scrfd_2_5g_bnkps_outputs
+        'outputs': scrfd_2_5g_bnkps_outputs,
+        'link': '1qnKTHMkuoWsCJ6iJeiFExGy5PSi8JKPL',
+        'dl_type': 'google'
     },
 
     'scrfd_10g_bnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
-        'outputs': scrfd_10g_bnkps_outputs
+        'outputs': scrfd_10g_bnkps_outputs,
+        'link': '1OAXx8U8SIsBhmYYGKmD-CLXrYz_YIV-3',
+        'dl_type': 'google'
     },
 
     'scrfd_500m_gnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
-        'outputs': scrfd_500m_gnkps_outputs
+        'outputs': scrfd_500m_gnkps_outputs,
+        'link': '13OoTQlyDI2BkuA5oJUtuuvMlxvkM_-h7',
+        'dl_type': 'google'
     },
 
     'scrfd_2.5g_gnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
-        'outputs': scrfd_2_5g_gnkps_outputs
+        'outputs': scrfd_2_5g_gnkps_outputs,
+        'link': '1F__ILEeCTzeR71BAV-vInuyBezYmNMsB',
+        'dl_type': 'google'
     },
 
     'scrfd_10g_gnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
-        'outputs': scrfd_10g_gnkps_outputs
+        'outputs': scrfd_10g_gnkps_outputs,
+        'link': '1v9nhtPWMLSedueeL6c3nJEoIFlSNSCvh',
+        'dl_type': 'google'
     },
 
     'coordinateReg': {
@@ -160,7 +187,7 @@ mxnet_models = {
         'params': '2d106det-0000.params',
         'in_package': False,
         'shape': (1, 3, 192, 192),
-        'reshape': False
+        'reshape': False,
     },
     'r100-arcface-msfdrop75': {
         'symbol': 'model-symbol.json',
@@ -176,7 +203,7 @@ mxnet_models = {
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
-        'reshape': False
+        'reshape': False,
     },
     'glint360k_r100FC_1.0': {
         'symbol': 'model-symbol.json',
@@ -199,7 +226,9 @@ mxnet_models = {
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
-        'reshape': False
+        'reshape': False,
+        'link': '1TR_ImGvuY7Dt22a9BOAUAlHasFfkrJp-',
+        'dl_type': 'google'
     },
 
     # You can put your own pretrained ArcFace model to /models/mxnet/custom_rec_model
@@ -212,11 +241,6 @@ mxnet_models = {
         'reshape': False
     }
 }
-scrfd_10g_gnkps_outputs = ['451', '504', '557', '454', '507', '560', '457', '510', '563']
-
-
-
-models_repo = 'https://drive.google.com/drive/folders/109D__GLXHPmiW9tIgsCadTdjcXB0u0vK'
 
 
 class Configs(object):
@@ -258,3 +282,6 @@ class Configs(object):
 
     def get_dl_link(self, model_name):
         return self.mxnet_models.get(model_name, {}).get('link')
+
+    def get_dl_type(self, model_name):
+        return self.mxnet_models.get(model_name, {}).get('dl_type')

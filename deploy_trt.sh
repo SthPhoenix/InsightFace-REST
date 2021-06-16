@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.5.9.9'
+TAG='v0.6.0.0'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -36,12 +36,13 @@ force_fp16=False
 
 # DET MODELS:
 ## retinaface_mnet025_v1, retinaface_mnet025_v2, retinaface_r50_v1, centerface
-## ATTENTION: mtcnn model is not supported for TensorRT backend.
-det_model=retinaface_r50_v1
+## scrfd_500m_bnkps, scrfd_2.5g_bnkps, scrfd_10g_bnkps
+## scrfd_500m_gnkps, scrfd_2.5g_gnkps, scrfd_10g_gnkps
+det_model=scrfd_10g_gnkps
 
 # REC MODELS:
-## arcface_r100_v1
-rec_model=arcface_r100_v1
+## arcface_r100_v1, glintr100
+rec_model=glintr100
 ## Do not load recognition model:
 rec_ignore=False
 ## Maximum batch size for recognition model

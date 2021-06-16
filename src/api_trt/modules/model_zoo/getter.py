@@ -14,6 +14,7 @@ from ..converters.reshape_onnx import reshape, reshape_onnx_input
 from ..converters.remove_initializer_from_input import remove_initializer_from_input
 from ..utils.helpers import prepare_folders
 from ..utils.download import download
+from ..utils.download_google import download_from_gdrive
 from ..utils.model_store import get_model_file
 
 from ..configs import Configs
@@ -92,8 +93,12 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
             convert_insight_model(mxnet_symbol, mxnet_params, onnx_path, shape)
         else:
             dl_link = config.get_dl_link(model_name)
+            dl_type = config.get_dl_type(model_name)
             if dl_link:
-                download(config.get_dl_link(model_name), onnx_path)
+                if dl_type == 'google':
+                    download_from_gdrive(dl_link, onnx_path)
+                else:
+                    download(dl_link, onnx_path)
                 remove_initializer_from_input(onnx_path, onnx_path)
             elif os.path.exists(mxnet_symbol) and os.path.exists(mxnet_params):
                 convert_insight_model(mxnet_symbol, mxnet_params, onnx_path, shape)

@@ -1,12 +1,5 @@
 # InsightFace-REST
 
-> IMPORTANT NOTICE: Due to update of Deepinsight InsightFace python package to version 0.2 auto download of InsightFace 
-> models is no longer available for now. 
-> Please manually download models and unpack them into `/models/mxnet`. 
-> 
-> Download link available at official InsightFace repository: [python-package](https://github.com/deepinsight/insightface/tree/master/python-package)
-
-
 This repository aims to provide convenient, easy deployable and scalable
 REST API for InsightFace face detection and recognition pipeline using
 FastAPI for serving and NVIDIA TensorRT for optimized inference.
@@ -26,12 +19,12 @@ API and converting models to ONNX and TensorRT using Docker.
 
 - Ready for deployment on NVIDIA GPU enabled systems using Docker and
   nvidia-docker2.
-- Fully automatic model bootstrapping, including downloading and
-  MXnet->ONNX->TensorRT conversion of official DeepInsight InsightFace
-  models.
+- Automatic model download at startup (using Google Drive).
 - Up to 3x performance boost over MXNet inference with help of TensorRT
   optimizations, FP16 inference and batch inference of detected faces
   with ArcFace model.
+- Support for older Retinaface detectors and MXNet based ArcFace models, 
+  as well as newer SCRFD detectors and PyTorch based `glintr100` model.
 - Inference on CPU with ONNX-Runtime.
 
 ## Contents
@@ -62,33 +55,33 @@ API and converting models to ONNX and TensorRT using Docker.
 
 | Model                 | Auto download | Inference code | Source                     | ONNX File |
 |:----------------------|:--------------:|:---------------:|:-------------------------|:---------:|
-| retinaface_r50_v1     | No*           | Yes            | [official package][1]      |[link][dl1]|
-| retinaface_mnet025_v1 | No*           | Yes            | [official package][1]      |[link][dl2]|
-| retinaface_mnet025_v2 | No*           | Yes            | [official package][1]      |[link][dl3]|
-| mnet_cov2             | No*           | Yes            | [mnet_cov2][2]             |[link][dl4]|
-| centerface            | Yes           | Yes            | [Star-Clouds/CenterFace][3]|[link][dl5]|
-| scrfd_10g_bnkps       | No*           | Yes            | [SCRFD][4]                 |[link][dl6]|
-| scrfd_2.5g_bnkps      | No*           | Yes            | [SCRFD][4]                 |[link][dl7]|
-| scrfd_500m_bnkps      | No*           | Yes            | [SCRFD][4]                 |[link][dl15]|
-| scrfd_10g_gnkps       | No*           | Yes            | [SCRFD][4]**               |[link][dl16]|
-| scrfd_2.5g_gnkps      | No*           | Yes            | [SCRFD][4]**               |[link][dl17]|
-| scrfd_500m_gnkps      | No*           | Yes            | [SCRFD][4]**               |[link][dl18]|
+| retinaface_r50_v1     | Yes*           | Yes            | [official package][1]      |[link][dl1]|
+| retinaface_mnet025_v1 | Yes*           | Yes            | [official package][1]      |[link][dl2]|
+| retinaface_mnet025_v2 | Yes*           | Yes            | [official package][1]      |[link][dl3]|
+| mnet_cov2             | Yes*           | Yes            | [mnet_cov2][2]             |[link][dl4]|
+| centerface            | Yes            | Yes            | [Star-Clouds/CenterFace][3]|[link][dl5]|
+| scrfd_10g_bnkps       | Yes*           | Yes            | [SCRFD][4]                 |[link][dl6]|
+| scrfd_2.5g_bnkps      | Yes*           | Yes            | [SCRFD][4]                 |[link][dl7]|
+| scrfd_500m_bnkps      | Yes*           | Yes            | [SCRFD][4]                 |[link][dl15]|
+| scrfd_10g_gnkps       | Yes*           | Yes            | [SCRFD][4]**               |[link][dl16]|
+| scrfd_2.5g_gnkps      | Yes*           | Yes            | [SCRFD][4]**               |[link][dl17]|
+| scrfd_500m_gnkps      | Yes*           | Yes            | [SCRFD][4]**               |[link][dl18]|
 
 ### Recognition:
 
 | Model                  | Auto download | Inference code | Source                | ONNX File  |
 |:-----------------------|:--------------:|:---------------:|:--------------------|:----------:|
-| arcface_r100_v1        | No*           | Yes            | [official package][1] |[link][dl8] |
-| r100-arcface-msfdrop75 | No            | Yes            | [SubCenter-ArcFace][5]| None       |
-| r50-arcface-msfdrop75  | No            | Yes            | [SubCenter-ArcFace][5]| None       |
-| glint360k_r100FC_1.0   | No            | Yes            | [Partial-FC][6]       | None       |
-| glint360k_r100FC_0.1   | No            | Yes            | [Partial-FC][6]       | None       |
-| glintr100              | No*           | Yes            | [official package][1] |[link][dl13]|
+| arcface_r100_v1        | Yes*           | Yes            | [official package][1] |[link][dl8] |
+| r100-arcface-msfdrop75 | No             | Yes            | [SubCenter-ArcFace][5]| None       |
+| r50-arcface-msfdrop75  | No             | Yes            | [SubCenter-ArcFace][5]| None       |
+| glint360k_r100FC_1.0   | No             | Yes            | [Partial-FC][6]       | None       |
+| glint360k_r100FC_0.1   | No             | Yes            | [Partial-FC][6]       | None       |
+| glintr100              | Yes*           | Yes            | [official package][1] |[link][dl13]|
 ### Other:
 
 | Model        | Auto download | Inference code | Source                | ONNX File  |
 |:-------------|:--------------:|:---------------:|:--------------------|:----------:|
-| genderage_v1 | No*           | Yes            | [official package][1] |[link][dl14]|
+| genderage_v1 | Yes*           | Yes            | [official package][1] |[link][dl14]|
 | 2d106det     | No            | No             | [coordinateReg][8]    | None       |
 
 
@@ -116,10 +109,7 @@ API and converting models to ONNX and TensorRT using Docker.
 [dl17]: https://drive.google.com/file/d/1F__ILEeCTzeR71BAV-vInuyBezYmNMsB/view?usp=sharing
 [dl18]: https://drive.google.com/file/d/13OoTQlyDI2BkuA5oJUtuuvMlxvkM_-h7/view?usp=sharing
 
- `*` - please refer to important notice at the top of the page
-
-> For now you can manually download provided ONNX files and put them under `models` folder at following path:
-> `models/onnx/{model_name}/{model_name}.onnx`
+ `*` - Models will be downloaded from Google Drive, which might be inaccessible in some regions like China.
 
 `**` - custom models retrained for this repo. Original SCRFD models have bug 
 ([deepinsight/insightface#1518](https://github.com/deepinsight/insightface/issues/1518)) with 
@@ -242,16 +232,27 @@ bounding box, detection probability and detection number.
 
 ## Work in progress:
 
-- Add examples of indexing and searching faces.
+- Add examples of indexing and searching faces (powered by Milvus).
 - Add Triton Inference Server as execution backend
-- Add Cython postprocessing of Retinaface predictions.
 
 
 ## Known issues:
 
-- There are no known issues at the moment.
+- When `glintr100` recognition model is used `genderage` model returns 
+  wrong predictions.
 
 ## Changelog:
+
+### 2021-06-16 v0.6.0.0
+
+REST-API
+- Added support for newer InsightFace face detection SCRFD models:
+  `scrfd_500m_bnkps`, `scrfd_2.5g_bnkps`, `scrfd_10g_bnkps`
+- Released custom trained SCRFD models:
+  `scrfd_500m_gnkps`, `scrfd_2.5g_gnkps`, `scrfd_10g_gnkps`
+- Added support for newer InsightFace face recognition model `glintr100`  
+- Models auto download switched to Google Drive.
+- Default models switched to `glintr100` and `scrfd_10g_gnkps`
 
 ### 2021-05-08 v0.5.9.9
 
