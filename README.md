@@ -67,6 +67,8 @@ API and converting models to ONNX and TensorRT using Docker.
 | scrfd_2.5g_gnkps      | Yes*           | Yes            | [SCRFD][4]**               |[link][dl17]|
 | scrfd_500m_gnkps      | Yes*           | Yes            | [SCRFD][4]**               |[link][dl18]|
 
+> Note: SCRFD family models requires input image shape dividable by 32, i.e 640x640, 1024x768.
+
 ### Recognition:
 
 | Model                  | Auto download | Inference code | Source                | ONNX File  |

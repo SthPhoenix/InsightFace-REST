@@ -38,6 +38,7 @@ force_fp16=False
 ## retinaface_mnet025_v1, retinaface_mnet025_v2, retinaface_r50_v1, centerface
 ## scrfd_500m_bnkps, scrfd_2.5g_bnkps, scrfd_10g_bnkps
 ## scrfd_500m_gnkps, scrfd_2.5g_gnkps, scrfd_10g_gnkps
+## Note: SCRFD family models requires input image shape dividable by 32, i.e 640x640, 1024x768.
 det_model=scrfd_10g_gnkps
 
 # REC MODELS:
