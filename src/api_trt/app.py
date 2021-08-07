@@ -19,7 +19,7 @@ from fastapi.openapi.docs import (
 from modules.processing import Processing
 from env_parser import EnvConfigs
 
-__version__ = "0.6.0.0"
+__version__ = "0.6.1.0"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
