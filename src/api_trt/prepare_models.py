@@ -32,7 +32,7 @@ def prepare_models(root_dir: str = '/models'):
 
     for model in [rec_name, det_name, ga_name]:
         batch_size = 1
-        if config.mxnet_models[model].get('allow_batching'):
+        if config.models[model].get('allow_batching'):
             batch_size = rec_batch_size
         logging.info(f"Preparing '{model}' model...")
 
