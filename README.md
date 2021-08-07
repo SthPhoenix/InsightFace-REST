@@ -137,12 +137,18 @@ Models accuracy on WiderFace benchmark:
 ## Running with Docker:
 
 1. Clone repo.
-2. Execute `deploy_trt.sh` from repo's root.
+2. Execute `deploy_trt.sh` from repo's root, edit settings if needed.
 3. Go to http://localhost:18081 to access documentation and try API
 
 If you have multiple GPU's with enough GPU memory you can try running
 multiple containers by editing *n_gpu* and *n_workers* parameters in
 `deploy_trt.sh`.
+
+By default container is configured to build TRT engines without FP16
+support, to enable it change value of `force_fp16` to `True` in 
+`deploy_trt.sh`. Keep in mind, that your GPU should support fast FP16
+inference (NVIDIA GPUs of RTX20xx series and above, or server GPUs like 
+TESLA P100, T4 etc. ).
 
 Also if you want to test API in non-GPU environment you can run service
 with `deploy_cpu.sh` script. In this case ONNXRuntime will be used as
