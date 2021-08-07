@@ -143,7 +143,7 @@ async def extract(data: BodyExtract):
 
        - **images**: dict containing either links or data lists. (*required*)
        - **threshold**: Detection threshold. Default: 0.6 (*optional*)
-       - **embed_only**: Treat input images as face crops, omit detection step. Default: False (*optional*)
+       - **embed_only**: Treat input images as face crops (112x112 crops required), omit detection step. Default: False (*optional*)
        - **return_face_data**: Return face crops encoded in base64. Default: False (*optional*)
        - **return_landmarks**: Return face landmarks. Default: False (*optional*)
        - **extract_embedding**: Extract face embeddings (otherwise only detect faces). Default: True (*optional*)
@@ -193,7 +193,7 @@ async def draw_upl(file: bytes = File(...), threshold: float = Form(0.6), draw_l
     """
     Return image with drawn faces for testing purposes.
 
-       - **images**: dict containing either links or data lists. (*required*)
+       - **file**: Image file (*required*)
        - **threshold**: Detection threshold. Default: 0.6 (*optional*)
        - **draw_landmarks**: Draw faces landmarks Default: True (*optional*)
        - **draw_scores**: Draw detection scores Default: True (*optional*)
