@@ -245,6 +245,12 @@ bounding box, detection probability and detection number.
 
 ## Changelog:
 
+### 2021-08-07 v0.6.1.0
+
+REST-API
+- Dropped support of MXNet inference backend and automatic MXNet->ONNX models conversion, 
+  since all models are now distributed as ONNX by default.
+
 ### 2021-06-16 v0.6.0.0
 
 REST-API
