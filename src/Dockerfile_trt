@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && apt-get install -y libgl1-mesa-glx protobuf-compiler libprotoc-dev libb64-0d libturbojpeg
 ENV PIP_INSTALL="python -m pip --no-cache-dir install --upgrade"
-RUN $PIP_INSTALL mxnet insightface==0.1.5 fastapi uvicorn ujson numba aiofiles python-multipart
+RUN $PIP_INSTALL requests tqdm opencv-python scikit-image fastapi uvicorn ujson numba aiofiles python-multipart
 RUN $PIP_INSTALL onnx==1.7.0
 RUN $PIP_INSTALL onnx-simplifier
 RUN $PIP_INSTALL nvidia-pyindex && pip install tritonclient[http,grpc]
