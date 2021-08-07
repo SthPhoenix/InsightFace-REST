@@ -131,7 +131,7 @@ Models accuracy on WiderFace benchmark:
 
 1. Docker
 2. Nvidia-container-toolkit
-3. Nvidia GPU drivers (465.x.x and above)
+3. Nvidia GPU drivers (470.x.x and above)
 
 
 ## Running with Docker:
