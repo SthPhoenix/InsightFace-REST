@@ -95,7 +95,7 @@ docker run  -p $START_PORT:18080\
     -e DEF_RETURN_FACE_DATA=$return_face_data\
     -e DEF_EXTRACT_EMBEDDING=$extract_embeddings\
     -e DEF_EXTRACT_GA=$detect_ga\
-    -e DEF_API_VER='1'\
+    -e DEF_API_VER='2'\
     -v $PWD/models:/models\
     -v $PWD/src/api_trt:/app\
     --health-cmd='curl -f http://localhost:18080/info || exit 1'\

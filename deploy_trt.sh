@@ -31,7 +31,7 @@ max_size=640,640
 # Force FP16 mode for building TensorRT engines, even if it's not supported.
 # Please check that your GPU supports FP16, otherwise performance may drop.
 # For GPUs supporting it gives about 2x performance boost.
-force_fp16=False
+force_fp16=True
 
 
 # DET MODELS:
@@ -117,7 +117,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e DEF_RETURN_FACE_DATA=$return_face_data\
         -e DEF_EXTRACT_EMBEDDING=$extract_embeddings\
         -e DEF_EXTRACT_GA=$detect_ga\
-        -e DEF_API_VER='1'\
+        -e DEF_API_VER='2'\
         -v $PWD/models:/models\
         -v $PWD/src/api_trt:/app\
         --health-cmd='curl -f http://localhost:18080/info || exit 1'\
