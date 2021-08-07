@@ -41,10 +41,8 @@ scrfd_2_5g_gnkps_outputs = ['448', '488', '528', '451', '491', '531', '454', '49
 scrfd_10g_gnkps_outputs = ['451', '504', '557', '454', '507', '560', '457', '510', '563']
 
 
-mxnet_models = {
+models = {
     'retinaface_mnet025_v0': {
-        'symbol': 'mnet.25-symbol.json',
-        'params': 'mnet.25-0000.params',
         'shape': (1, 3, 480, 640),
         'outputs': retina_outputs,
         'reshape': True,
@@ -53,8 +51,6 @@ mxnet_models = {
         'dl_type': 'google'
     },
     'retinaface_mnet025_v1': {
-        'symbol': 'mnet10-symbol.json',
-        'params': 'mnet10-0000.params',
         'shape': (1, 3, 480, 640),
         'outputs': retina_outputs,
         'reshape': True,
@@ -63,8 +59,6 @@ mxnet_models = {
         'dl_type': 'google'
     },
     'retinaface_mnet025_v2': {
-        'symbol': 'mnet12-symbol.json',
-        'params': 'mnet12-0000.params',
         'shape': (1, 3, 480, 640),
         'outputs': retina_outputs,
         'reshape': True,
@@ -73,8 +67,6 @@ mxnet_models = {
         'dl_type': 'google'
     },
     'retinaface_r50_v1': {
-        'symbol': 'R50-symbol.json',
-        'params': 'R50-0000.params',
         'shape': (1, 3, 480, 640),
         'outputs': retina_outputs,
         'reshape': True,
@@ -83,8 +75,6 @@ mxnet_models = {
         'dl_type': 'google'
     },
     'mnet_cov2': {
-        'symbol': 'mnet_cov2-symbol.json',
-        'params': 'mnet_cov2-0000.params',
         'shape': (1, 3, 480, 640),
         'outputs': anticov_outputs,
         'reshape': True,
@@ -93,8 +83,6 @@ mxnet_models = {
         'dl_type': 'google'
     },
     'arcface_r100_v1': {
-        'symbol': 'model-symbol.json',
-        'params': 'model-0000.params',
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
         'reshape': False,
@@ -103,8 +91,6 @@ mxnet_models = {
         'dl_type': 'google'
     },
     'genderage_v1': {
-        'symbol': 'model-symbol.json',
-        'params': 'model-0000.params',
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
         'reshape': False,
@@ -183,39 +169,29 @@ mxnet_models = {
     },
 
     'coordinateReg': {
-        'symbol': '2d106det-symbol.json',
-        'params': '2d106det-0000.params',
         'in_package': False,
         'shape': (1, 3, 192, 192),
         'reshape': False,
     },
     'r100-arcface-msfdrop75': {
-        'symbol': 'model-symbol.json',
-        'params': 'model-0000.params',
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
         'reshape': False,
     },
     'r50-arcface-msfdrop75': {
-        'symbol': 'model-symbol.json',
-        'params': 'model-0000.params',
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
         'reshape': False,
     },
     'glint360k_r100FC_1.0': {
-        'symbol': 'model-symbol.json',
-        'params': 'model-0000.params',
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
         'reshape': False
     },
     'glint360k_r100FC_0.1': {
-        'symbol': 'model-symbol.json',
-        'params': 'model-0000.params',
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
@@ -231,10 +207,8 @@ mxnet_models = {
         'dl_type': 'google'
     },
 
-    # You can put your own pretrained ArcFace model to /models/mxnet/custom_rec_model
+    # You can put your own pretrained ArcFace model to /models/onnx/custom_rec_model
     'custom_rec_model': {
-        'symbol': 'model-symbol.json',
-        'params': 'model-0000.params',
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
@@ -246,12 +220,10 @@ mxnet_models = {
 class Configs(object):
     def __init__(self, models_dir: str = '/models'):
         self.models_dir = self.__get_param('MODELS_DIR', models_dir)
-        self.mxnet_models_dir = os.path.join(self.models_dir, 'mxnet')
         self.onnx_models_dir = os.path.join(self.models_dir, 'onnx')
         self.trt_engines_dir = os.path.join(self.models_dir, 'trt-engines')
-        self.mxnet_models = mxnet_models
+        self.models = models
         self.type2path = dict(
-            mxnet=self.mxnet_models_dir,
             onnx=self.onnx_models_dir,
             engine=self.trt_engines_dir,
             plan=self.trt_engines_dir
@@ -260,14 +232,6 @@ class Configs(object):
     def __get_param(self, ENV, default=None):
         return os.environ.get(ENV, default)
 
-    def get_mxnet_model_paths(self, model_name):
-        symbol_path = os.path.join(self.mxnet_models_dir, model_name, self.mxnet_models[model_name].get('symbol', ''))
-        param_path = os.path.join(self.mxnet_models_dir, model_name, self.mxnet_models[model_name].get('params', ''))
-        return symbol_path, param_path
-
-    def in_official_package(self, model_name):
-        return mxnet_models[model_name]['in_package']
-
     def build_model_paths(self, model_name: str, ext: str):
         base = self.type2path[ext]
         parent = os.path.join(base, model_name)
@@ -275,13 +239,13 @@ class Configs(object):
         return parent, file
 
     def get_outputs_order(self, model_name):
-        return self.mxnet_models.get(model_name, {}).get('outputs')
+        return self.models.get(model_name, {}).get('outputs')
 
     def get_shape(self, model_name):
-        return self.mxnet_models.get(model_name, {}).get('shape')
+        return self.models.get(model_name, {}).get('shape')
 
     def get_dl_link(self, model_name):
-        return self.mxnet_models.get(model_name, {}).get('link')
+        return self.models.get(model_name, {}).get('link')
 
     def get_dl_type(self, model_name):
-        return self.mxnet_models.get(model_name, {}).get('dl_type')
+        return self.models.get(model_name, {}).get('dl_type')

@@ -6,7 +6,7 @@ import cv2
 import logging
 
 import time
-from insightface.utils import face_align
+from modules.utils import face_align
 
 from modules.model_zoo.getter import get_model
 from modules.imagedata import ImageData
