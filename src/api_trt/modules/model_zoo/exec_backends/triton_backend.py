@@ -48,6 +48,9 @@ def parse_model_grpc(model_metadata, model_config):
     # Model input must have 3 dims (not counting the batch dimension),
     # either CHW or HWC
     input_batch_dim = (max_batch_size > 0)
+    # Workaround for SCRFD model.
+    if max_batch_size == 0 and input_metadata.shape[0] < 0:
+        input_batch_dim = True
     expected_input_dims = 3 + (1 if input_batch_dim else 0)
     if len(input_metadata.shape) != expected_input_dims:
         raise Exception(
