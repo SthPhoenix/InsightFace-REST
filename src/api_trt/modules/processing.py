@@ -1,6 +1,5 @@
 from typing import Dict, List, Optional, Union
-import urllib
-import urllib.request
+import requests
 import traceback
 import io
 import base64
@@ -16,25 +15,21 @@ from .face_model import FaceAnalysis, Face
 
 jpeg = TurboJPEG()
 
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
+}
+sess = requests.Session()
+sess.headers.update(headers)
 
-async def dl_image(path, headers=None):
-    if headers is None:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
-        }
+async def dl_image(path):
 
     im_data = dict(data=None,
                    traceback=None)
 
     try:
         if path.startswith('http'):
-            req = urllib.request.Request(
-                path,
-                headers=headers
-            )
-
-            resp = urllib.request.urlopen(req)
-            __bin = bytearray(resp.read())
+            resp = sess.get(path)
+            __bin = bytearray(resp.content)
             try:
                 _image = jpeg.decode(__bin)
             except:
