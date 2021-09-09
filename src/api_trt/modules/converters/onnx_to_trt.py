@@ -20,7 +20,7 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
     :param input_onnx: serialized ONNX model.
     :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful.
     :param max_batch_size: Define maximum batch size supported by engine. If >1 creates optimization profile.
-    :param max_workspace: Maximum builder warkspace in MB.
+    :param max_workspace: Maximum builder workspace in MB.
     :return: TensorRT engine
     """
 
