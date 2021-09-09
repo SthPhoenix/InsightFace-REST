@@ -10,7 +10,7 @@ import logging
 from tritonclient.utils import triton_to_np_dtype
 from tritonclient.utils import InferenceServerException
 #import tritonclient.utils.shared_memory as shm
-#import tritonclient.utils.cuda_shared_memory as cudashm
+import tritonclient.utils.cuda_shared_memory as cudashm
 
 #from tritonclient.grpc import service_pb2, service_pb2_grpc
 import tritonclient.grpc as grpcclient
@@ -49,7 +49,7 @@ def parse_model_grpc(model_metadata, model_config):
     # either CHW or HWC
     input_batch_dim = (max_batch_size > 0)
     # Workaround for SCRFD model.
-    if max_batch_size == 0 and input_metadata.shape[0] < 0:
+    if max_batch_size == 0 and input_metadata.shape[0] <= 1:
         input_batch_dim = True
     expected_input_dims = 3 + (1 if input_batch_dim else 0)
     if len(input_metadata.shape) != expected_input_dims:
@@ -167,9 +167,23 @@ class Cosface:
         except InferenceServerException as e:
             print("failed to retrieve the config: " + str(e))
             sys.exit(1)
-
+            
+            
         self.max_batch_size, self.input_name, self.output_name, self.c, self.h, self.w, self.format, self.dtype = parse_model_grpc(
             model_metadata, model_config.config)
+        
+        self.in_handle_name = f'fdata_{os.getpid()}'
+        self.input_bytesize = 12 * self.w * self.h * self.max_batch_size
+        self.in_handle = cudashm.create_shared_memory_region(
+            self.in_handle_name, self.input_bytesize, 0)
+        
+        self.triton_client.unregister_cuda_shared_memory(self.in_handle_name)
+
+        self.triton_client.register_cuda_shared_memory(
+            self.in_handle_name, cudashm.get_raw_handle(self.in_handle), 0,
+            self.input_bytesize)
+
+        
 
     def get_embedding(self, face_img):
         if not isinstance(face_img, list):
@@ -183,9 +197,16 @@ class Cosface:
 
         face_img = np.stack(face_img)
         face_img = face_img.astype(triton_to_np_dtype(self.dtype))
+        
+        
         inputs = []
         inputs.append(grpcclient.InferInput(self.input_name, [face_img.shape[0], self.c, self.h, self.w], "FP32"))
-        inputs[0].set_data_from_numpy(face_img)
+        #inputs[0].set_data_from_numpy(face_img)
+        
+        cudashm.set_shared_memory_region(self.in_handle, [face_img])
+        input_bytesize = 12 * face_img.shape[0] * self.w * self.h
+        inputs[-1].set_shared_memory(self.in_handle_name, input_bytesize)
+        
 
         out = self.triton_client.infer(self.model_name,
                                        inputs,
@@ -213,20 +234,6 @@ class DetectorInfer:
         # Make sure the model matches our requirements, and get some
         # properties of the model that we need for preprocessing
 
-        #self.triton_client.unregister_system_shared_memory()
-        #self.triton_client.unregister_cuda_shared_memory()
-
-        #self.in_handle_name = f'data_{os.getpid()}'
-        #self.input_bytesize = 4915200
-        #self.in_handle = cudashm.create_shared_memory_region(
-        #    self.in_handle_name, self.input_bytesize, 0)
-
-        #self.triton_client.register_cuda_shared_memory(
-        #    self.in_handle_name, cudashm.get_raw_handle(self.in_handle), 0,
-        #    self.input_bytesize)
-
-
-
         try:
             model_metadata = self.triton_client.get_model_metadata(
                 model_name=self.model_name, model_version=self.model_version)
@@ -246,13 +253,26 @@ class DetectorInfer:
 
         self.input_shape = (1, self.c, self.h, self.w)
 
+        self.in_handle_name = f'data_{os.getpid()}'
+        self.input_bytesize = 12 * self.w * self.h * self.max_batch_size
+        
+        self.in_handle = cudashm.create_shared_memory_region(
+            self.in_handle_name, self.input_bytesize, 0)
+        
+        self.triton_client.unregister_cuda_shared_memory(self.in_handle_name)
+        self.triton_client.register_cuda_shared_memory(
+            self.in_handle_name, cudashm.get_raw_handle(self.in_handle), 0,
+            self.input_bytesize)
+
+
+
     def run(self, input):
         inputs = []
         outputs = [grpcclient.InferRequestedOutput(e) for e in self.output_order]
         inputs.append(grpcclient.InferInput(self.input_name, [1, self.c, self.h, self.w], "FP32"))
-        inputs[0].set_data_from_numpy(input)
-        #cudashm.set_shared_memory_region(self.in_handle, [input])
-        #inputs[-1].set_shared_memory(self.in_handle_name, self.input_bytesize)
+        #inputs[0].set_data_from_numpy(input)
+        cudashm.set_shared_memory_region(self.in_handle, [input])
+        inputs[-1].set_shared_memory(self.in_handle_name, self.input_bytesize)
 
         out = self.triton_client.infer(self.model_name,
                                        inputs,
