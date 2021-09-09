@@ -251,6 +251,14 @@ bounding box, detection probability and detection number.
 
 ## Changelog:
 
+### 2021-09-09 v0.6.2.0
+
+REST-API
+- Use async `httpx` lib for retrieving images by urls instead of urllib3 (which caused 
+  performance drop in multi-GPU environment under load due to excessive usage of opened sockets)
+- Update draft Triton Infernce Server support to use CUDA shared memory.
+- Minor refactoring for future change of project structure.
+
 ### 2021-08-07 v0.6.1.0
 
 REST-API
