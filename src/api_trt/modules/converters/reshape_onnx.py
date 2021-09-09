@@ -2,7 +2,7 @@ import onnx
 import math
 import os
 from typing import List
-
+import logging
 
 def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
     '''
@@ -26,7 +26,7 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
 
         input_name = model.graph.input[0].name
         out_shape = model.graph.output[0].type.tensor_type.shape.dim[1].dim_value
-
+        
         dyn_size = False
         if model.graph.input[0].type.tensor_type.shape.dim[2].dim_param == '?':
             dyn_size = True
@@ -38,10 +38,12 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
 
     d = model.graph.input[0].type.tensor_type.shape.dim
     d[0].dim_value = n
+    logging.info(f"In shape: {d}")
     if mode != 'arcface':
         d[2].dim_value = h
         d[3].dim_value = w
     divisor = 4
+    logging.debug(f"Mode: {mode}")
     if mode != 'scrfd':
         for output in model.graph.output:
             if mode == 'retinaface':
@@ -51,7 +53,7 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
             if mode != 'arcface':
                 d[2].dim_value = math.ceil(h / divisor)
                 d[3].dim_value = math.ceil(w / divisor)
-
+    logging.debug(f"Out shape: {d}")
     return model
 
 
