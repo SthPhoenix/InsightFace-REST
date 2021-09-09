@@ -1,11 +1,11 @@
 from typing import Dict, List, Optional, Union
-import requests
 import traceback
 import io
 import base64
 import time
 import os
 import logging
+import httpx
 
 import numpy as np
 import cv2
@@ -18,8 +18,10 @@ jpeg = TurboJPEG()
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
 }
-sess = requests.Session()
-sess.headers.update(headers)
+
+
+client = httpx.AsyncClient(headers=headers)
+
 
 async def dl_image(path):
 
@@ -28,7 +30,8 @@ async def dl_image(path):
 
     try:
         if path.startswith('http'):
-            resp = sess.get(path)
+            #resp = sess.get(path)
+            resp = await client.get(path)
             __bin = bytearray(resp.content)
             try:
                 _image = jpeg.decode(__bin)
