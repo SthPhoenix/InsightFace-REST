@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.6.1.0'
+TAG='v0.6.2.0'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -53,11 +53,11 @@ rec_batch_size=1
 ## genderage_v1
 ga_model=genderage_v1
 ## Do not load genderage model:
-ga_ignore=False
+ga_ignore=True
 
 # Triton Inference Server GRPC uri:port (optional)
 # Should be updated when INFERENCE_BACKEND=triton
-triton_uri='localhost:8000'
+triton_uri='localhost:8001'
 
 # Default settings for inference requests, can be overridden inside
 # request body.
@@ -67,7 +67,7 @@ return_face_data=False
 ## Get faces embeddings. Otherwise only bounding boxes will be returned.
 extract_embeddings=True
 ## Estimate gender/age
-detect_ga=True
+detect_ga=False
 ##Face detection probability threshold
 det_thresh=0.6
 
