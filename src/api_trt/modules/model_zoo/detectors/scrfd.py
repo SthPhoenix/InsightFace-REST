@@ -114,7 +114,7 @@ class SCRFD:
         t0 = time.time()
         net_outs = self.session.run(blob)
         t1 = time.time()
-        logging.debug('inference cost:', (t1 - t0))
+        logging.debug('inference cost: {(t1 - t0)}')
 
         input_height = blob.shape[2]
         input_width = blob.shape[3]
