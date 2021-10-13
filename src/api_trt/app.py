@@ -3,11 +3,12 @@ import logging
 import time
 from typing import Optional, List
 
-import pydantic
-from fastapi import FastAPI, File, Form, UploadFile
+import msgpack
+
+from fastapi import FastAPI, File, Form, UploadFile, Header
 from fastapi.encoders import jsonable_encoder
 from starlette.staticfiles import StaticFiles
-from starlette.responses import StreamingResponse, RedirectResponse
+from starlette.responses import StreamingResponse, RedirectResponse, PlainTextResponse
 from fastapi.responses import UJSONResponse
 from fastapi.openapi.docs import (
     get_redoc_html,
@@ -19,7 +20,7 @@ from modules.processing import Processing
 from env_parser import EnvConfigs
 from schemas import BodyDraw, BodyExtract
 
-__version__ = "0.6.2.0"
+__version__ = "0.6.3.0"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -50,7 +51,7 @@ app = FastAPI(
 )
 
 @app.post('/extract', tags=['Detection & recognition'])
-async def extract(data: BodyExtract):
+async def extract(data: BodyExtract, accept: Optional[List[str]] = Header(None)):
     """
     Face extraction/embeddings endpoint accept json with
     parameters in following format:
@@ -64,7 +65,8 @@ async def extract(data: BodyExtract):
        - **extract_ga**: Extract gender/age. Default: False (*optional*)
        - **limit_faces**: Maximum number of faces to be processed.  0 for unlimited number. Default: 0 (*optional*)
        - **verbose_timings**: Return all timings. Default: False (*optional*)
-       - **api_ver**: Output data serialization format. Currently only version "1" is supported (*optional*)
+       - **msgpack**: Serialize output to msgpack format for transfer. Default: False (*optional*)
+       - **api_ver**: Output data serialization format. (*optional*)
        \f
 
        :return:
@@ -76,7 +78,13 @@ async def extract(data: BodyExtract):
                                       threshold=data.threshold, extract_ga=data.extract_ga,
                                       limit_faces=data.limit_faces, return_landmarks=data.return_landmarks,
                                       verbose_timings=data.verbose_timings, api_ver=data.api_ver)
-    return UJSONResponse(output)
+
+
+
+    if data.msgpack or 'application/x-msgpack' in accept:
+        return PlainTextResponse(msgpack.dumps(output), media_type='application/x-msgpack')
+    else:
+        return UJSONResponse(output)
 
 
 @app.post('/draw_detections', tags=['Detection & recognition'])
