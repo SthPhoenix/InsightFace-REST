@@ -61,6 +61,10 @@ class BodyExtract(BaseModel):
                                             example='2',
                                             description='Output data serialization format.')
 
+    msgpack: Optional[bool] = pydantic.Field(default=False,
+                                            example=False,
+                                            description='Use MSGPACK for response serialization')
+
 
 class BodyDraw(BaseModel):
     images: Images
