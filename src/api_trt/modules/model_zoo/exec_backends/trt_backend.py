@@ -133,6 +133,14 @@ class DetectorInfer:
         logging.info(f"Warming up face detector TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
+        self.out_shapes = self.rec_model.out_shapes
+        self.input_dtype = np.uint8
+        self.max_batch_size = self.rec_model.max_batch_size
+        if self.input_shape[0] == -1:
+            self.input_shape = (1,) + self.input_shape[1:]
+
+
+        logging.info(self.input_shape)
         if not self.output_order:
             self.output_order = self.rec_model.out_names
         self.rec_model.run(np.zeros(self.input_shape, np.float32))

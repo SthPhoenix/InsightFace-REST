@@ -39,8 +39,8 @@ def parse_model_grpc(model_metadata, model_config):
 
     input_metadata = model_metadata.inputs[0]
     input_config = model_config.input[0]
-    output_names = [model_metadata.outputs[i].name for i in range(len(model_metadata.outputs))]
-
+    output_names = [out.name for out in model_metadata.outputs]
+    out_shapes = [out.shape for out in model_metadata.outputs]
     max_batch_size = 0
     if  model_config.max_batch_size:
         max_batch_size = model_config.max_batch_size
@@ -69,7 +69,7 @@ def parse_model_grpc(model_metadata, model_config):
         w = input_metadata.shape[3 if input_batch_dim else 2]
 
     return (max_batch_size, input_metadata.name, output_names, c,
-            h, w, input_config.format, input_metadata.datatype)
+            h, w, input_config.format, input_metadata.datatype, out_shapes)
 
 url = 'localhost:8001'
 model_name = 'arcface_r100_v1'
@@ -104,7 +104,7 @@ class Arcface:
             print("failed to retrieve the config: " + str(e))
             sys.exit(1)
 
-        self.max_batch_size, self.input_name, self.output_name, self.c, self.h, self.w, self.format, self.dtype = parse_model_grpc(
+        self.max_batch_size, self.input_name, self.output_name, self.c, self.h, self.w, self.format, self.dtype, self.out_shapes = parse_model_grpc(
             model_metadata, model_config.config)
 
 
@@ -169,19 +169,30 @@ class Cosface:
             sys.exit(1)
             
             
-        self.max_batch_size, self.input_name, self.output_name, self.c, self.h, self.w, self.format, self.dtype = parse_model_grpc(
+        self.max_batch_size, self.input_name, self.output_name, self.c, self.h, self.w, self.format, self.dtype, self.out_shapes = parse_model_grpc(
             model_metadata, model_config.config)
         
         self.in_handle_name = f'fdata_{os.getpid()}'
         self.input_bytesize = 12 * self.w * self.h * self.max_batch_size
         self.in_handle = cudashm.create_shared_memory_region(
             self.in_handle_name, self.input_bytesize, 0)
+
+
+        self.out_handle_name = f'fdata_out_{os.getpid()}'
+        self.out_bytesize = 12 * 512 * self.max_batch_size
+        self.out_handle = cudashm.create_shared_memory_region(
+            self.out_handle_name, self.out_bytesize, 0)
         
         self.triton_client.unregister_cuda_shared_memory(self.in_handle_name)
+        self.triton_client.unregister_cuda_shared_memory(self.out_handle_name)
 
         self.triton_client.register_cuda_shared_memory(
             self.in_handle_name, cudashm.get_raw_handle(self.in_handle), 0,
             self.input_bytesize)
+
+        self.triton_client.register_cuda_shared_memory(
+            self.out_handle_name, cudashm.get_raw_handle(self.out_handle), 0,
+            self.out_bytesize)
 
         
 
@@ -206,14 +217,21 @@ class Cosface:
         cudashm.set_shared_memory_region(self.in_handle, [face_img])
         input_bytesize = 12 * face_img.shape[0] * self.w * self.h
         inputs[-1].set_shared_memory(self.in_handle_name, input_bytesize)
-        
+
+        outputs=[]
+        out_bytesize = 12 * 512 * self.max_batch_size
+        outputs.append(grpcclient.InferRequestedOutput('1333'))
+        outputs[-1].set_shared_memory(self.out_handle_name, out_bytesize)
+
 
         out = self.triton_client.infer(self.model_name,
                                        inputs,
                                        model_version=self.model_version,
-                                       outputs=None)
+                                       outputs=outputs)
 
-        out = [out.as_numpy(e) for e in self.output_name]
+        out0 = out.get_output('1333')
+        out = [cudashm.get_contents_as_numpy(self.out_handle,triton_to_np_dtype(self.dtype),[1,512])]
+        #out = [out.as_numpy(e) for e in self.output_name]
 
         return out[0]
 
@@ -225,6 +243,7 @@ class DetectorInfer:
         self.model_version = model_version
         self.url = triton_uri
         self.input_shape = (1, 3, 640, 640)
+        self.input_dtype = np.float32
         self.output_order = output_order
         self.triton_client = grpcclient.InferenceServerClient(url=triton_uri)
 
@@ -241,6 +260,8 @@ class DetectorInfer:
             print("failed to retrieve the metadata: " + str(e))
             sys.exit(1)
 
+        logging.info(model_metadata)
+
         try:
             model_config = self.triton_client.get_model_config(
                 model_name=self.model_name, model_version=self.model_version)
@@ -248,17 +269,21 @@ class DetectorInfer:
             print("failed to retrieve the config: " + str(e))
             sys.exit(1)
 
-        self.max_batch_size, self.input_name, self.output_name, self.c, self.h, self.w, self.format, self.dtype = parse_model_grpc(
+        self.max_batch_size, self.input_name, self.output_name, self.c, self.h, self.w, self.format, self.dtype, self.out_shapes = parse_model_grpc(
             model_metadata, model_config.config)
 
         self.input_shape = (1, self.c, self.h, self.w)
+        self.input_dtype = triton_to_np_dtype(self.dtype)
 
         self.in_handle_name = f'data_{os.getpid()}'
+
+        if self.max_batch_size <=0:
+            self.max_batch_size = 1
         self.input_bytesize = 12 * self.w * self.h * self.max_batch_size
-        
+
         self.in_handle = cudashm.create_shared_memory_region(
             self.in_handle_name, self.input_bytesize, 0)
-        
+
         self.triton_client.unregister_cuda_shared_memory(self.in_handle_name)
         self.triton_client.register_cuda_shared_memory(
             self.in_handle_name, cudashm.get_raw_handle(self.in_handle), 0,
@@ -269,7 +294,7 @@ class DetectorInfer:
     def run(self, input):
         inputs = []
         outputs = [grpcclient.InferRequestedOutput(e) for e in self.output_order]
-        inputs.append(grpcclient.InferInput(self.input_name, [1, self.c, self.h, self.w], "FP32"))
+        inputs.append(grpcclient.InferInput(self.input_name, [1, self.c, self.h, self.w], self.dtype))
         #inputs[0].set_data_from_numpy(input)
         cudashm.set_shared_memory_region(self.in_handle, [input])
         inputs[-1].set_shared_memory(self.in_handle_name, self.input_bytesize)

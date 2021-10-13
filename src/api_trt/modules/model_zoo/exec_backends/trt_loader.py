@@ -96,11 +96,15 @@ class TrtModel(object):
         input = np.asarray(input)
         batch_size = input.shape[0]
         allocate_place = np.prod(input.shape)
-        self.inputs[0].host[:allocate_place] = input.flatten(order='C').astype(np.float32)
+        # Removed .astype(np.float32) in case input has different dtype
+        # This fix exploiting TensorRT "bug" allowing to pass uint8 inputs instead of FP32,
+        # suitable only for models which contains image normalization steps.
+        self.inputs[0].host[:allocate_place] = input.flatten(order='C')
         self.context.set_binding_shape(0, input.shape)
         trt_outputs = do_inference(
             self.context, bindings=self.bindings,
             inputs=self.inputs, outputs=self.outputs, stream=self.stream)
+
         #Reshape TRT outputs to original shape instead of flattened array
         if deflatten:
             trt_outputs = [output.reshape(shape) for output, shape in zip(trt_outputs, self.out_shapes)]

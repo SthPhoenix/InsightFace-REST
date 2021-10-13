@@ -98,20 +98,28 @@ class DetectorInfer:
     def __init__(self, model='/models/onnx/centerface/centerface.onnx',
                  output_order=None,**kwargs):
         self.rec_model = onnxruntime.InferenceSession(model)
+        logging.info('Detector started')
         self.input = self.rec_model.get_inputs()[0]
+        self.input_dtype = self.input.type
+        logging.debug(f"INPUT DTYPE: {self.input.type}")
+        if self.input_dtype == 'tensor(float)':
+            self.input_dtype = np.float32
+        else:
+            self.input_dtype = np.uint8
 
-        if output_order is None:
-            output_order = [e.name for e in self.rec_model.get_outputs()]
         self.output_order = output_order
-
+        self.out_shapes = None
         self.input_shape = tuple(self.input.shape)
         print(self.input_shape)
 
     # warmup
     def prepare(self, **kwargs):
         logging.info("Warming up face detection ONNX Runtime engine...")
+        if self.output_order is None:
+            self.output_order = [e.name for e in self.rec_model.get_outputs()]
+        self.out_shapes = [e.shape for e in self.rec_model.get_outputs()]
         self.rec_model.run(self.output_order,
-                           {self.rec_model.get_inputs()[0].name: [np.zeros(tuple(self.input.shape[1:]), np.float32)]})
+                           {self.rec_model.get_inputs()[0].name: [np.zeros(tuple(self.input.shape[1:]), self.input_dtype)]})
 
     def run(self, input):
         net_out = self.rec_model.run(self.output_order, {self.input.name: input})
