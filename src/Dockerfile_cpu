@@ -7,10 +7,10 @@ RUN apt-get update && apt-get install -y libgl1-mesa-glx protobuf-compiler libpr
     libgomp1 gcc curl  libturbojpeg0 git && rm -rf /var/lib/apt/lists/*
 ENV PIP_INSTALL="python -m pip --no-cache-dir install --upgrade"
 RUN $PIP_INSTALL requests tqdm opencv-python scikit-image fastapi uvicorn ujson numba aiofiles python-multipart
-RUN $PIP_INSTALL onnx==1.7.0
+RUN $PIP_INSTALL onnx==1.8.0
 RUN $PIP_INSTALL onnx-simplifier
 RUN $PIP_INSTALL nvidia-pyindex && pip install tritonclient[http,grpc]
-RUN $PIP_INSTALL git+git://github.com/lilohuang/PyTurboJPEG.git
+RUN $PIP_INSTALL git+git://github.com/lilohuang/PyTurboJPEG.git msgpack
 
 WORKDIR /app
 COPY api_trt /app
