@@ -47,8 +47,11 @@ models = {
     'scrfd_500m_bnkps': scrfd,
     'scrfd_34g_gnkps': scrfd,
     'scrfd_10g_gnkps': scrfd,
+    'scrfd_10g_gnkps_norm': scrfd_v2,
     'scrfd_2.5g_gnkps': scrfd,
+    'scrfd_2.5g_gnkps_norm': scrfd_v2,
     'scrfd_500m_gnkps': scrfd,
+    'scrfd_500m_gnkps_norm': scrfd_v2,
 }
 
 
