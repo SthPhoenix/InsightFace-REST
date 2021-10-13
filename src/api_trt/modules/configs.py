@@ -187,6 +187,8 @@ models = {
         'shape': (1, 3, 640, 640),
         'reshape': True,
         'outputs': scrfd_norm_outputs,
+        'link': '1Ks7kAHxSVnE-Zh0p99mVyQ9CLas1Amem',
+        'dl_type': 'google'
     },
 
     'coordinateReg': {
