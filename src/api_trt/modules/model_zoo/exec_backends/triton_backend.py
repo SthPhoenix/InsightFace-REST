@@ -6,16 +6,16 @@ import argparse
 import numpy as np
 import logging
 
-#import tritonclient.http as httpclient
+# import tritonclient.http as httpclient
 from tritonclient.utils import triton_to_np_dtype
 from tritonclient.utils import InferenceServerException
-#import tritonclient.utils.shared_memory as shm
+# import tritonclient.utils.shared_memory as shm
 import tritonclient.utils.cuda_shared_memory as cudashm
 
-#from tritonclient.grpc import service_pb2, service_pb2_grpc
+# from tritonclient.grpc import service_pb2, service_pb2_grpc
 import tritonclient.grpc as grpcclient
-#import tritonclient.grpc.model_config_pb2 as mc
 
+# import tritonclient.grpc.model_config_pb2 as mc
 
 
 FLAGS = None
@@ -42,7 +42,7 @@ def parse_model_grpc(model_metadata, model_config):
     output_names = [out.name for out in model_metadata.outputs]
     out_shapes = [out.shape for out in model_metadata.outputs]
     max_batch_size = 0
-    if  model_config.max_batch_size:
+    if model_config.max_batch_size:
         max_batch_size = model_config.max_batch_size
 
     # Model input must have 3 dims (not counting the batch dimension),
@@ -55,9 +55,8 @@ def parse_model_grpc(model_metadata, model_config):
     if len(input_metadata.shape) != expected_input_dims:
         raise Exception(
             "expecting input to have {} dimensions, model '{}' input has {}".
-            format(expected_input_dims, model_metadata.name,
-                   len(input_metadata.shape)))
-
+                format(expected_input_dims, model_metadata.name,
+                       len(input_metadata.shape)))
 
     if input_config.format == "FORMAT_NHWC":
         h = input_metadata.shape[1 if input_batch_dim else 0]
@@ -71,20 +70,21 @@ def parse_model_grpc(model_metadata, model_config):
     return (max_batch_size, input_metadata.name, output_names, c,
             h, w, input_config.format, input_metadata.datatype, out_shapes)
 
+
 url = 'localhost:8001'
 model_name = 'arcface_r100_v1'
 model_version = '1'
 
+
 class Arcface:
 
-    def __init__(self, rec_name = 'arcface_r100_v1', model_version='1', triton_uri='localhost:8001', **kwargs):
+    def __init__(self, rec_name='arcface_r100_v1', model_version='1', triton_uri='localhost:8001', **kwargs):
         self.model_name = rec_name
         self.model_version = model_version
         self.url = triton_uri
         self.triton_client = grpcclient.InferenceServerClient(url=triton_uri)
 
-
-    def prepare(self,**kwargs):
+    def prepare(self, **kwargs):
         concurrency = 10
         # Make sure the model matches our requirements, and get some
         # properties of the model that we need for preprocessing
@@ -107,10 +107,7 @@ class Arcface:
         self.max_batch_size, self.input_name, self.output_name, self.c, self.h, self.w, self.format, self.dtype, self.out_shapes = parse_model_grpc(
             model_metadata, model_config.config)
 
-
-
-
-    def get_embedding(self,face_img):
+    def get_embedding(self, face_img):
 
         if not isinstance(face_img, list):
             face_img = [face_img]
@@ -128,9 +125,9 @@ class Arcface:
         inputs[0].set_data_from_numpy(face_img)
 
         out = self.triton_client.infer(self.model_name,
-                            inputs,
-                            model_version=self.model_version,
-                            outputs=None)
+                                       inputs,
+                                       model_version=self.model_version,
+                                       outputs=None)
 
         out = [out.as_numpy(e) for e in self.output_name]
 
@@ -138,7 +135,7 @@ class Arcface:
 
 
 class Cosface:
-    def __init__(self, rec_name = 'arcface_r100_v1', triton_uri='localhost:8001', model_version='1',**kwargs):
+    def __init__(self, rec_name='arcface_r100_v1', triton_uri='localhost:8001', model_version='1', **kwargs):
         self.model_name = rec_name
         self.model_version = model_version
         self.url = triton_uri
@@ -167,22 +164,20 @@ class Cosface:
         except InferenceServerException as e:
             print("failed to retrieve the config: " + str(e))
             sys.exit(1)
-            
-            
+
         self.max_batch_size, self.input_name, self.output_name, self.c, self.h, self.w, self.format, self.dtype, self.out_shapes = parse_model_grpc(
             model_metadata, model_config.config)
-        
+
         self.in_handle_name = f'fdata_{os.getpid()}'
         self.input_bytesize = 12 * self.w * self.h * self.max_batch_size
         self.in_handle = cudashm.create_shared_memory_region(
             self.in_handle_name, self.input_bytesize, 0)
 
-
         self.out_handle_name = f'fdata_out_{os.getpid()}'
         self.out_bytesize = 12 * 512 * self.max_batch_size
         self.out_handle = cudashm.create_shared_memory_region(
             self.out_handle_name, self.out_bytesize, 0)
-        
+
         self.triton_client.unregister_cuda_shared_memory(self.in_handle_name)
         self.triton_client.unregister_cuda_shared_memory(self.out_handle_name)
 
@@ -193,8 +188,6 @@ class Cosface:
         self.triton_client.register_cuda_shared_memory(
             self.out_handle_name, cudashm.get_raw_handle(self.out_handle), 0,
             self.out_bytesize)
-
-        
 
     def get_embedding(self, face_img):
         if not isinstance(face_img, list):
@@ -208,21 +201,19 @@ class Cosface:
 
         face_img = np.stack(face_img)
         face_img = face_img.astype(triton_to_np_dtype(self.dtype))
-        
-        
+
         inputs = []
         inputs.append(grpcclient.InferInput(self.input_name, [face_img.shape[0], self.c, self.h, self.w], "FP32"))
-        #inputs[0].set_data_from_numpy(face_img)
-        
+        # inputs[0].set_data_from_numpy(face_img)
+
         cudashm.set_shared_memory_region(self.in_handle, [face_img])
         input_bytesize = 12 * face_img.shape[0] * self.w * self.h
         inputs[-1].set_shared_memory(self.in_handle_name, input_bytesize)
 
-        outputs=[]
+        outputs = []
         out_bytesize = 12 * 512 * self.max_batch_size
-        outputs.append(grpcclient.InferRequestedOutput('1333'))
+        outputs.append(grpcclient.InferRequestedOutput(self.output_name[0]))
         outputs[-1].set_shared_memory(self.out_handle_name, out_bytesize)
-
 
         out = self.triton_client.infer(self.model_name,
                                        inputs,
@@ -230,15 +221,16 @@ class Cosface:
                                        outputs=outputs)
 
         out0 = out.get_output('1333')
-        out = [cudashm.get_contents_as_numpy(self.out_handle,triton_to_np_dtype(self.dtype),[1,512])]
-        #out = [out.as_numpy(e) for e in self.output_name]
+        out = [cudashm.get_contents_as_numpy(self.out_handle, triton_to_np_dtype(self.dtype), [face_img.shape[0], 512])]
+        # out = [out.as_numpy(e) for e in self.output_name]
 
         return out[0]
 
 
 class DetectorInfer:
 
-    def __init__(self, model = 'retinaface_r50_v1', output_order=None, triton_uri='localhost:8001', model_version='1',**kwargs):
+    def __init__(self, model='retinaface_r50_v1', output_order=None, triton_uri='localhost:8001', model_version='1',
+                 **kwargs):
         self.model_name = model
         self.model_version = model_version
         self.url = triton_uri
@@ -277,9 +269,9 @@ class DetectorInfer:
 
         self.in_handle_name = f'data_{os.getpid()}'
 
-        if self.max_batch_size <=0:
+        if self.max_batch_size <= 0:
             self.max_batch_size = 1
-        self.input_bytesize = 12 * self.w * self.h * self.max_batch_size
+        self.input_bytesize = 12 * self.w * self.h * 1
 
         self.in_handle = cudashm.create_shared_memory_region(
             self.in_handle_name, self.input_bytesize, 0)
@@ -289,13 +281,11 @@ class DetectorInfer:
             self.in_handle_name, cudashm.get_raw_handle(self.in_handle), 0,
             self.input_bytesize)
 
-
-
     def run(self, input):
         inputs = []
         outputs = [grpcclient.InferRequestedOutput(e) for e in self.output_order]
         inputs.append(grpcclient.InferInput(self.input_name, [1, self.c, self.h, self.w], self.dtype))
-        #inputs[0].set_data_from_numpy(input)
+        # inputs[0].set_data_from_numpy(input)
         cudashm.set_shared_memory_region(self.in_handle, [input])
         inputs[-1].set_shared_memory(self.in_handle_name, self.input_bytesize)
 

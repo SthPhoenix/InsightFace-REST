@@ -186,6 +186,7 @@ models = {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
+        'allow_batching': True,
         'outputs': scrfd_norm_outputs,
         'link': '1Ks7kAHxSVnE-Zh0p99mVyQ9CLas1Amem',
         'dl_type': 'google'
@@ -228,6 +229,13 @@ models = {
         'reshape': False,
         'link': '1TR_ImGvuY7Dt22a9BOAUAlHasFfkrJp-',
         'dl_type': 'google'
+    },
+
+    'webface_r50': {
+        'in_package': False,
+        'shape': (1, 3, 112, 112),
+        'allow_batching': True,
+        'reshape': False,
     },
 
     # You can put your own pretrained ArcFace model to /models/onnx/custom_rec_model

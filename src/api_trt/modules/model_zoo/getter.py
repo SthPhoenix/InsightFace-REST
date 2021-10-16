@@ -35,6 +35,7 @@ models = {
     'glint360k_r100FC_1.0': glint360k_r100FC_1_0,
     'glint360k_r100FC_0.1': glint360k_r100FC_0_1,
     'glintr100': glintr100,
+    'webface_r50': glintr100,
     'genderage_v1': genderage_v1,
     'retinaface_r50_v1': retinaface_r50_v1,
     'retinaface_mnet025_v1': retinaface_mnet025_v1,
