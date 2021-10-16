@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit
+import logging
 
 @njit()
 def nms(dets, thresh = 0.4):
@@ -30,3 +31,14 @@ def nms(dets, thresh = 0.4):
         order = order[inds + 1]
 
     return keep
+
+
+def trace_nms():
+    '''
+    Force NUMBA to trace and compile NMS
+    :return:  None
+    '''
+    wup_boxes = np.array([[0, 0, 100, 100, 1.0], [50, 50, 90, 90, 0.5]]).astype(np.float32)
+    nms(wup_boxes)
+
+trace_nms()
