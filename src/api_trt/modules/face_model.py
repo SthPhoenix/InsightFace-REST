@@ -28,12 +28,16 @@ device2ctx = {
 # Wrapper for insightface detection model
 class Detector:
     def __init__(self, device: str = 'cuda', det_name: str = 'retinaface_r50_v1', max_size=None,
-                 backend_name: str = 'trt', force_fp16: bool = False, triton_uri=None):
+                 backend_name: str = 'trt', force_fp16: bool = False, triton_uri=None, max_batch_size: int = 1):
         if max_size is None:
             max_size = [640, 480]
 
+        logging.info(f"MAX_BATCH_SIZE: {max_batch_size}")
+
         self.retina = get_model(det_name, backend_name=backend_name, force_fp16=force_fp16, im_size=max_size,
-                                root_dir='/models', download_model=False, triton_uri=triton_uri)
+                                root_dir='/models', download_model=False, triton_uri=triton_uri,
+                                max_batch_size=max_batch_size)
+
         self.retina.prepare(ctx_id=device2ctx[device], nms=0.35)
 
     def detect(self, data, threshold=0.3):
@@ -53,7 +57,7 @@ class Detector:
 class FaceAnalysis:
     def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
                  ga_name: str = 'genderage_v1', device: str = 'cuda',
-                 max_size=None, max_rec_batch_size: int = 1,
+                 max_size=None, max_rec_batch_size: int = 1, max_det_batch_size: int = 1,
                  backend_name: str = 'mxnet', force_fp16: bool = False, triton_uri=None):
 
         if max_size is None:
@@ -61,6 +65,8 @@ class FaceAnalysis:
 
         self.max_size = max_size
         self.max_rec_batch_size = max_rec_batch_size
+        self.max_det_batch_size = max_det_batch_size
+        logging.info(self.max_det_batch_size)
         if backend_name not in ('trt', 'triton') and max_rec_batch_size != 1:
             logging.warning('Batch processing supported only for TensorRT & Triton backend. Fallback to 1.')
             self.max_rec_batch_size = 1
@@ -70,7 +76,8 @@ class FaceAnalysis:
         ctx = device2ctx[device]
 
         self.det_model = Detector(det_name=det_name, device=device, max_size=self.max_size,
-                                  backend_name=backend_name, force_fp16=force_fp16, triton_uri=triton_uri)
+                                  max_batch_size=self.max_det_batch_size, backend_name=backend_name,
+                                  force_fp16=force_fp16, triton_uri=triton_uri)
 
         if rec_name is not None:
             self.rec_model = get_model(rec_name, backend_name=backend_name, force_fp16=force_fp16,

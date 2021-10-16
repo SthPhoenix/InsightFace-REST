@@ -18,8 +18,10 @@ def prepare_models(root_dir: str = '/models'):
     backend_name = os.getenv('INFERENCE_BACKEND', 'trt')
     rec_name = os.getenv("REC_NAME", "arcface_r100_v1")
     rec_batch_size = int(os.getenv("REC_BATCH_SIZE", 1))
+    det_batch_size = int(os.getenv("DET_BATCH_SIZE", 1))
     det_name = os.getenv("DET_NAME", "retinaface_mnet025_v2")
     ga_name = os.getenv("GA_NAME", "genderage_v1")
+    ga_ignore = tobool(os.getenv("GA_NAME", False))
 
     force_fp16 = tobool(os.getenv('FORCE_FP16', False))
 
@@ -30,10 +32,18 @@ def prepare_models(root_dir: str = '/models'):
 
     config = Configs(models_dir=root_dir)
 
-    for model in [rec_name, det_name, ga_name]:
+    models = [rec_name, det_name]
+
+    if not ga_ignore:
+        models.append(ga_name)
+
+    for model in models:
         batch_size = 1
         if config.models[model].get('allow_batching'):
-            batch_size = rec_batch_size
+            if model == det_name:
+                batch_size = det_batch_size
+            else:
+                batch_size = rec_batch_size
         logging.info(f"Preparing '{model}' model...")
 
         prepare_backend(model_name=model, backend_name=backend_name, im_size=max_size, force_fp16=force_fp16,
