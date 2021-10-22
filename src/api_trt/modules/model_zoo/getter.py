@@ -17,14 +17,16 @@ from ..utils.download_google import download_from_gdrive
 from ..configs import Configs
 
 from .exec_backends import onnxrt_backend as onnx_backend
-from .exec_backends import triton_backend as triton_backend
 
-# Since TensorRT and PyCUDA are optional dependencies it might be not available
+# Since TensorRT, TritonClient and PyCUDA are optional dependencies it might be not available
 try:
     from .exec_backends import trt_backend
+    from .exec_backends import triton_backend as triton_backend
     from ..converters.onnx_to_trt import convert_onnx
-except:
+except Exception as e:
+    logging.warning(e)
     trt_backend = None
+    triton_backend = None
     convert_onnx = None
 
 # Map model names to corresponding functions

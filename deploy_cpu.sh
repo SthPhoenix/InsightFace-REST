@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.6.1.0-cpu'
+TAG='v0.6.3.0-cpu'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -31,7 +31,7 @@ max_size=640,640
 ## scrfd_500m_bnkps, scrfd_2.5g_bnkps, scrfd_10g_bnkps
 ## scrfd_500m_gnkps, scrfd_2.5g_gnkps, scrfd_10g_gnkps
 ## Note: SCRFD family models requires input image shape dividable by 32, i.e 640x640, 1024x768.
-det_model=scrfd_10g_gnkps
+det_model=scrfd_2.5g_gnkps
 
 # REC MODELS:
 ## arcface_r100_v1, glintr100
@@ -45,7 +45,7 @@ rec_batch_size=1
 ## genderage_v1
 ga_model=genderage_v1
 ## Do not load genderage model:
-ga_ignore=False
+ga_ignore=True
 
 # Default settings for inference requests, can be overridden inside
 # request body.
@@ -55,7 +55,7 @@ return_face_data=False
 ## Get faces embeddings. Otherwise only bounding boxes will be returned.
 extract_embeddings=True
 ## Estimate gender/age
-detect_ga=True
+detect_ga=False
 ##Face detection probability threshold
 det_thresh=0.6
 
