@@ -251,6 +251,16 @@ models = {
         'dl_type': 'google'
     },
 
+    'w600k_mbf': {
+        'in_package': False,
+        'shape': (1, 3, 112, 112),
+        'allow_batching': True,
+        'function': 'arcface_torch',
+        'reshape': False,
+        'link': '1GtBKfGucgJDRLHvGWR3jOQovHYXY-Lpe',
+        'dl_type': 'google'
+    },
+
     # You can put your own pretrained ArcFace model to /models/onnx/custom_rec_model
     'custom_rec_model': {
         'in_package': False,
