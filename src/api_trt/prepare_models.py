@@ -21,7 +21,7 @@ def prepare_models(root_dir: str = '/models'):
     det_batch_size = int(os.getenv("DET_BATCH_SIZE", 1))
     det_name = os.getenv("DET_NAME", "retinaface_mnet025_v2")
     ga_name = os.getenv("GA_NAME", "genderage_v1")
-    ga_ignore = tobool(os.getenv("GA_NAME", False))
+    ga_ignore = tobool(os.getenv("GA_IGNORE", False))
 
     force_fp16 = tobool(os.getenv('FORCE_FP16', False))
 
