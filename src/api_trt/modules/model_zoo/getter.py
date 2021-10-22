@@ -7,7 +7,7 @@ import onnx
 from .face_detectors import *
 from .face_processors import *
 
-#from ..converters.insight2onnx import convert_insight_model
+# from ..converters.insight2onnx import convert_insight_model
 from ..converters.reshape_onnx import reshape, reshape_onnx_input
 from ..converters.remove_initializer_from_input import remove_initializer_from_input
 from ..utils.helpers import prepare_folders
@@ -29,15 +29,8 @@ except Exception as e:
     triton_backend = None
     convert_onnx = None
 
-# Map model names to corresponding functions
-models = {
-    'arcface_r100_v1': arcface_r100_v1,
-    'r50-arcface-msfdrop75': r50_arcface_msfdrop75,
-    'r100-arcface-msfdrop75': r100_arcface_msfdrop75,
-    'glint360k_r100FC_1.0': glint360k_r100FC_1_0,
-    'glint360k_r100FC_0.1': glint360k_r100FC_0_1,
-    'glintr100': glintr100,
-    'webface_r50': glintr100,
+# Map function names to corresponding functions
+func_map = {
     'genderage_v1': genderage_v1,
     'retinaface_r50_v1': retinaface_r50_v1,
     'retinaface_mnet025_v1': retinaface_mnet025_v1,
@@ -45,16 +38,10 @@ models = {
     'mnet_cov2': mnet_cov2,
     'centerface': centerface,
     'dbface': dbface,
-    'scrfd_10g_bnkps': scrfd,
-    'scrfd_2.5g_bnkps': scrfd,
-    'scrfd_500m_bnkps': scrfd,
-    'scrfd_34g_gnkps': scrfd,
-    'scrfd_10g_gnkps': scrfd,
-    'scrfd_10g_gnkps_norm': scrfd_v2,
-    'scrfd_2.5g_gnkps': scrfd,
-    'scrfd_2.5g_gnkps_norm': scrfd_v2,
-    'scrfd_500m_gnkps': scrfd,
-    'scrfd_500m_gnkps_norm': scrfd_v2,
+    'scrfd': scrfd,
+    'scrfd_v2': scrfd_v2,
+    'arcface_mxnet': arcface_mxnet,
+    'arcface_torch': arcface_torch
 }
 
 
@@ -79,6 +66,7 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
     prepare_folders([config.onnx_models_dir, config.trt_engines_dir])
     reshape_allowed = config.models[model_name].get('reshape')
     shape = config.get_shape(model_name)
+
     if reshape_allowed is True and im_size is not None:
         shape = (1, 3) + tuple(im_size)[::-1]
 
@@ -95,11 +83,9 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
             else:
                 download(dl_link, onnx_path)
             remove_initializer_from_input(onnx_path, onnx_path)
-        #elif os.path.exists(mxnet_symbol) and os.path.exists(mxnet_params):
-            #convert_insight_model(mxnet_symbol, mxnet_params, onnx_path, shape)
         else:
             logging.error("You have requested non standard model, but haven't provided download link or "
-                          "MXNet model. Place model to proper folder and change configs.py accordingly.")
+                          "ONNX model. Place model to proper folder and change configs.py accordingly.")
     if backend_name == 'triton':
         return model_name
 
@@ -172,10 +158,10 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
         logging.error(f"Unknown backend '{backend_name}' specified. Exiting.")
         exit(1)
 
-    if model_name not in models:
+    if model_name not in config.models.keys():
         logging.error(f"Unknown model {model_name} specified."
                       f" Please select one of the following:\n"
-                      f"{', '.join(list(models.keys()))}")
+                      f"{', '.join(list(config.models.keys()))}")
         exit(1)
 
     backend = backends[backend_name]
@@ -185,5 +171,6 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
                                  download_model=download_model)
 
     outputs = config.get_outputs_order(model_name)
-    model = models[model_name](model_path=model_path, backend=backend, outputs=outputs, triton_uri=triton_uri)
+    func = func_map[config.models[model_name].get('function')]
+    model = func(model_path=model_path, backend=backend, outputs=outputs, triton_uri=triton_uri)
     return model
