@@ -6,7 +6,7 @@ import cv2
 import logging
 
 import time
-from modules.utils import face_align
+from modules.utils import fast_face_align as face_align
 
 from modules.model_zoo.getter import get_model
 from modules.imagedata import ImageData
@@ -140,14 +140,16 @@ class FaceAnalysis:
                 embeddings = self.rec_model.get_embedding(crops)
                 t1 = time.time()
                 took = t1 - t0
-                logging.debug(f'Embedding {total} faces took: {took} ({took / total} per face)')
+                logging.debug(
+                    f'Embedding {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
 
             if extract_ga:
                 t0 = time.time()
                 ga = self.ga_model.get(crops)
                 t1 = time.time()
                 took = t1 - t0
-                logging.debug(f'Extracting g/a for {total} faces took: {took} ({took / total} per face)')
+                logging.debug(
+                    f'Extracting g/a for {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
 
             for i, crop in enumerate(crops):
                 embedding = None
@@ -190,12 +192,12 @@ class FaceAnalysis:
         img = ImageData(img, max_size=max_size)
         img.resize_image(mode='pad')
         t1 = time.time()
-        logging.debug(f'Preparing image took: {t1 - t0}')
+        logging.debug(f'Preparing image took: {(t1 - t0) * 1000:.3f} ms.')
 
         t0 = time.time()
         boxes, probs, landmarks, mask_probs = self.det_model.detect(img.transformed_image, threshold=threshold)
         t1 = time.time()
-        logging.debug(f'Detection took: {t1 - t0}')
+        logging.debug(f'Detection took: {(t1 - t0) * 1000:.3f} ms.')
         faces = []
         await asyncio.sleep(0)
         if not isinstance(boxes, type(None)):
@@ -204,31 +206,47 @@ class FaceAnalysis:
                 boxes, probs, landmarks, mask_probs = self.sort_boxes(boxes, probs, landmarks, mask_probs,
                                                                       shape=img.transformed_image.shape,
                                                                       max_num=limit_faces)
-            for i in range(len(boxes)):
-                # Translate points to original image size
-                bbox = self.reproject_points(boxes[i], img.scale_factor)
-                landmark = self.reproject_points(landmarks[i], img.scale_factor)
-                det_score = probs[i]
+
+            # Translate points to original image size
+            boxes = self.reproject_points(boxes, img.scale_factor)
+            landmarks = self.reproject_points(landmarks, img.scale_factor)
+            # Crop faces from original image instead of resized to improve quality
+            crops = face_align.norm_crop_batched(img.orig_image, landmarks)
+
+            for i, _crop in enumerate(crops):
 
                 if not isinstance(mask_probs, type(None)):
                     mask_prob = mask_probs[i]
                 else:
                     mask_prob = None
 
-                # Crop faces from original image instead of resized to improve quality
-                _crop = face_align.norm_crop(img.orig_image, landmark=landmark)
-                face = Face(bbox=bbox, landmark=landmark, det_score=det_score,
+                face = Face(bbox=boxes[i], landmark=landmarks[i], det_score=probs[i],
                             num_det=i, scale=img.scale_factor, mask_prob=mask_prob, facedata=_crop)
 
                 faces.append(face)
 
             t1 = time.time()
-            logging.debug(f'Cropping {len(boxes)} faces took: {t1 - t0}')
+            logging.debug(f'Cropping {len(boxes)} faces took: {(t1 - t0) * 1000:.3f} ms.')
 
             # Process detected faces
             faces = [e for e in self.process_faces(faces, extract_embedding=extract_embedding,
                                                    extract_ga=extract_ga, return_face_data=return_face_data)]
 
         tf = time.time()
-        logging.debug(f'Full processing took: {tf - ts}')
+
+        def colorize_log(string, color):
+            colors = dict(
+                grey="\x1b[38;21m",
+                yellow="\x1b[33;21m",
+                red="\x1b[31;21m",
+                bold_red="\x1b[31;1m",
+            )
+            reset = "\x1b[0m"
+            col = colors.get(color)
+            if col is None:
+                return string
+            string = f"{col}{string}{reset}"
+            return string
+
+        logging.debug(colorize_log(f'Full processing took: {(tf - ts) * 1000:.3f} ms.', 'red'))
         return faces
