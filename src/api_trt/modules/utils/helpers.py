@@ -23,3 +23,17 @@ def parse_size(size=None, def_size='640,480'):
     size_lst = list(map(int, size.split(',')))
     return size_lst
 
+
+def colorize_log(string, color):
+    colors = dict(
+        grey="\x1b[38;21m",
+        yellow="\x1b[33;21m",
+        red="\x1b[31;21m",
+        bold_red="\x1b[31;1m",
+    )
+    reset = "\x1b[0m"
+    col = colors.get(color)
+    if col is None:
+        return string
+    string = f"{col}{string}{reset}"
+    return string

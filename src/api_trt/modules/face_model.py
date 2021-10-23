@@ -10,7 +10,7 @@ from modules.utils import fast_face_align as face_align
 
 from modules.model_zoo.getter import get_model
 from modules.imagedata import ImageData
-from modules.utils.helpers import to_chunks
+from modules.utils.helpers import to_chunks, colorize_log
 
 import asyncio
 
@@ -234,19 +234,6 @@ class FaceAnalysis:
 
         tf = time.time()
 
-        def colorize_log(string, color):
-            colors = dict(
-                grey="\x1b[38;21m",
-                yellow="\x1b[33;21m",
-                red="\x1b[31;21m",
-                bold_red="\x1b[31;1m",
-            )
-            reset = "\x1b[0m"
-            col = colors.get(color)
-            if col is None:
-                return string
-            string = f"{col}{string}{reset}"
-            return string
 
         logging.debug(colorize_log(f'Full processing took: {(tf - ts) * 1000:.3f} ms.', 'red'))
         return faces
