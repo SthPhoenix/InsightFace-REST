@@ -73,7 +73,7 @@ async def decode_image(b64encoded):
             __bin = np.fromstring(__bin, np.uint8)
             _image = cv2.imdecode(__bin, cv2.IMREAD_COLOR)
         t1 = time.time()
-        logging.info(f'Decoding took: {t1 - t0}')
+        logging.debug(f'Decoding took: {(t1 - t0) * 1000:.3f} ms.')
     except Exception:
         tb = traceback.format_exc()
         print(tb)
@@ -267,7 +267,7 @@ class Processing:
         images = await get_images(images)
         tl1 = time.time()
         took_loading = tl1 - tl0
-        logging.debug(f'Reading images took: {took_loading} s.')
+        logging.debug(f'Reading images took: {took_loading * 1000:.3f} ms.')
         serializer = Serializer()
 
         if embed_only:
