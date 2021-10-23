@@ -93,8 +93,8 @@ class SCRFD:
         self._num_anchors = 2
         self.use_kps = True
 
-    def prepare(self, nms: float = 0.45, **kwargs):
-        self.nms_threshold = nms
+    def prepare(self, nms_treshold: float = 0.45, **kwargs):
+        self.nms_threshold = nms_treshold
         self.session.prepare()
         self.out_shapes = self.session.out_shapes
         if len(self.out_shapes[0]) == 3:
@@ -106,7 +106,8 @@ class SCRFD:
         bboxes_list = []
         kpss_list = []
         if self.ver == 2:
-            blob = np.transpose(img, (2, 0, 1))
+            blob = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            blob = np.transpose(blob, (2, 0, 1))
             blob = np.expand_dims(blob, axis=0).astype(self.session.input_dtype)
         else:
             input_size = tuple(img.shape[0:2][::-1])
@@ -114,7 +115,7 @@ class SCRFD:
         t0 = time.time()
         net_outs = self.session.run(blob)
         t1 = time.time()
-        logging.debug(f'inference cost: {(t1 - t0)}')
+        logging.debug(f'Inference cost: {(t1 - t0) * 1000:.3f} ms.')
 
         input_height = blob.shape[2]
         input_width = blob.shape[3]
