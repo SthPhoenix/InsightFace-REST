@@ -1,5 +1,6 @@
 import os
 import logging
+import json
 from typing import List
 
 import onnx
@@ -45,6 +46,23 @@ func_map = {
 }
 
 
+def sniff_output_order(model_path, save_dir):
+    model = onnx.load(model_path)
+    output = [node.name for node in model.graph.output]
+    with open(os.path.join(save_dir, 'output_order.json'), mode='w') as fl:
+        fl.write(json.dumps(output))
+    return output
+
+
+def read_outputs_order(trt_dir):
+    outputs = None
+    outputs_file = os.path.join(trt_dir, 'output_order.json')
+    if os.path.exists(outputs_file):
+        with open(outputs_file, mode='r') as fl:
+            outputs = json.loads(fl.read())
+    return outputs
+
+
 def prepare_backend(model_name, backend_name, im_size: List[int] = None,
                     max_batch_size: int = 1,
                     force_fp16: bool = False,
@@ -85,7 +103,6 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
             onnx_exists = False
             trt_rebuild_required = True
 
-
     if not onnx_exists and download_model is True:
         prepare_folders([onnx_dir])
         dl_link = config.get_dl_link(model_name)
@@ -116,6 +133,10 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
             trt_path = trt_path.replace('.plan', f'_batch{max_batch_size}.plan')
         if force_fp16 is True:
             trt_path = trt_path.replace('.plan', '_fp16.plan')
+
+        if not config.get_outputs_order(model_name):
+            logging.debug('No output order provided, trying to read it from ONNX model.')
+            sniff_output_order(onnx_path, trt_dir)
 
         if not os.path.exists(trt_path) or trt_rebuild_required:
             prepare_folders([trt_dir])
@@ -184,6 +205,11 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
                                  download_model=download_model)
 
     outputs = config.get_outputs_order(model_name)
+    if not outputs and backend_name == 'trt':
+        logging.debug(f'No output order provided, for "{model_name}" trying to read it from "output_order.json"')
+        trt_dir, trt_path = config.build_model_paths(model_name, 'plan')
+        outputs = read_outputs_order(trt_dir)
+
     func = func_map[config.models[model_name].get('function')]
     model = func(model_path=model_path, backend=backend, outputs=outputs, triton_uri=triton_uri)
     return model
