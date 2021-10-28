@@ -12,7 +12,7 @@ from ..converters.reshape_onnx import reshape, reshape_onnx_input
 from ..converters.remove_initializer_from_input import remove_initializer_from_input
 from ..utils.helpers import prepare_folders
 from ..utils.download import download
-from ..utils.download_google import download_from_gdrive
+from ..utils.download_google import download_from_gdrive, check_hash
 
 from ..configs import Configs
 
@@ -73,7 +73,20 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
     onnx_dir, onnx_path = config.build_model_paths(model_name, 'onnx')
     trt_dir, trt_path = config.build_model_paths(model_name, 'plan')
 
-    if not os.path.exists(onnx_path) and download_model is True:
+    onnx_exists = os.path.exists(onnx_path)
+    onnx_hash = config.models[model_name].get('md5')
+    trt_rebuild_required = False
+    if onnx_exists and onnx_hash:
+        hashes_match = check_hash(onnx_path, onnx_hash, algo='md5')
+        if not hashes_match:
+            logging.warning('ONNX model hash mismatch, trying to download it again. '
+                            'This behaviour is expected in current version for scrfd_*_gnkps models '
+                            'due to models update.')
+            onnx_exists = False
+            trt_rebuild_required = True
+
+
+    if not onnx_exists and download_model is True:
         prepare_folders([onnx_dir])
         dl_link = config.get_dl_link(model_name)
         dl_type = config.get_dl_type(model_name)
@@ -104,7 +117,7 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
         if force_fp16 is True:
             trt_path = trt_path.replace('.plan', '_fp16.plan')
 
-        if not os.path.exists(trt_path):
+        if not os.path.exists(trt_path) or trt_rebuild_required:
             prepare_folders([trt_dir])
 
             if reshape_allowed is True or max_batch_size != 1:

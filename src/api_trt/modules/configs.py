@@ -39,6 +39,7 @@ scrfd_10g_bnkps_outputs = ['448', '471', '494', '451', '474', '497', '454', '477
 scrfd_500m_gnkps_outputs = ['447', '512', '577', '450', '515', '580', '453', '518', '583']
 scrfd_2_5g_gnkps_outputs = ['448', '488', '528', '451', '491', '531', '454', '494', '534']
 scrfd_10g_gnkps_outputs = ['451', '504', '557', '454', '507', '560', '457', '510', '563']
+scrfd_outputs = ['score_8', 'score_16', 'score_32', 'bbox_8', 'bbox_16', 'bbox_32', 'kps_8', 'kps_16', 'kps_32']
 scrfd_norm_outputs = ['score_8', 'score_16', 'score_32', 'bbox_8', 'bbox_16', 'bbox_32', 'kps_8', 'kps_16', 'kps_32']
 
 models = {
@@ -153,40 +154,32 @@ models = {
         'shape': (1, 3, 640, 640),
         'reshape': True,
         'function': 'scrfd',
-        'outputs': scrfd_500m_gnkps_outputs,
-        'link': '13OoTQlyDI2BkuA5oJUtuuvMlxvkM_-h7',
+        'outputs': scrfd_outputs,
+        'allow_batching': True,
+        'link': '19CeBV03a3DEhZeas4olZn7GgiUESDu0L',
+        'md5': 'ef4bcb0606d6e5ebf325f8322e507a7b',
         'dl_type': 'google'
-    },
-    'scrfd_500m_gnkps_norm': {
-        'in_package': False,
-        'shape': (1, 3, 640, 640),
-        'reshape': True,
-        'function': 'scrfd_v2',
-        'outputs': scrfd_norm_outputs,
     },
     'scrfd_2.5g_gnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
         'function': 'scrfd',
-        'outputs': scrfd_2_5g_gnkps_outputs,
-        'link': '1F__ILEeCTzeR71BAV-vInuyBezYmNMsB',
+        'outputs': scrfd_outputs,
+        'allow_batching': True,
+        'link': '1_LeETpKhWL4sRPvLZEvka-bGNMN4tMOU',
+        'md5': '50febd32caa699ef7a47cf7422c56bbd',
         'dl_type': 'google'
-    },
-    'scrfd_2.5g_gnkps_norm': {
-        'in_package': False,
-        'shape': (1, 3, 640, 640),
-        'reshape': True,
-        'function': 'scrfd_v2',
-        'outputs': scrfd_norm_outputs,
     },
     'scrfd_10g_gnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
         'reshape': True,
         'function': 'scrfd',
-        'outputs': scrfd_10g_gnkps_outputs,
-        'link': '1v9nhtPWMLSedueeL6c3nJEoIFlSNSCvh',
+        'outputs': scrfd_outputs,
+        'allow_batching': True,
+        'link': '14BuXR6L73w1mwKXHPIcZlc9LYaid4Evl',
+        'md5': '1d9b64bb0e6e18d4838872c9e7efd709',
         'dl_type': 'google'
     },
     'scrfd_10g_gnkps_norm': {
@@ -195,7 +188,7 @@ models = {
         'reshape': True,
         'allow_batching': True,
         'function': 'scrfd_v2',
-        'outputs': scrfd_norm_outputs,
+        'outputs': scrfd_outputs,
         'link': '1Ks7kAHxSVnE-Zh0p99mVyQ9CLas1Amem',
         'dl_type': 'google'
     },
