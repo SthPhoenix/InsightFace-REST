@@ -36,11 +36,7 @@ dbface_outputs = ["hm", "tlrb", "landmark"]
 scrfd_500m_bnkps_outputs = ['443', '468', '493', '446', '471', '496', '449', '474', '499']
 scrfd_2_5g_bnkps_outputs = ['446', '466', '486', '449', '469', '489', '452', '472', '492']
 scrfd_10g_bnkps_outputs = ['448', '471', '494', '451', '474', '497', '454', '477', '500']
-scrfd_500m_gnkps_outputs = ['447', '512', '577', '450', '515', '580', '453', '518', '583']
-scrfd_2_5g_gnkps_outputs = ['448', '488', '528', '451', '491', '531', '454', '494', '534']
-scrfd_10g_gnkps_outputs = ['451', '504', '557', '454', '507', '560', '457', '510', '563']
 scrfd_outputs = ['score_8', 'score_16', 'score_32', 'bbox_8', 'bbox_16', 'bbox_32', 'kps_8', 'kps_16', 'kps_32']
-scrfd_norm_outputs = ['score_8', 'score_16', 'score_32', 'bbox_8', 'bbox_16', 'bbox_32', 'kps_8', 'kps_16', 'kps_32']
 
 models = {
     'retinaface_mnet025_v0': {
