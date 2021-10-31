@@ -8,6 +8,7 @@
 
 from __future__ import division
 import numpy as np
+from numba import njit
 
 import time
 import os.path as osp
@@ -25,52 +26,53 @@ except:
     DIT = None
 
 
-def distance2bbox(points, distance, max_shape=None):
+@njit(cache=True)
+def distance2bbox(points, distance):
     """Decode distance prediction to bounding box.
 
     Args:
         points (Tensor): Shape (n, 2), [x, y].
         distance (Tensor): Distance from the given point to 4
             boundaries (left, top, right, bottom).
-        max_shape (tuple): Shape of the image.
 
     Returns:
         Tensor: Decoded bboxes.
     """
-    x1 = points[:, 0] - distance[:, 0]
-    y1 = points[:, 1] - distance[:, 1]
-    x2 = points[:, 0] + distance[:, 2]
-    y2 = points[:, 1] + distance[:, 3]
-    if max_shape is not None:
-        x1 = x1.clamp(min=0, max=max_shape[1])
-        y1 = y1.clamp(min=0, max=max_shape[0])
-        x2 = x2.clamp(min=0, max=max_shape[1])
-        y2 = y2.clamp(min=0, max=max_shape[0])
-    return np.stack([x1, y1, x2, y2], axis=-1)
+    # WARNING! Don't try this at home, without Numba at least...
+    # Here we use C-style function instead of Numpy matrix operations
+    # since after Numba compilation code seems to work 2-4x times faster.
+
+    for ix in range(0, distance.shape[0]):
+        distance[ix, 0] = points[ix, 0] - distance[ix, 0]
+        distance[ix, 1] = points[ix, 1] - distance[ix, 1]
+        distance[ix, 2] = points[ix, 2] + distance[ix, 2]
+        distance[ix, 3] = points[ix, 3] + distance[ix, 3]
+
+    return distance
 
 
-def distance2kps(points, distance, max_shape=None):
+@njit(cache=True)
+def distance2kps(points, distance):
     """Decode distance prediction to bounding box.
 
     Args:
         points (Tensor): Shape (n, 2), [x, y].
         distance (Tensor): Distance from the given point to 4
             boundaries (left, top, right, bottom).
-        max_shape (tuple): Shape of the image.
 
     Returns:
         Tensor: Decoded bboxes.
     """
-    preds = []
-    for i in range(0, distance.shape[1], 2):
-        px = points[:, i % 2] + distance[:, i]
-        py = points[:, i % 2 + 1] + distance[:, i + 1]
-        if max_shape is not None:
-            px = px.clamp(min=0, max=max_shape[1])
-            py = py.clamp(min=0, max=max_shape[0])
-        preds.append(px)
-        preds.append(py)
-    return np.stack(preds, axis=-1)
+    # WARNING! Don't try this at home, without Numba at least...
+    # Here we use C-style function instead of Numpy matrix operations
+    # since after Numba compilation code seems to work 2-4x times faster.
+
+    for ix in range(0, distance.shape[1], 2):
+        for j in range(0, distance.shape[0]):
+            distance[j, ix] += points[j, 0]
+            distance[j, ix + 1] += points[j, 1]
+
+    return distance
 
 
 class SCRFD:
@@ -101,10 +103,7 @@ class SCRFD:
             self.batched = True
         self.input_shape = self.session.input_shape
 
-    def forward(self, img, threshold):
-        scores_list = []
-        bboxes_list = []
-        kpss_list = []
+    def preprocess(self, img):
         if self.ver == 2:
             blob = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             blob = np.transpose(blob, (2, 0, 1))
@@ -112,13 +111,19 @@ class SCRFD:
         else:
             input_size = tuple(img.shape[0:2][::-1])
             blob = cv2.dnn.blobFromImage(img, 1.0 / 128, input_size, (127.5, 127.5, 127.5), swapRB=True)
+        return blob
+
+    def forward(self, blob):
         t0 = time.time()
         net_outs = self.session.run(blob)
         t1 = time.time()
         logging.debug(f'Inference cost: {(t1 - t0) * 1000:.3f} ms.')
+        return net_outs
 
-        input_height = blob.shape[2]
-        input_width = blob.shape[3]
+    def postprocess(self, input_height, input_width, net_outs, threshold):
+        scores_list = []
+        bboxes_list = []
+        kpss_list = []
         fmc = self.fmc
         for idx, stride in enumerate(self._feat_stride_fpn):
             kps_preds = None
@@ -158,17 +163,13 @@ class SCRFD:
                 kpss = kpss.reshape((kpss.shape[0], -1, 2))
                 pos_kpss = kpss[pos_inds]
                 kpss_list.append(pos_kpss)
-        return scores_list, bboxes_list, kpss_list
+        return bboxes_list, kpss_list, scores_list
 
-    def detect(self, img, threshold=0.5, max_num=0, metric='default'):
-
-        scores_list, bboxes_list, kpss_list = self.forward(img, threshold)
-
+    def filter(self, bboxes_list, kpss_list, scores_list, img_center, max_num, metric):
         scores = np.vstack(scores_list)
         scores_ravel = scores.ravel()
         order = scores_ravel.argsort()[::-1]
         bboxes = np.vstack(bboxes_list)
-
         pre_det = np.hstack((bboxes, scores)).astype(np.float32, copy=False)
         pre_det = pre_det[order, :]
         keep = nms(pre_det)
@@ -186,7 +187,7 @@ class SCRFD:
             if metric == 'max':
                 values = area
             else:
-                img_center = img.shape[0] // 2, img.shape[1] // 2
+
                 offsets = np.vstack([
                     (det[:, 0] + det[:, 2]) / 2 - img_center[1],
                     (det[:, 1] + det[:, 3]) / 2 - img_center[0]
@@ -199,5 +200,15 @@ class SCRFD:
             det = det[bindex, :]
             if kpss is not None:
                 kpss = kpss[bindex, :]
+        return det, kpss
+
+    def detect(self, img, threshold=0.5, max_num=0, metric='default'):
+        input_height = img.shape[0]
+        input_width = img.shape[1]
+        img_center = img.shape[0] // 2, img.shape[1] // 2
+        blob = self.preprocess(img)
+        net_outs = self.forward(blob)
+        bboxes_list, kpss_list, scores_list = self.postprocess(input_height, input_width, net_outs, threshold)
+        det, kpss = self.filter(bboxes_list, kpss_list, scores_list, img_center, max_num, metric)
 
         return det, kpss
