@@ -2,7 +2,7 @@ import numpy as np
 from numba import njit
 import logging
 
-@njit()
+@njit(cache=True)
 def nms(dets, thresh = 0.4):
     x1 = dets[:, 0]
     y1 = dets[:, 1]
