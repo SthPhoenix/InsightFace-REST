@@ -19,18 +19,16 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
 }
 
-
 client = httpx.AsyncClient(headers=headers)
 
 
 async def dl_image(path):
-
     im_data = dict(data=None,
                    traceback=None)
 
     try:
         if path.startswith('http'):
-            #resp = sess.get(path)
+            # resp = sess.get(path)
             resp = await client.get(path)
             __bin = bytearray(resp.content)
             try:
@@ -167,18 +165,19 @@ class Processing:
 
     def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
                  ga_name: str = 'genderage_v1', device: str = 'cuda', max_size: List[int] = None,
-                 backend_name: str = 'trt', max_rec_batch_size: int = 1,
+                 backend_name: str = 'trt', max_rec_batch_size: int = 1, max_det_batch_size: int = 1,
                  force_fp16: bool = False, triton_uri=None):
 
         if max_size is None:
             max_size = [640, 480]
 
         self.max_rec_batch_size = max_rec_batch_size
+        self.max_det_batch_size = max_det_batch_size
         self.det_name = det_name
-
         self.max_size = max_size
         self.model = FaceAnalysis(det_name=det_name, rec_name=rec_name, ga_name=ga_name, device=device,
                                   max_size=self.max_size, max_rec_batch_size=self.max_rec_batch_size,
+                                  max_det_batch_size=self.max_det_batch_size,
                                   backend_name=backend_name, force_fp16=force_fp16, triton_uri=triton_uri
                                   )
 
@@ -191,7 +190,7 @@ class Processing:
     def embed_crops(self, images, extract_embedding: bool = True, extract_ga: bool = True):
 
         t0 = time.time()
-        output = dict(took=None, data=[], status="ok")
+        output = dict(took_ms=None, data=[], status="ok")
 
         iterator = self.__iterate_faces(images)
         faces = self.model.process_faces(iterator, extract_embedding=extract_embedding, extract_ga=extract_ga,
@@ -213,7 +212,7 @@ class Processing:
             output['traceback'] = tb
 
         took = time.time() - t0
-        output['took'] = took
+        output['took_ms'] = took * 1000
         return output
 
     async def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
@@ -223,7 +222,7 @@ class Processing:
         output = dict(took={}, data=[])
 
         for image_data in images:
-            _faces_dict = dict(status=None, took=None, faces=[])
+            _faces_dict = dict(status='', took_ms=0., faces=[])
             try:
                 t1 = time.time()
                 if image_data.get('traceback') is not None:
@@ -241,7 +240,7 @@ class Processing:
                                                     return_landmarks=return_landmarks)
                         _faces_dict['faces'].append(_face_dict)
                     took_image = time.time() - t1
-                    _faces_dict['took'] = took_image
+                    _faces_dict['took_ms'] = took_image * 1000
                     _faces_dict['status'] = 'ok'
 
             except Exception as e:
@@ -282,10 +281,10 @@ class Processing:
                                       )
             took_embed = time.time() - te0
             took = time.time() - t0
-            output['took']['total'] = took
+            output['took']['total_ms'] = took * 1000
             if verbose_timings:
-                output['took']['read_imgs'] = took_loading
-                output['took']['embed_all'] = took_embed
+                output['took']['read_imgs_ms'] = took_loading * 1000
+                output['took']['embed_all_ms'] = took_embed * 1000
 
             return serializer.serialize(output, api_ver=api_ver)
 
