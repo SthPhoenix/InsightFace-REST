@@ -134,12 +134,13 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
         if force_fp16 is True:
             trt_path = trt_path.replace('.plan', '_fp16.plan')
 
+        prepare_folders([trt_dir])
+
         if not config.get_outputs_order(model_name):
             logging.debug('No output order provided, trying to read it from ONNX model.')
             sniff_output_order(onnx_path, trt_dir)
 
         if not os.path.exists(trt_path) or trt_rebuild_required:
-            prepare_folders([trt_dir])
 
             if reshape_allowed is True or max_batch_size != 1:
                 logging.info(f'Reshaping ONNX inputs to: {shape}')
