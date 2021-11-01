@@ -9,8 +9,6 @@ import cv2
 import numpy as np
 import numba as nb
 
-
-
 arcface_src = np.array(
     [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366],
      [41.5493, 92.3655], [70.7299, 92.2041]],
@@ -19,7 +17,7 @@ arcface_src = np.array(
 arcface_src = np.expand_dims(arcface_src, axis=0)
 
 
-@nb.njit(cache=True)
+@nb.njit(cache=True, fastmath=True)
 def np_apply_along_axis(func1d, axis, arr):
     assert arr.ndim == 2
     assert axis in [0, 1]
@@ -35,17 +33,17 @@ def np_apply_along_axis(func1d, axis, arr):
     return result
 
 
-@nb.njit(cache=True)
+@nb.njit(cache=True, fastmath=True)
 def np_mean(array, axis):
     return np_apply_along_axis(np.mean, axis, array)
 
 
-@nb.njit(cache=True)
+@nb.njit(cache=True, fastmath=True)
 def np_std(array, axis):
     return np_apply_along_axis(np.std, axis, array)
 
 
-@nb.njit(cache=True)
+@nb.njit(cache=True, fastmath=True)
 def np_var(array, axis):
     return np_apply_along_axis(np.var, axis, array)
 
@@ -103,8 +101,7 @@ def _umeyama(src, dst, estimate_scale):
     return T
 
 
-
-@nb.njit(cache=True)
+@nb.njit(cache=True, fastmath=True)
 def estimate_norm(lmk, image_size=112, mode='arcface'):
     assert lmk.shape == (5, 2)
 
@@ -119,7 +116,7 @@ def estimate_norm(lmk, image_size=112, mode='arcface'):
     return M
 
 
-@nb.njit(cache=True)
+@nb.njit(cache=True, fastmath=True)
 def estimate_norm_batch(lmks, image_size=112, mode='arcface'):
     Ms = []
     for lmk in lmks:
