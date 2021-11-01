@@ -21,12 +21,13 @@ from ..exec_backends.onnxrt_backend import DetectorInfer as DIO
 
 # Since TensorRT and pycuda are optional dependencies it might be not available
 try:
+    import cupy as cp
     from ..exec_backends.trt_backend import DetectorInfer as DIT
 except:
     DIT = None
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def distance2bbox(points, distance):
     """Decode distance prediction to bounding box.
 
@@ -45,13 +46,13 @@ def distance2bbox(points, distance):
     for ix in range(0, distance.shape[0]):
         distance[ix, 0] = points[ix, 0] - distance[ix, 0]
         distance[ix, 1] = points[ix, 1] - distance[ix, 1]
-        distance[ix, 2] = points[ix, 2] + distance[ix, 2]
-        distance[ix, 3] = points[ix, 3] + distance[ix, 3]
+        distance[ix, 2] = points[ix, 0] + distance[ix, 2]
+        distance[ix, 3] = points[ix, 1] + distance[ix, 3]
 
     return distance
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def distance2kps(points, distance):
     """Decode distance prediction to bounding box.
 
@@ -75,6 +76,18 @@ def distance2kps(points, distance):
     return distance
 
 
+def _normalize_on_device(input, stream, out):
+    input = np.expand_dims(input, axis=0)
+    allocate_place = np.prod(input.shape)
+    with stream:
+        g_img = cp.asarray(input)
+        g_img = g_img[..., ::-1]
+        g_img = cp.transpose(g_img, (0, 3, 1, 2))
+        g_img = cp.subtract(g_img, 127.5, dtype=cp.float32)
+        out.device[:allocate_place] = cp.multiply(g_img, 1 / 128).flatten()
+    return g_img.shape
+
+
 class SCRFD:
     def __init__(self, inference_backend: Union[DIT, DIO], ver=1):
         self.session = inference_backend
@@ -82,18 +95,15 @@ class SCRFD:
         self.nms_threshold = 0.4
         self.masks = False
         self.ver = ver
-        self._init_vars()
-
-    def _init_vars(self):
-        self.use_kps = False
+        self.use_kps = True
         self.out_shapes = None
         self.batched = False
         self._anchor_ratio = 1.0
-        self._num_anchors = 1
         self.fmc = 3
         self._feat_stride_fpn = [8, 16, 32]
         self._num_anchors = 2
-        self.use_kps = True
+        self.stream = None
+        self.input_ptr = None
 
     def prepare(self, nms_treshold: float = 0.45, **kwargs):
         self.nms_threshold = nms_treshold
@@ -102,20 +112,34 @@ class SCRFD:
         if len(self.out_shapes[0]) == 3:
             self.batched = True
         self.input_shape = self.session.input_shape
+        self.infer_shape = self.input_shape
+        # Check if exec backend provides CUDA stream
+        try:
+            self.stream = self.session.stream
+            self.input_ptr = self.session.input_ptr
+        except:
+            pass
 
     def preprocess(self, img):
+        blob = None
         if self.ver == 2:
             blob = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             blob = np.transpose(blob, (2, 0, 1))
             blob = np.expand_dims(blob, axis=0).astype(self.session.input_dtype)
         else:
-            input_size = tuple(img.shape[0:2][::-1])
-            blob = cv2.dnn.blobFromImage(img, 1.0 / 128, input_size, (127.5, 127.5, 127.5), swapRB=True)
+            if self.stream:
+                self.infer_shape = _normalize_on_device(img, self.stream, self.input_ptr)
+            else:
+                input_size = tuple(img.shape[0:2][::-1])
+                blob = cv2.dnn.blobFromImage(img, 1.0 / 128, input_size, (127.5, 127.5, 127.5), swapRB=True)
         return blob
 
     def forward(self, blob):
         t0 = time.time()
-        net_outs = self.session.run(blob)
+        if self.stream:
+            net_outs = self.session.run(from_device=True, infer_shape=self.input_shape)
+        else:
+            net_outs = self.session.run(blob)
         t1 = time.time()
         logging.debug(f'Inference cost: {(t1 - t0) * 1000:.3f} ms.')
         return net_outs
