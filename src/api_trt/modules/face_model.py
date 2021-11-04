@@ -211,7 +211,10 @@ class FaceAnalysis:
             boxes = self.reproject_points(boxes, img.scale_factor)
             landmarks = self.reproject_points(landmarks, img.scale_factor)
             # Crop faces from original image instead of resized to improve quality
-            crops = face_align.norm_crop_batched(img.orig_image, landmarks)
+            if extract_ga or extract_embedding or return_face_data:
+                crops = face_align.norm_crop_batched(img.orig_image, landmarks)
+            else:
+                crops = [None] * len(boxes)
 
             for i, _crop in enumerate(crops):
 
