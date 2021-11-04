@@ -33,9 +33,6 @@ anticov_outputs = [
 
 centerface_outputs = ['537', '538', '539', '540']
 dbface_outputs = ["hm", "tlrb", "landmark"]
-scrfd_500m_bnkps_outputs = ['443', '468', '493', '446', '471', '496', '449', '474', '499']
-scrfd_2_5g_bnkps_outputs = ['446', '466', '486', '449', '469', '489', '452', '472', '492']
-scrfd_10g_bnkps_outputs = ['448', '471', '494', '451', '474', '497', '454', '477', '500']
 scrfd_outputs = ['score_8', 'score_16', 'score_32', 'bbox_8', 'bbox_16', 'bbox_32', 'kps_8', 'kps_16', 'kps_32']
 
 models = {
@@ -123,8 +120,9 @@ models = {
         'shape': (1, 3, 640, 640),
         'reshape': True,
         'function': 'scrfd',
-        'outputs': scrfd_500m_bnkps_outputs,
-        'link': '13mY-c6NIShu_-4AdCo3Z3YIYja4HfNaA',
+        'outputs': scrfd_outputs,
+        'link': '1ccagW08CyKJoeFAmL2ao7pjwr3_m_Zm1',
+        'md5': '03fd8fe67902798b7584b1e7ff3e0f6f',
         'dl_type': 'google'
     },
     'scrfd_2.5g_bnkps': {
@@ -132,8 +130,9 @@ models = {
         'shape': (1, 3, 640, 640),
         'reshape': True,
         'function': 'scrfd',
-        'outputs': scrfd_2_5g_bnkps_outputs,
-        'link': '1qnKTHMkuoWsCJ6iJeiFExGy5PSi8JKPL',
+        'outputs': scrfd_outputs,
+        'link': '1yObTSsOYCJFn38uf6O6Hku-XEhK8-q0n',
+        'md5': '02710671a1af640b610b501383153868',
         'dl_type': 'google'
     },
     'scrfd_10g_bnkps': {
@@ -141,8 +140,9 @@ models = {
         'shape': (1, 3, 640, 640),
         'reshape': True,
         'function': 'scrfd',
-        'outputs': scrfd_10g_bnkps_outputs,
-        'link': '1OAXx8U8SIsBhmYYGKmD-CLXrYz_YIV-3',
+        'outputs': scrfd_outputs,
+        'link': '1llbQa8HFle-45wscZulzGcNncPFgYruJ',
+        'md5': '2740f9259d46355ca5fa0d9b54943524',
         'dl_type': 'google'
     },
     'scrfd_500m_gnkps': {
