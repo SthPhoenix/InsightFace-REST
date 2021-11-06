@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.6.3.0'
+TAG='v0.7.0.0'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -42,12 +42,14 @@ force_fp16=False
 det_model=scrfd_10g_gnkps
 
 # REC MODELS:
-## arcface_r100_v1, glintr100
+## arcface_r100_v1, glintr100, w600k_r50, w600k_mbf
 rec_model=glintr100
 ## Do not load recognition model:
 rec_ignore=False
 ## Maximum batch size for recognition model
 rec_batch_size=1
+## Maximum batch size for detection model, use only for building models for Triton Server
+det_batch_size=1
 
 # GENDER/AGE MODELS:
 ## genderage_v1
@@ -109,6 +111,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e REC_NAME=$rec_model\
         -e REC_IGNORE=$rec_ignore\
         -e REC_BATCH_SIZE=$rec_batch_size\
+        -e DET_BATCH_SIZE=$det_batch_size\
         -e GA_NAME=$ga_model\
         -e GA_IGNORE=$ga_ignore\
         -e TRITON_URI=$triton_uri\

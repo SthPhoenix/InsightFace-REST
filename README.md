@@ -251,6 +251,38 @@ bounding box, detection probability and detection number.
 
 ## Changelog:
 
+### 2021-11-06 v0.7.0.0
+
+Since a lot of updates happened since last release version is updated straight to v0.7.0.0
+
+Additions:
+- Added experimental support for msgpack serializer: helps reduce network traffic for embeddings for ~2x.
+- Output names no longer required for detection models when building TRT engine - correct output order is now extracted 
+  from onnx models.
+- Detection models now can be exported to TRT engine with batch size > 1 - inference code doesn't support it yet, though
+  now they could be used in Triton Inference Server without issues. 
+
+Model Zoo:
+- Added support for WebFace600k based recognition models from InsightFace repo: `w600k_r50` and `w600k_mbf`
+- Added md5 check for models to allow automatic re-download if models have changed.
+- All `scrfd` based models now supports batch dimension/
+
+Improvements:
+- 1.5x-2x faster SCRFD re-implementation with Numba: 4.5 ms. vs 10 ms. for `lumia.jpg` example with
+  `scrfd_10g_gnkps` and threshold = 0.3 (432 faces detected)).
+- Move image normalization step to GPU with help of CuPy (4x lower data transfer from CPU to GPU, about 6% 
+  inference speedup, and some computations offloaded from CPU).
+- 4.5x Faster `face_align.norm_crop` implementation with help of Numba and removal of unused computations.
+  (Cropping 432 faces from `lumia.jpg` example tooks 45 ms. vs 205 ms.).
+- Face crops are now extracted only when needed - when face data or embeddings are requested, improving 
+  detection only performance.
+- Added Numba njit cache to reduce subsequent starts time.
+- Logging timings rounded to ms for better readability.
+- Minor refactoring 
+
+Fixes:
+- Since gender/age estimation model is currently not supported exclude it from models preparing step.
+
 ### 2021-09-09 v0.6.2.0
 
 REST-API
