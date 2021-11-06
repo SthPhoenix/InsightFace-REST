@@ -255,6 +255,18 @@ bounding box, detection probability and detection number.
 
 Since a lot of updates happened since last release version is updated straight to v0.7.0.0
 
+Comparing to previous release (v0.6.2.0)  this release brings improved performance for SCRFD based detectors.
+
+Here is performance comparison on GPU `Nvidia RTX 2080 Super` for `scrfd_10g_gnkps` detector paired with 
+`glintr100` recognition model (all tests are using `src/api_trt/test_images/Stallone.jpg`, 1 face per image):
+
+| Num workers    | Client threads   | FPS v0.6.2.0  | FPS v0.7.0.0 | Speed-up |
+| -------------- | ---------------- |-------------- | ------------ | -------- | 
+|  1             | 1                | 56            | 103          | 83.9%    |
+|  1             | 30               | 72            | 128          | 77.7%    |
+|  6             | 30               | 145           | 179          | 23.4%    |
+
+
 Additions:
 - Added experimental support for msgpack serializer: helps reduce network traffic for embeddings for ~2x.
 - Output names no longer required for detection models when building TRT engine - correct output order is now extracted 
