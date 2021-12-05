@@ -23,6 +23,7 @@ try:
 except BaseException:
     DIT = None
 
+import asyncio
 
 def timing(f):
     @wraps(f)
@@ -37,96 +38,35 @@ def timing(f):
 
 
 @njit(fastmath=True, cache=True)
-def distance2bbox(points, distance):
-    """Decode distance prediction to bounding box.
-
-    Args:
-        points (Tensor): Shape (n, 2), [x, y].
-        distance (Tensor): Distance from the given point to 4
-            boundaries (left, top, right, bottom).
-
-    Returns:
-        Tensor: Decoded bboxes.
-    """
-    # WARNING! Don't try this at home, without Numba at least...
-    # Here we use C-style function instead of Numpy matrix operations
-    # since after Numba compilation code seems to work 2-4x times faster.
-
-    for ix in range(0, distance.shape[0]):
-        distance[ix, 0] = points[ix, 0] - distance[ix, 0]
-        distance[ix, 1] = points[ix, 1] - distance[ix, 1]
-        distance[ix, 2] = points[ix, 0] + distance[ix, 2]
-        distance[ix, 3] = points[ix, 1] + distance[ix, 3]
-
-    return distance
-
-
-@njit(fastmath=True, cache=True)
-def distance2kps(points, distance):
-    """Decode distance prediction to bounding box.
-
-    Args:
-        points (Tensor): Shape (n, 2), [x, y].
-        distance (Tensor): Distance from the given point to 4
-            boundaries (left, top, right, bottom).
-
-    Returns:
-        Tensor: Decoded bboxes.
-    """
-    # WARNING! Don't try this at home, without Numba at least...
-    # Here we use C-style function instead of Numpy matrix operations
-    # since after Numba compilation code seems to work 2-4x times faster.
-
-    for ix in range(0, distance.shape[1], 2):
-        for j in range(0, distance.shape[0]):
-            distance[j, ix] += points[j, 0]
-            distance[j, ix + 1] += points[j, 1]
-
-    return distance
-
-
-@njit(fastmath=True, cache=True)
-def fast_multiply(matrix, value):
-    """
-    Fast multiply list on value
-
-    :param matrix: List of values
-    :param value: Multiplier
-    :return: Multiplied list
-    """
-    for ix in range(0, matrix.shape[0]):
-        matrix[ix] *= value
-    return matrix
-
-
-@njit(fastmath=True, cache=True)
-def single_distance2bbox(point, distance):
+def single_distance2bbox(point, distance, stride):
     """
     Fast conversion of single bbox distances to coordinates
 
     :param point: Anchor point
     :param distance: Bbox distances from anchor point
+    :param stride: Current stride scale
     :return: bbox
     """
-    distance[0] = point[0] - distance[0]
-    distance[1] = point[1] - distance[1]
-    distance[2] = point[0] + distance[2]
-    distance[3] = point[1] + distance[3]
+    distance[0] = point[0] - distance[0] * stride
+    distance[1] = point[1] - distance[1] * stride
+    distance[2] = point[0] + distance[2] * stride
+    distance[3] = point[1] + distance[3] * stride
     return distance
 
 
 @njit(fastmath=True, cache=True)
-def single_distance2kps(point, distance):
+def single_distance2kps(point, distance, stride):
     """
     Fast conversion of single keypoint distances to coordinates
 
     :param point: Anchor point
     :param distance: Keypoint distances from anchor point
+    :param stride: Current stride scale
     :return: keypoint
     """
     for ix in range(0, distance.shape[0], 2):
-        distance[ix] += point[0]
-        distance[ix + 1] += point[1]
+        distance[ix] = distance[ix] * stride + point[0]
+        distance[ix + 1] = distance[ix + 1] * stride + point[1]
     return distance
 
 
@@ -155,13 +95,9 @@ def generate_proposals(score_blob, bbox_blob, kpss_blob, stride, anchors, thresh
 
     for ix in range(0, anchors.shape[0]):
         if score_blob[ix, 0] > threshold:
-            bbox = fast_multiply(bbox_blob[ix], stride)
-            kpss = fast_multiply(kpss_blob[ix], stride)
-            bbox = single_distance2bbox(anchors[ix], bbox)
-            kpss = single_distance2kps(anchors[ix], kpss)
             score_out[total] = score_blob[ix]
-            bbox_out[total] = bbox
-            kpss_out[total] = kpss
+            bbox_out[total] = single_distance2bbox(anchors[ix], bbox_blob[ix], stride)
+            kpss_out[total] = single_distance2kps(anchors[ix], kpss_blob[ix], stride)
             total += 1
 
     return score_out, bbox_out, kpss_out, total
@@ -170,7 +106,7 @@ def generate_proposals(score_blob, bbox_blob, kpss_blob, stride, anchors, thresh
 # @timing
 @njit(fastmath=True, cache=True)
 def filter(bboxes_list: np.ndarray, kpss_list: np.ndarray,
-           scores_list: np.ndarray):
+           scores_list: np.ndarray, nms_threshold: float = 0.4):
     """
     Filter postprocessed network outputs with NMS
 
@@ -184,7 +120,7 @@ def filter(bboxes_list: np.ndarray, kpss_list: np.ndarray,
     order: np.ndarray = scores_ravel.argsort()[::-1]
     pre_det = np.hstack((bboxes_list, scores_list))
     pre_det = pre_det[order, :]
-    keep = nms(pre_det)
+    keep = nms(pre_det, thresh = nms_threshold)
     keep = np.asarray(keep)
     det = pre_det[keep, :]
     kpss = kpss_list.reshape((kpss_list.shape[0], -1, 2))
@@ -230,7 +166,7 @@ class SCRFD:
         self.stream = None
         self.input_ptr = None
 
-    def prepare(self, nms_treshold: float = 0.45, **kwargs):
+    def prepare(self, nms_treshold: float = 0.4, **kwargs):
         """
         Read network params and populate class parameters
 
@@ -276,7 +212,7 @@ class SCRFD:
         bboxes_list, kpss_list, scores_list = self._postprocess(net_outs, input_height, input_width, threshold)
 
         det, kpss = filter(
-            bboxes_list, kpss_list, scores_list)
+            bboxes_list, kpss_list, scores_list, self.nms_threshold)
 
         return det, kpss
 
