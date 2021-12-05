@@ -97,8 +97,8 @@ class DBFace(object):
         self.nms_threshold = 0.45
         self.input_shape = (1, 3, 480, 640)
 
-    def prepare(self, nms: float = 0.45, **kwargs):
-        self.nms_threshold = nms
+    def prepare(self, nms_threshold: float = 0.45, **kwargs):
+        self.nms_threshold = nms_threshold
         self.net.prepare()
         self.input_shape = self.net.input_shape
 
@@ -110,7 +110,7 @@ class DBFace(object):
         logging.debug(f"DBFace inference took: {t1 - t0}")
         return self.postprocess(hm, box, landmark, threshold=threshold)
 
-    def postprocess(self, hm, box, landmark, threshold=0.35, nms_iou=0.45):
+    def postprocess(self, hm, box, landmark, threshold=0.35):
         t0 = time.time()
         hm_pool = max_pool2d(hm[0, 0, :, :], 3, 1, 1)
         hm_pool = np.expand_dims(np.expand_dims(hm_pool, 0), 0)

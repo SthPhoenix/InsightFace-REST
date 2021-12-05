@@ -24,8 +24,8 @@ class CenterFace(object):
     def __call__(self, img, threshold=0.5):
         return self.detect(img, threshold)
 
-    def prepare(self, nms: float = 0.3, **kwargs):
-        self.nms_threshold = nms
+    def prepare(self, nms_threshold: float = 0.3, **kwargs):
+        self.nms_threshold = nms_threshold
         self.net.prepare()
         self.input_shape = self.net.input_shape
 

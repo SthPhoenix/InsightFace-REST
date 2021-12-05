@@ -217,10 +217,10 @@ class RetinaFace:
         self.model = inference_backend
         self.input_shape = (1, 3, 480, 640)
 
-    def prepare(self, nms: float = 0.4, **kwargs):
+    def prepare(self, nms_threshold: float = 0.4, **kwargs):
         self.model.prepare()
         self.input_shape = self.model.input_shape
-        self.nms_threshold = nms
+        self.nms_threshold = nms_threshold
         self.landmark_std = 1.0
 
         _ratio = (1.,)
