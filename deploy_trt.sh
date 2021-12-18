@@ -101,6 +101,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         --gpus $device\
         -d\
         -e LOG_LEVEL=$log_level\
+        -e USE_NVJPEG=False\
         -e PYTHONUNBUFFERED=0\
         -e PORT=18080\
         -e NUM_WORKERS=$n_workers\
