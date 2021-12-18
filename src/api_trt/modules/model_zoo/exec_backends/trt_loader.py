@@ -67,7 +67,7 @@ class TrtModel(object):
             raise RuntimeError('Unable to load the engine file')
 
         self.context = self.engine.create_execution_context()
-        self.stream = cp.cuda.Stream()
+        self.stream = cp.cuda.Stream(non_blocking=True)
 
         self.max_batch_size = self.engine.get_profile_shape(0, 0)[2][0]
         for binding in self.engine:
