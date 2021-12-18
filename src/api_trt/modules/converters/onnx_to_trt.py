@@ -35,7 +35,6 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
             if not has_fp16:
                 logging.warning('Builder report no fast FP16 support. Performance drop expected')
             config.set_flag(trt.BuilderFlag.FP16)
-            config.set_flag(trt.BuilderFlag.STRICT_TYPES)
 
         config.max_workspace_size = max_workspace * 1024 * 1024
 
