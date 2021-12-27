@@ -122,6 +122,6 @@ class TrtModel(object):
         if deflatten:
             trt_outputs = [output.reshape(shape) for output, shape in zip(trt_outputs, self.out_shapes)]
         if as_dict:
-            return {name: trt_outputs[i] for i, name in enumerate(self.out_names)}
+            return {name: trt_outputs[i][:infer_shape[0]] for i, name in enumerate(self.out_names)}
 
         return [trt_output[:infer_shape[0]] for trt_output in trt_outputs]
