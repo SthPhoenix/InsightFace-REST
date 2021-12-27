@@ -102,13 +102,22 @@ class DBFace(object):
         self.net.prepare()
         self.input_shape = self.net.input_shape
 
-    def detect(self, img: np.ndarray, threshold: float = 0.4):
-        img = prepare_image(img)
-        t0 = time.time()
-        hm, box, landmark = self.net.run(img)
-        t1 = time.time()
-        logging.debug(f"DBFace inference took: {t1 - t0}")
-        return self.postprocess(hm, box, landmark, threshold=threshold)
+    def detect(self, imgs: Union[list, tuple], threshold: float = 0.4):
+        if not isinstance(imgs, tuple):
+            imgs = (imgs)
+
+        det_list = []
+        lmk_list = []
+        for img in imgs:
+            img = prepare_image(img)
+            t0 = time.time()
+            hm, box, landmark = self.net.run(img)
+            t1 = time.time()
+            logging.debug(f"DBFace inference took: {t1 - t0}")
+            det, landmarks = self.postprocess(hm, box, landmark, threshold=threshold)
+            det_list.append(det)
+            lmk_list.append(landmarks)
+        return det_list, lmk_list
 
     def postprocess(self, hm, box, landmark, threshold=0.35):
         t0 = time.time()

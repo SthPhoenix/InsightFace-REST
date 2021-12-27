@@ -255,15 +255,26 @@ class RetinaFace:
 
         self._num_anchors = dict(zip(self.fpn_keys, [anchors.shape[0] for anchors in self._anchors_fpn.values()]))
 
-    def detect(self, im: np.ndarray, threshold: float = 0.6):
-        im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-        im = np.transpose(im, (2, 0, 1))
-        input_blob = np.expand_dims(im, axis=0).astype(np.float32)
-        t0 = time.time()
-        net_out = self.model.run(input_blob)
-        t1 = time.time()
-        logging.debug(f"Retina inference took: {t1 - t0}")
-        return self.postprocess(net_out, threshold)
+    def detect(self, imgs: Union[list, tuple], threshold: float = 0.6):
+
+        if not isinstance(imgs, tuple):
+                imgs = (imgs)
+
+        det_list = []
+        lmk_list = []
+        for im in imgs:
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+            im = np.transpose(im, (2, 0, 1))
+            input_blob = np.expand_dims(im, axis=0).astype(np.float32)
+            t0 = time.time()
+            net_out = self.model.run(input_blob)
+            t1 = time.time()
+            logging.debug(f"Retina inference took: {t1 - t0}")
+            det, landmarks = self.postprocess(net_out, threshold)
+            det_list.append(det)
+            lmk_list.append(landmarks)
+
+        return det_list, lmk_list
 
     def postprocess(self, net_out, threshold):
         proposals_list = []

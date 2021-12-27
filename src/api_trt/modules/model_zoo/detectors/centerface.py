@@ -16,9 +16,10 @@ except:
 
 class CenterFace(object):
     def __init__(self, inference_backend: Union[DIT, DIO], landmarks=True):
-        self.landmarks = landmarks
+        self.landmarks = True
         self.net = inference_backend
         self.nms_threshold = 0.3
+        self.masks = False
         self.input_shape = (1, 3, 480, 640)
 
     def __call__(self, img, threshold=0.5):
@@ -29,14 +30,26 @@ class CenterFace(object):
         self.net.prepare()
         self.input_shape = self.net.input_shape
 
-    def detect(self, img: np.ndarray, threshold: float = 0.4):
-        h, w = img.shape[:2]
-        blob = np.expand_dims(img[:, :, (2, 1, 0)].transpose(2, 0, 1), axis=0).astype("float32")
-        t0 = time.time()
-        heatmap, scale, offset, lms = self.net.run(blob)
-        t1 = time.time()
-        logging.debug(f"Centerface inference took: {t1 - t0}")
-        return self.postprocess(heatmap, lms, offset, scale, (h, w), threshold)
+    def detect(self, imgs: Union[list, tuple], threshold: float = 0.4):
+
+        if not isinstance(imgs, tuple):
+            imgs = (imgs)
+
+        det_list = []
+        lmk_list = []
+
+        for img in imgs:
+            h, w = img.shape[:2]
+            blob = np.expand_dims(img[:, :, (2, 1, 0)].transpose(2, 0, 1), axis=0).astype("float32")
+            t0 = time.time()
+            heatmap, scale, offset, lms = self.net.run(blob)
+            t1 = time.time()
+            logging.debug(f"Centerface inference took: {t1 - t0}")
+            det, landmarks = self.postprocess(heatmap, lms, offset, scale, (h, w), threshold)
+            det_list.append(det)
+            lmk_list.append(landmarks)
+
+        return det_list, lmk_list
 
     def postprocess(self, heatmap, lms, offset, scale, size, threshold):
         t0 = time.time()
@@ -53,6 +66,7 @@ class CenterFace(object):
             if self.landmarks:
                 lms = np.empty(shape=[0, 10], dtype=np.float32)
         t1 = time.time()
+        logging.debug(f'Centerface detections: {len(dets)}')
         logging.debug(f"Centerface postprocess took: {t1 - t0}")
 
         if self.landmarks:
