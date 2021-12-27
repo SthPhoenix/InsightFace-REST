@@ -30,6 +30,7 @@ def colorize_log(string, color):
         yellow="\x1b[33;21m",
         red="\x1b[31;21m",
         bold_red="\x1b[31;1m",
+        green="\x1b[32;1m",
     )
     reset = "\x1b[0m"
     col = colors.get(color)
