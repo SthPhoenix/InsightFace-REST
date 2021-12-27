@@ -121,6 +121,7 @@ models = {
         'reshape': True,
         'function': 'scrfd',
         'outputs': scrfd_outputs,
+        'allow_batching': True,
         'link': '1ccagW08CyKJoeFAmL2ao7pjwr3_m_Zm1',
         'md5': '03fd8fe67902798b7584b1e7ff3e0f6f',
         'dl_type': 'google'
@@ -131,6 +132,7 @@ models = {
         'reshape': True,
         'function': 'scrfd',
         'outputs': scrfd_outputs,
+        'allow_batching': True,
         'link': '1yObTSsOYCJFn38uf6O6Hku-XEhK8-q0n',
         'md5': '02710671a1af640b610b501383153868',
         'dl_type': 'google'
@@ -141,10 +143,30 @@ models = {
         'reshape': True,
         'function': 'scrfd',
         'outputs': scrfd_outputs,
+        'allow_batching': True,
         'link': '1llbQa8HFle-45wscZulzGcNncPFgYruJ',
         'md5': '2740f9259d46355ca5fa0d9b54943524',
         'dl_type': 'google'
     },
+
+    'scrfd_10g_bnkps_v2': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'allow_batching': True,
+        'function': 'scrfd',
+        'outputs': scrfd_outputs,
+    },
+
+    'scrfd_10g_bnkps_e0': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'allow_batching': True,
+        'function': 'scrfd',
+        'outputs': scrfd_outputs,
+    },
+
     'scrfd_500m_gnkps': {
         'in_package': False,
         'shape': (1, 3, 640, 640),
