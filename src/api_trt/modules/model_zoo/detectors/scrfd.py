@@ -120,7 +120,7 @@ def filter(bboxes_list: np.ndarray, kpss_list: np.ndarray,
     order: np.ndarray = scores_ravel.argsort()[::-1]
     pre_det = np.hstack((bboxes_list, scores_list))
     pre_det = pre_det[order, :]
-    keep = nms(pre_det, thresh = nms_threshold)
+    keep = nms(pre_det, thresh=nms_threshold)
     keep = np.asarray(keep)
     det = pre_det[keep, :]
     kpss = kpss_list.reshape((kpss_list.shape[0], -1, 2))
@@ -139,7 +139,7 @@ def _normalize_on_device(input, stream, out):
     :param out: Inference backend pre-allocated input buffer
     :return: Image shape after preprocessing
     """
-    input = np.expand_dims(input, axis=0)
+
     allocate_place = np.prod(input.shape)
     with stream:
         g_img = cp.asarray(input)
@@ -195,7 +195,7 @@ class SCRFD:
             pass
 
     # @timing
-    def detect(self, img, threshold=0.5):
+    def detect(self, imgs, threshold=0.5):
         """
         Run detection pipeline for provided image
 
@@ -204,17 +204,32 @@ class SCRFD:
         :return: Face bboxes with scores [t,l,b,r,score], and key points
         """
 
-        input_height = img.shape[0]
-        input_width = img.shape[1]
-        blob = self._preprocess(img)
+        if isinstance(imgs, list) or isinstance(imgs, tuple):
+            if len(imgs) == 1:
+                imgs = np.expand_dims(imgs[0], 0)
+            else:
+                imgs = np.stack(imgs)
+        elif len(imgs.shape) == 3:
+            imgs = np.expand_dims(imgs, 0)
+
+        input_height = imgs[0].shape[0]
+        input_width = imgs[0].shape[1]
+        blob = self._preprocess(imgs)
         net_outs = self._forward(blob)
 
-        bboxes_list, kpss_list, scores_list = self._postprocess(net_outs, input_height, input_width, threshold)
+        dets_list = []
+        kpss_list = []
 
-        det, kpss = filter(
-            bboxes_list, kpss_list, scores_list, self.nms_threshold)
+        bboxes_by_img, kpss_by_img, scores_by_img = self._postprocess(net_outs, input_height, input_width, threshold)
 
-        return det, kpss
+        for e in range(self.infer_shape[0]):
+            det, kpss = filter(
+                bboxes_by_img[e], kpss_by_img[e], scores_by_img[e], self.nms_threshold)
+
+            dets_list.append(det)
+            kpss_list.append(kpss)
+
+        return dets_list, kpss_list
 
     @staticmethod
     def _get_max_prop_len(input_shape, feat_strides, num_anchors):
@@ -289,7 +304,7 @@ class SCRFD:
         t0 = time.time()
         if self.stream:
             net_outs = self.session.run(
-                from_device=True, infer_shape=self.input_shape)
+                from_device=True, infer_shape=self.infer_shape)
         else:
             net_outs = self.session.run(blob)
         t1 = time.time()
@@ -329,15 +344,27 @@ class SCRFD:
 
         offset = 0
 
-        for idx, stride in enumerate(self._feat_stride_fpn):
-            score_blob = net_outs[idx][0]
-            bbox_blob = net_outs[idx + self.fmc][0]
-            kpss_blob = net_outs[idx + self.fmc * 2][0]
-            stride_anchors = anchor_centers[idx]
-            self.score_list, self.bbox_list, self.kpss_list, total = generate_proposals(score_blob, bbox_blob,
-                                                                                        kpss_blob, stride,
-                                                                                        stride_anchors, threshold,
-                                                                                        self.score_list, self.bbox_list,
-                                                                                        self.kpss_list, offset)
-            offset = total
-        return self.bbox_list[:offset], self.kpss_list[:offset], self.score_list[:offset]
+        batch_size = self.infer_shape[0]
+        bboxes_by_img = []
+        kpss_by_img = []
+        scores_by_img = []
+
+        for n_img in range(batch_size):
+            for idx, stride in enumerate(self._feat_stride_fpn):
+                score_blob = net_outs[idx][n_img]
+                bbox_blob = net_outs[idx + self.fmc][n_img]
+                kpss_blob = net_outs[idx + self.fmc * 2][n_img]
+                stride_anchors = anchor_centers[idx]
+                self.score_list, self.bbox_list, self.kpss_list, total = generate_proposals(score_blob, bbox_blob,
+                                                                                            kpss_blob, stride,
+                                                                                            stride_anchors, threshold,
+                                                                                            self.score_list,
+                                                                                            self.bbox_list,
+                                                                                            self.kpss_list, offset)
+                offset = total
+
+            bboxes_by_img.append(self.bbox_list[:offset])
+            kpss_by_img.append(self.kpss_list[:offset])
+            scores_by_img.append(self.score_list[:offset])
+
+        return bboxes_by_img, kpss_by_img, scores_by_img
