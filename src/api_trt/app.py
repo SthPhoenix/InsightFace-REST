@@ -20,7 +20,7 @@ from modules.processing import Processing
 from env_parser import EnvConfigs
 from schemas import BodyDraw, BodyExtract
 
-__version__ = "0.7.0.0"
+__version__ = "0.7.1.0"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -38,6 +38,7 @@ processing = Processing(det_name=configs.models.det_name, rec_name=configs.model
                         device=configs.models.device,
                         max_size=configs.defaults.max_size,
                         max_rec_batch_size=configs.models.rec_batch_size,
+                        max_det_batch_size=configs.models.det_batch_size,
                         backend_name=configs.models.backend_name,
                         force_fp16=configs.models.fp16,
                         triton_uri=configs.models.triton_uri)
