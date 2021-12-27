@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tensorrt:21.09-py3
+FROM nvcr.io/nvidia/tensorrt:21.12-py3
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
