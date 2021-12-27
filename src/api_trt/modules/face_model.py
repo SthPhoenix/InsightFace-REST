@@ -4,12 +4,13 @@ import numpy as np
 from numpy.linalg import norm
 import cv2
 import logging
+from functools import partial
 
 import time
 from modules.utils import fast_face_align as face_align
 
 from modules.model_zoo.getter import get_model
-from modules.imagedata import ImageData
+from modules.imagedata import ImageData, resize_image
 from modules.utils.helpers import to_chunks, colorize_log
 
 import asyncio
@@ -42,16 +43,26 @@ class Detector:
 
     def detect(self, data, threshold=0.3):
         bboxes, landmarks = self.retina.detect(data, threshold=threshold)
-        boxes = bboxes[:, 0:4]
-        probs = bboxes[:, 4]
+
+        boxes = [e[:, 0:4] for e in bboxes]
+        probs = [e[:, 4] for e in bboxes]
+
         mask_probs = None
         try:
             if self.retina.masks == True:
-                mask_probs = bboxes[:, 5]
+                mask_probs = [e[:, 5] for e in bboxes][0]
+            else:
+                mask_probs = np.empty_like(probs, dtype=None)
         except:
             pass
-        t1 = time.time()
         return boxes, probs, landmarks, mask_probs
+
+
+# Translate bboxes and landmarks from resized to original image size
+def reproject_points(dets, scale: float):
+    if scale != 1.0:
+        dets = dets / scale
+    return dets
 
 
 class FaceAnalysis:
@@ -66,6 +77,8 @@ class FaceAnalysis:
         self.max_size = max_size
         self.max_rec_batch_size = max_rec_batch_size
         self.max_det_batch_size = max_det_batch_size
+        self.det_name = det_name
+        self.rec_name = rec_name
         logging.info(self.max_det_batch_size)
         if backend_name not in ('trt', 'triton') and max_rec_batch_size != 1:
             logging.warning('Batch processing supported only for TensorRT & Triton backend. Fallback to 1.')
@@ -106,8 +119,7 @@ class FaceAnalysis:
             ])
             offset_dist_squared = np.sum(np.power(offsets, 2.0), 0)
             values = area  # some extra weight on the centering
-            bindex = np.argsort(
-                values)[::-1]  # some extra weight on the centering
+            bindex = np.argsort(values)[::-1]  # some extra weight on the centering
             bindex = bindex[0:max_num]
 
             boxes = boxes[bindex, :]
@@ -118,12 +130,6 @@ class FaceAnalysis:
             landmarks = landmarks[bindex, :]
 
         return boxes, probs, landmarks, mask_probs
-
-    # Translate bboxes and landmarks from resized to original image size
-    def reproject_points(self, dets, scale: float):
-        if scale != 1.0:
-            dets = dets / scale
-        return dets
 
     def process_faces(self, faces: List[Face], extract_embedding: bool = True, extract_ga: bool = True,
                       return_face_data: bool = False):
@@ -152,7 +158,6 @@ class FaceAnalysis:
                     f'Extracting g/a for {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
 
             for i, crop in enumerate(crops):
-                embedding = None
                 embedding_norm = None
                 normed_embedding = None
                 gender = None
@@ -176,12 +181,11 @@ class FaceAnalysis:
                 yield face
 
     # Process single image
-    async def get(self, img, extract_embedding: bool = True, extract_ga: bool = True,
+    async def get(self, images, extract_embedding: bool = True, extract_ga: bool = True,
                   return_face_data: bool = True, max_size: List[int] = None, threshold: float = 0.6,
                   limit_faces: int = 0):
 
         ts = time.time()
-        t0 = time.time()
 
         # If detector has input_shape attribute, use it instead of provided value
         try:
@@ -189,54 +193,120 @@ class FaceAnalysis:
         except:
             pass
 
-        img = ImageData(img, max_size=max_size)
-        img.resize_image(mode='pad')
-        t1 = time.time()
-        logging.debug(f'Preparing image took: {(t1 - t0) * 1000:.3f} ms.')
+        # Pre-assign max_size to resize function
+        _partial_resize = partial(resize_image, max_size=max_size)
+        # Pre-assign threshold to detect function
+        _partial_detect = partial(self.det_model.detect, threshold=threshold)
 
-        t0 = time.time()
-        boxes, probs, landmarks, mask_probs = self.det_model.detect(img.transformed_image, threshold=threshold)
-        t1 = time.time()
-        logging.debug(f'Detection took: {(t1 - t0) * 1000:.3f} ms.')
+        # Initialize resied images iterator
+        res_images = map(_partial_resize, images)
+        batches = to_chunks(res_images, self.max_det_batch_size)
+
         faces = []
-        await asyncio.sleep(0)
-        if not isinstance(boxes, type(None)):
+        faces_per_img = {}
+
+        for bid, batch in enumerate(batches):
+            batch_imgs, scales = zip(*batch)
             t0 = time.time()
-            if limit_faces > 0:
-                boxes, probs, landmarks, mask_probs = self.sort_boxes(boxes, probs, landmarks, mask_probs,
-                                                                      shape=img.transformed_image.shape,
-                                                                      max_num=limit_faces)
+            det_predictions = zip(*_partial_detect(batch_imgs))
 
-            # Translate points to original image size
-            boxes = self.reproject_points(boxes, img.scale_factor)
-            landmarks = self.reproject_points(landmarks, img.scale_factor)
-            # Crop faces from original image instead of resized to improve quality
-            if extract_ga or extract_embedding or return_face_data:
-                crops = face_align.norm_crop_batched(img.orig_image, landmarks)
-            else:
-                crops = [None] * len(boxes)
+            for idx, pred in enumerate(det_predictions):
+                await asyncio.sleep(0)
+                orig_id = (bid * self.max_det_batch_size) + idx
+                boxes, probs, landmarks, mask_probs = pred
+                t1 = time.time()
+                logging.debug(f'Detection took: {(t1 - t0) * 1000:.3f} ms.')
 
-            for i, _crop in enumerate(crops):
+                faces_per_img[orig_id] = len(boxes)
 
-                if not isinstance(mask_probs, type(None)):
-                    mask_prob = mask_probs[i]
-                else:
-                    mask_prob = None
+                if not isinstance(boxes, type(None)):
+                    t0 = time.time()
+                    if limit_faces > 0:
+                        boxes, probs, landmarks, mask_probs = self.sort_boxes(boxes, probs, landmarks, mask_probs,
+                                                                              shape=batch_imgs[idx].shape,
+                                                                              max_num=limit_faces)
 
-                face = Face(bbox=boxes[i], landmark=landmarks[i], det_score=probs[i],
-                            num_det=i, scale=img.scale_factor, mask_prob=mask_prob, facedata=_crop)
+                    # Translate points to original image size
+                    boxes = reproject_points(boxes, scales[idx])
+                    landmarks = reproject_points(landmarks, scales[idx])
+                    # Crop faces from original image instead of resized to improve quality
+                    if extract_ga or extract_embedding or return_face_data:
+                        crops = face_align.norm_crop_batched(images[orig_id], landmarks)
+                    else:
+                        crops = [None] * len(boxes)
 
-                faces.append(face)
+                    for i, _crop in enumerate(crops):
+                        if self.det_model.retina.masks:
+                            mask_prob = mask_probs[i]
+                        else:
+                            mask_prob = None
 
-            t1 = time.time()
-            logging.debug(f'Cropping {len(boxes)} faces took: {(t1 - t0) * 1000:.3f} ms.')
+                        face = Face(bbox=boxes[i], landmark=landmarks[i], det_score=probs[i],
+                                    num_det=i, scale=scales[idx], mask_prob=mask_prob, facedata=_crop)
 
-            # Process detected faces
-            faces = [e for e in self.process_faces(faces, extract_embedding=extract_embedding,
-                                                   extract_ga=extract_ga, return_face_data=return_face_data)]
+                        faces.append(face)
+
+                    t1 = time.time()
+                    logging.debug(f'Cropping {len(boxes)} faces took: {(t1 - t0) * 1000:.3f} ms.')
+
+        # Process detected faces
+        faces = [e for e in self.process_faces(faces, extract_embedding=extract_embedding,
+                                               extract_ga=extract_ga, return_face_data=return_face_data)]
+
+        faces_by_img = []
+        offset = 0
+        for key in faces_per_img:
+            value = faces_per_img[key]
+            faces_by_img.append(faces[offset:offset + value])
+            offset += value
 
         tf = time.time()
 
-
         logging.debug(colorize_log(f'Full processing took: {(tf - ts) * 1000:.3f} ms.', 'red'))
-        return faces
+        return faces_by_img
+
+    def draw_faces(self, image, faces, draw_landmarks=True, draw_scores=True, draw_sizes=True):
+
+        for face in faces:
+            bbox = face.bbox.astype(int)
+            pt1 = tuple(bbox[0:2])
+            pt2 = tuple(bbox[2:4])
+            color = (0, 255, 0)
+            x, y = pt1
+            r, b = pt2
+            w = r - x
+            if face.mask_prob:
+                if face.mask_prob >= 0.2:
+                    color = (0, 255, 255)
+            cv2.rectangle(image, pt1, pt2, color, 1)
+
+            if draw_landmarks:
+                lms = face.landmark.astype(int)
+                pt_size = int(w * 0.05)
+                cv2.circle(image, (lms[0][0], lms[0][1]), 1, (0, 0, 255), pt_size)
+                cv2.circle(image, (lms[1][0], lms[1][1]), 1, (0, 255, 255), pt_size)
+                cv2.circle(image, (lms[2][0], lms[2][1]), 1, (255, 0, 255), pt_size)
+                cv2.circle(image, (lms[3][0], lms[3][1]), 1, (0, 255, 0), pt_size)
+                cv2.circle(image, (lms[4][0], lms[4][1]), 1, (255, 0, 0), pt_size)
+
+            if draw_scores:
+                text = f"{face.det_score:.3f}"
+                pos = (x + 3, y - 5)
+                textcolor = (0, 0, 0)
+                thickness = 1
+                border = int(thickness / 2)
+                cv2.rectangle(image, (x - border, y - 21, w + thickness, 21), color, -1, 16)
+                cv2.putText(image, text, pos, 0, 0.5, (0, 255, 0), 3, 16)
+                cv2.putText(image, text, pos, 0, 0.5, textcolor, 1, 16)
+            if draw_sizes:
+                text = f"w:{w}"
+                pos = (x + 3, b - 5)
+                cv2.putText(image, text, pos, 0, 0.5, (0, 0, 0), 3, 16)
+                cv2.putText(image, text, pos, 0, 0.5, (0, 255, 0), 1, 16)
+
+        total = f'faces: {len(faces)} ({self.det_name})'
+        bottom = image.shape[0]
+        cv2.putText(image, total, (5, bottom - 5), 0, 1, (0, 0, 0), 3, 16)
+        cv2.putText(image, total, (5, bottom - 5), 0, 1, (0, 255, 0), 1, 16)
+
+        return image

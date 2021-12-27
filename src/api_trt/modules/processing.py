@@ -9,7 +9,7 @@ import httpx
 
 import numpy as np
 import cv2
-from turbojpeg import TurboJPEG
+from functools import partial
 
 from .face_model import FaceAnalysis, Face
 from modules.utils.image_provider import get_images
@@ -98,7 +98,7 @@ class Processing:
                                   backend_name=backend_name, force_fp16=force_fp16, triton_uri=triton_uri
                                   )
 
-    def __iterate_faces(self, crops):
+    def __iterate_images(self, crops):
         for face in crops:
             if face.get('traceback') is None:
                 face = Face(facedata=face.get('data'))
@@ -109,7 +109,7 @@ class Processing:
         t0 = time.time()
         output = dict(took_ms=None, data=[], status="ok")
 
-        iterator = self.__iterate_faces(images)
+        iterator = self.__iterate_images(images)
         faces = self.model.process_faces(iterator, extract_embedding=extract_embedding, extract_ga=extract_ga,
                                          return_face_data=False)
 
@@ -136,30 +136,33 @@ class Processing:
                     limit_faces: int = 0, return_face_data: bool = False, extract_embedding: bool = True,
                     extract_ga: bool = True, return_landmarks: bool = False):
 
+        _get = partial(self.model.get, max_size=max_size, threshold=threshold,
+                       return_face_data=return_face_data,
+                       extract_embedding=extract_embedding, extract_ga=extract_ga,
+                       limit_faces=limit_faces)
+
+        _serialize = partial(serialize_face, return_face_data=return_face_data,
+                             return_landmarks=return_landmarks)
+
         output = dict(took={}, data=[])
 
-        for image_data in images:
+        imgs_iterable = self.__iterate_images(images)
+        faces_by_img = (e for e in await _get([img.facedata for img in imgs_iterable]))
+
+
+        for img in images:
             _faces_dict = dict(status='', took_ms=0., faces=[])
             try:
-                t1 = time.time()
-                if image_data.get('traceback') is not None:
+                if img.get('traceback') is not None:
                     _faces_dict['status'] = 'failed'
-                    _faces_dict['traceback'] = image_data.get('traceback')
+                    _faces_dict['traceback'] = img.get('traceback')
                 else:
-                    image = image_data.get('data')
-                    faces = await self.model.get(image, max_size=max_size, threshold=threshold,
-                                                 return_face_data=return_face_data,
-                                                 extract_embedding=extract_embedding, extract_ga=extract_ga,
-                                                 limit_faces=limit_faces)
-
-                    for idx, face in enumerate(faces):
-                        _face_dict = serialize_face(face=face, return_face_data=return_face_data,
-                                                    return_landmarks=return_landmarks)
-                        _faces_dict['faces'].append(_face_dict)
-                    took_image = time.time() - t1
-                    _faces_dict['took_ms'] = took_image * 1000
+                    t0 = time.perf_counter()
+                    faces = faces_by_img.__next__()
+                    _faces_dict['faces'] = list(map(_serialize, faces))
+                    took = time.perf_counter() - t0
+                    _faces_dict['took_ms'] = took * 1000
                     _faces_dict['status'] = 'ok'
-
             except Exception as e:
                 tb = traceback.format_exc()
                 print(tb)
@@ -167,6 +170,7 @@ class Processing:
                 _faces_dict['traceback'] = tb
 
             output['data'].append(_faces_dict)
+
         return output
 
     async def extract(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
@@ -216,50 +220,13 @@ class Processing:
             __bin = np.fromstring(images, np.uint8)
             image = cv2.imdecode(__bin, cv2.IMREAD_COLOR)
 
-        faces = await self.model.get(image, threshold=threshold, return_face_data=False,
+        faces = await self.model.get([image], threshold=threshold, return_face_data=False,
                                      extract_embedding=False, extract_ga=False, limit_faces=limit_faces)
 
-        for face in faces:
-            bbox = face.bbox.astype(int)
-            pt1 = tuple(bbox[0:2])
-            pt2 = tuple(bbox[2:4])
-            color = (0, 255, 0)
-            x, y = pt1
-            r, b = pt2
-            w = r - x
-            if face.mask_prob:
-                if face.mask_prob >= 0.2:
-                    color = (0, 255, 255)
-            cv2.rectangle(image, pt1, pt2, color, 1)
-
-            if draw_landmarks:
-                lms = face.landmark.astype(int)
-                pt_size = int(w * 0.05)
-                cv2.circle(image, (lms[0][0], lms[0][1]), 1, (0, 0, 255), pt_size)
-                cv2.circle(image, (lms[1][0], lms[1][1]), 1, (0, 255, 255), pt_size)
-                cv2.circle(image, (lms[2][0], lms[2][1]), 1, (255, 0, 255), pt_size)
-                cv2.circle(image, (lms[3][0], lms[3][1]), 1, (0, 255, 0), pt_size)
-                cv2.circle(image, (lms[4][0], lms[4][1]), 1, (255, 0, 0), pt_size)
-
-            if draw_scores:
-                text = f"{face.det_score:.3f}"
-                pos = (x + 3, y - 5)
-                textcolor = (0, 0, 0)
-                thickness = 1
-                border = int(thickness / 2)
-                cv2.rectangle(image, (x - border, y - 21, w + thickness, 21), color, -1, 16)
-                cv2.putText(image, text, pos, 0, 0.5, (0, 255, 0), 3, 16)
-                cv2.putText(image, text, pos, 0, 0.5, textcolor, 1, 16)
-            if draw_sizes:
-                text = f"w:{w}"
-                pos = (x + 3, b - 5)
-                cv2.putText(image, text, pos, 0, 0.5, (0, 0, 0), 3, 16)
-                cv2.putText(image, text, pos, 0, 0.5, (0, 255, 0), 1, 16)
-
-        total = f'faces: {len(faces)} ({self.det_name})'
-        bottom = image.shape[0]
-        cv2.putText(image, total, (5, bottom - 5), 0, 1, (0, 0, 0), 3, 16)
-        cv2.putText(image, total, (5, bottom - 5), 0, 1, (0, 255, 0), 1, 16)
+        image = self.model.draw_faces(image, faces[0],
+                                      draw_landmarks=draw_landmarks,
+                                      draw_scores=draw_scores,
+                                      draw_sizes=draw_sizes)
 
         is_success, buffer = cv2.imencode(".jpg", image)
         io_buf = io.BytesIO(buffer)
