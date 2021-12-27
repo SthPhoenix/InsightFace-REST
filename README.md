@@ -53,38 +53,38 @@ API and converting models to ONNX and TensorRT using Docker.
 ### Detection:
 
 
-| Model                 | Auto download | Inference code | Source                     | ONNX File |
-|:----------------------|:--------------:|:---------------:|:-------------------------|:---------:|
-| retinaface_r50_v1     | Yes*           | Yes            | [official package][1]      |[link][dl1]|
-| retinaface_mnet025_v1 | Yes*           | Yes            | [official package][1]      |[link][dl2]|
-| retinaface_mnet025_v2 | Yes*           | Yes            | [official package][1]      |[link][dl3]|
-| mnet_cov2             | Yes*           | Yes            | [mnet_cov2][2]             |[link][dl4]|
-| centerface            | Yes            | Yes            | [Star-Clouds/CenterFace][3]|[link][dl5]|
-| scrfd_10g_bnkps       | Yes*           | Yes            | [SCRFD][4]                 |[link][dl6]|
-| scrfd_2.5g_bnkps      | Yes*           | Yes            | [SCRFD][4]                 |[link][dl7]|
-| scrfd_500m_bnkps      | Yes*           | Yes            | [SCRFD][4]                 |[link][dl15]|
-| scrfd_10g_gnkps       | Yes*           | Yes            | [SCRFD][4]**               |[link][dl16]|
-| scrfd_2.5g_gnkps      | Yes*           | Yes            | [SCRFD][4]**               |[link][dl17]|
-| scrfd_500m_gnkps      | Yes*           | Yes            | [SCRFD][4]**               |[link][dl18]|
+| Model                 | Auto download  | Batch inference | Source                      |  ONNX File   |
+|:----------------------|:--------------:|:---------------:|:----------------------------|:------------:|
+| retinaface_r50_v1     |      Yes*      |                 | [official package][1]       | [link][dl1]  |
+| retinaface_mnet025_v1 |      Yes*      |                 | [official package][1]       | [link][dl2]  |
+| retinaface_mnet025_v2 |      Yes*      |                 | [official package][1]       | [link][dl3]  |
+| mnet_cov2             |      Yes*      |                 | [mnet_cov2][2]              | [link][dl4]  |
+| centerface            |      Yes       |                 | [Star-Clouds/CenterFace][3] | [link][dl5]  |
+| scrfd_10g_bnkps       |      Yes*      |       Yes       | [SCRFD][4]                  | [link][dl6]  |
+| scrfd_2.5g_bnkps      |      Yes*      |       Yes       | [SCRFD][4]                  | [link][dl7]  |
+| scrfd_500m_bnkps      |      Yes*      |       Yes       | [SCRFD][4]                  | [link][dl15] |
+| scrfd_10g_gnkps       |      Yes*      |       Yes       | [SCRFD][4]**                | [link][dl16] |
+| scrfd_2.5g_gnkps      |      Yes*      |       Yes       | [SCRFD][4]**                | [link][dl17] |
+| scrfd_500m_gnkps      |      Yes*      |       Yes       | [SCRFD][4]**                | [link][dl18] |
 
 > Note: SCRFD family models requires input image shape dividable by 32, i.e 640x640, 1024x768.
 
 ### Recognition:
 
-| Model                  | Auto download | Inference code | Source                | ONNX File  |
-|:-----------------------|:--------------:|:---------------:|:--------------------|:----------:|
-| arcface_r100_v1        | Yes*           | Yes            | [official package][1] |[link][dl8] |
-| r100-arcface-msfdrop75 | No             | Yes            | [SubCenter-ArcFace][5]| None       |
-| r50-arcface-msfdrop75  | No             | Yes            | [SubCenter-ArcFace][5]| None       |
-| glint360k_r100FC_1.0   | No             | Yes            | [Partial-FC][6]       | None       |
-| glint360k_r100FC_0.1   | No             | Yes            | [Partial-FC][6]       | None       |
-| glintr100              | Yes*           | Yes            | [official package][1] |[link][dl13]|
+| Model                  | Auto download | Batch inference | Source                 |  ONNX File   |
+|:-----------------------|:-------------:|:---------------:|:-----------------------|:------------:|
+| arcface_r100_v1        |     Yes*      |       Yes       | [official package][1]  | [link][dl8]  |
+| r100-arcface-msfdrop75 |      No       |       Yes       | [SubCenter-ArcFace][5] |     None     |
+| r50-arcface-msfdrop75  |      No       |       Yes       | [SubCenter-ArcFace][5] |     None     |
+| glint360k_r100FC_1.0   |      No       |       Yes       | [Partial-FC][6]        |     None     |
+| glint360k_r100FC_0.1   |      No       |       Yes       | [Partial-FC][6]        |     None     |
+| glintr100              |     Yes*      |       Yes       | [official package][1]  | [link][dl13] |
 ### Other:
 
-| Model        | Auto download | Inference code | Source                | ONNX File  |
-|:-------------|:--------------:|:---------------:|:--------------------|:----------:|
-| genderage_v1 | Yes*           | Yes            | [official package][1] |[link][dl14]|
-| 2d106det     | No            | No             | [coordinateReg][8]    | None       |
+|    Model     | Auto download | Inference code | Source                |   ONNX File   |
+|:------------:|:-------------:|:--------------:|:----------------------|:-------------:|
+| genderage_v1 |     Yes*      |      Yes       | [official package][1] | [link][dl14]  |
+|   2d106det   |      No       |       No       | [coordinateReg][8]    |     None      |
 
 
 [1]: https://github.com/deepinsight/insightface/tree/master/python-package
@@ -120,11 +120,11 @@ Batch Normalization, which fixes bug, though at cost of some accuracy.
 
 Models accuracy on WiderFace benchmark:
 
-| Model              | Easy   | Medium   | Hard  |
-| -------------------| -------|----------| ----- |
-|  scrfd_10g_gnkps   | 95.51  | 94.12    | 82.14 |
-|  scrfd_2.5g_gnkps  | 93.57  | 91.70    | 76.08 |
-|  scrfd_500m_gnkps  | 88.70  | 86.11    | 63.57 |
+|        Model        |  Easy   |   Medium   | Hard  |
+|:-------------------:|:-------:|:----------:|:-----:|
+|   scrfd_10g_gnkps   |  95.51  |   94.12    | 82.14 |
+|  scrfd_2.5g_gnkps   |  93.57  |   91.70    | 76.08 |
+|  scrfd_500m_gnkps   |  88.70  |   86.11    | 63.57 |
 
 
 ## Requirements:
