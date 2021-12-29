@@ -41,7 +41,9 @@ processing = Processing(det_name=configs.models.det_name, rec_name=configs.model
                         max_det_batch_size=configs.models.det_batch_size,
                         backend_name=configs.models.backend_name,
                         force_fp16=configs.models.fp16,
-                        triton_uri=configs.models.triton_uri)
+                        triton_uri=configs.models.triton_uri,
+                        root_dir='/models'
+                        )
 
 app = FastAPI(
     title="InsightFace-REST",
