@@ -25,7 +25,7 @@ try:
     from .exec_backends import triton_backend as triton_backend
     from ..converters.onnx_to_trt import convert_onnx
 except Exception as e:
-    logging.warning(e)
+    print(e)
     trt_backend = None
     triton_backend = None
     convert_onnx = None
