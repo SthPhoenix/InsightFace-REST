@@ -124,7 +124,7 @@ class FaceAnalysis:
 
             boxes = boxes[bindex, :]
             probs = probs[bindex]
-            if not isinstance(mask_probs, type(None)):
+            if self.det_model.retina.masks:
                 mask_probs = mask_probs[bindex, :]
 
             landmarks = landmarks[bindex, :]
@@ -209,9 +209,9 @@ class FaceAnalysis:
             batch_imgs, scales = zip(*batch)
             t0 = time.time()
             det_predictions = zip(*_partial_detect(batch_imgs))
-
             for idx, pred in enumerate(det_predictions):
                 await asyncio.sleep(0)
+
                 orig_id = (bid * self.max_det_batch_size) + idx
                 boxes, probs, landmarks, mask_probs = pred
                 t1 = time.time()
@@ -225,6 +225,7 @@ class FaceAnalysis:
                         boxes, probs, landmarks, mask_probs = self.sort_boxes(boxes, probs, landmarks, mask_probs,
                                                                               shape=batch_imgs[idx].shape,
                                                                               max_num=limit_faces)
+
 
                     # Translate points to original image size
                     boxes = reproject_points(boxes, scales[idx])
