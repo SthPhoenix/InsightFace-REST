@@ -288,8 +288,8 @@ class SCRFD:
             self.infer_shape = _normalize_on_device(
                 img, self.stream, self.input_ptr)
         else:
-            input_size = tuple(img.shape[0:2][::-1])
-            blob = cv2.dnn.blobFromImage(
+            input_size = tuple(img[0].shape[0:2][::-1])
+            blob = cv2.dnn.blobFromImages(
                 img, 1.0 / 128, input_size, (127.5, 127.5, 127.5), swapRB=True)
         return blob
 
