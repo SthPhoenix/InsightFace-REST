@@ -76,11 +76,11 @@ class DetectorInfer:
 
     def __init__(self, model='/models/onnx/centerface/centerface.onnx',
                  output_order=None, **kwargs):
+
         self.rec_model = onnxruntime.InferenceSession(model)
         logging.info('Detector started')
         self.input = self.rec_model.get_inputs()[0]
         self.input_dtype = self.input.type
-        logging.debug(f"INPUT DTYPE: {self.input.type}")
         if self.input_dtype == 'tensor(float)':
             self.input_dtype = np.float32
         else:
@@ -89,7 +89,6 @@ class DetectorInfer:
         self.output_order = output_order
         self.out_shapes = None
         self.input_shape = tuple(self.input.shape)
-        print(self.input_shape)
 
     # warmup
     def prepare(self, **kwargs):
