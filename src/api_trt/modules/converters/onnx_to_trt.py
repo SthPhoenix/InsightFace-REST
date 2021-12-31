@@ -50,9 +50,13 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
         profile = builder.create_optimization_profile()
         # Get input name and shape for building optimization profile
         input = network.get_input(0)
-        im_size = input.shape[2:]
+        inp_shape = list(input.shape)
+        inp_shape[0] = 1
+        min_opt_shape = tuple(inp_shape)
+        inp_shape[0] = max_batch_size
+        max_shape = tuple(inp_shape)
         input_name = input.name
-        profile.set_shape(input_name, (1, 3) + im_size, (1, 3) + im_size, (max_batch_size, 3) + im_size)
+        profile.set_shape(input_name, min_opt_shape, min_opt_shape, max_shape)
         config.add_optimization_profile(profile)
 
         return builder.build_engine(network, config=config)
