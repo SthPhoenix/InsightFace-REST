@@ -1,7 +1,7 @@
 import os
 import logging
 
-from modules.utils.helpers import parse_size, tobool
+from modules.utils.helpers import parse_size, tobool, validate_max_size
 from modules.model_zoo.getter import prepare_backend
 from modules.configs import Configs
 
@@ -14,6 +14,7 @@ logging.basicConfig(
 )
 
 
+
 def prepare_models(root_dir: str = '/models'):
     backend_name = os.getenv('INFERENCE_BACKEND', 'trt')
     rec_name = os.getenv("REC_NAME", "arcface_r100_v1")
@@ -22,6 +23,8 @@ def prepare_models(root_dir: str = '/models'):
     det_name = os.getenv("DET_NAME", "retinaface_mnet025_v2")
     ga_name = os.getenv("GA_NAME", "genderage_v1")
     ga_ignore = tobool(os.getenv("GA_IGNORE", False))
+    mask_detector = os.getenv("MASK_DETECTOR", "mask_detector")
+    mask_ignore = tobool(os.getenv('MASK_IGNORE', False))
 
     force_fp16 = tobool(os.getenv('FORCE_FP16', False))
 
@@ -30,12 +33,16 @@ def prepare_models(root_dir: str = '/models'):
     if max_size is None:
         max_size = [640, 640]
 
+    max_size = validate_max_size(max_size)
+
     config = Configs(models_dir=root_dir)
 
     models = [rec_name, det_name]
 
     if not ga_ignore:
         models.append(ga_name)
+    if not mask_ignore:
+        models.append(mask_detector)
 
     for model in models:
         batch_size = 1
