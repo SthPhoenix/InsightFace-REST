@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.6.3.0-cpu'
+TAG='v0.7.2.0-cpu'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -47,6 +47,12 @@ ga_model=genderage_v1
 ## Do not load genderage model:
 ga_ignore=True
 
+# Mask detection models
+## mask_detector
+mask_detector=mask_detector
+## Do not load mask detection model:
+mask_ignore=True
+
 # Default settings for inference requests, can be overridden inside
 # request body.
 
@@ -88,6 +94,8 @@ docker run  -p $START_PORT:18080\
     -e DET_THRESH=$det_thresh\
     -e REC_NAME=$rec_model\
     -e REC_IGNORE=$rec_ignore\
+    -e MASK_DETECTOR=$mask_detector\
+    -e MASK_IGNORE=$mask_ignore\
     -e GA_NAME=$ga_model\
     -e GA_IGNORE=$ga_ignore\
     -e KEEP_ALL=True\

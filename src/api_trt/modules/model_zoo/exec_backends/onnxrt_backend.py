@@ -73,6 +73,41 @@ class FaceGenderage:
             _ga.append((gender, age))
         return _ga
 
+class MaskDetection:
+
+    def __init__(self, rec_name='/models/onnx/genderage_v1/genderage_v1.onnx', outputs=None, **kwargs):
+        self.rec_model = onnxruntime.InferenceSession(rec_name)
+        self.input = self.rec_model.get_inputs()[0]
+        if outputs is None:
+            outputs = [e.name for e in self.rec_model.get_outputs()]
+        self.outputs = outputs
+
+    # warmup
+    def prepare(self, **kwargs):
+        logging.info("Warming up mask detection ONNX Runtime engine...")
+        self.rec_model.run(self.outputs,
+                           {self.rec_model.get_inputs()[0].name: [np.zeros(tuple(self.input.shape[1:]), np.float32)]})
+
+    def get(self, face_img):
+        if not isinstance(face_img, list):
+            face_img = [face_img]
+
+        if not face_img[0].shape == (224, 224, 3):
+            for i, img in enumerate(face_img):
+                img = cv2.resize(img, (224, 224))
+                face_img[i] = img
+            face_img = np.stack(face_img)
+
+        face_img = np.multiply(face_img, 1/127.5, dtype='float32') - 1.
+        _mask = []
+
+        ret = self.rec_model.run(self.outputs, {self.input.name: face_img})[0]
+        for e in ret:
+            mask = e[0]
+            no_mask = e[1]
+            _mask.append((mask, no_mask))
+        return _mask
+
 
 class DetectorInfer:
 
