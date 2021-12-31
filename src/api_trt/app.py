@@ -20,7 +20,7 @@ from modules.processing import Processing
 from env_parser import EnvConfigs
 from schemas import BodyDraw, BodyExtract
 
-__version__ = "0.7.1.0"
+__version__ = "0.7.2.0"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -35,6 +35,7 @@ logging.basicConfig(
 
 processing = Processing(det_name=configs.models.det_name, rec_name=configs.models.rec_name,
                         ga_name=configs.models.ga_name,
+                        mask_detector=configs.models.mask_detector,
                         device=configs.models.device,
                         max_size=configs.defaults.max_size,
                         max_rec_batch_size=configs.models.rec_batch_size,
@@ -80,6 +81,7 @@ async def extract(data: BodyExtract, accept: Optional[List[str]] = Header(None))
                                       embed_only=data.embed_only, extract_embedding=data.extract_embedding,
                                       threshold=data.threshold, extract_ga=data.extract_ga,
                                       limit_faces=data.limit_faces, return_landmarks=data.return_landmarks,
+                                      detect_masks = data.detect_masks,
                                       verbose_timings=data.verbose_timings, api_ver=data.api_ver)
 
 
@@ -107,7 +109,7 @@ async def draw(data: BodyDraw):
     images = jsonable_encoder(data.images)
     output = await processing.draw(images, threshold=data.threshold,
                                    draw_landmarks=data.draw_landmarks, draw_scores=data.draw_scores,
-                                   limit_faces=data.limit_faces, draw_sizes=data.draw_sizes)
+                                   limit_faces=data.limit_faces, draw_sizes=data.draw_sizes,detect_masks=data.detect_masks)
     output.seek(0)
     return StreamingResponse(output, media_type="image/png")
 
@@ -151,6 +153,7 @@ def info():
     )
     about['models'].pop('ga_ignore', None)
     about['models'].pop('rec_ignore', None)
+    about['models'].pop('mask_ignore', None)
     about['models'].pop('device', None)
     return about
 

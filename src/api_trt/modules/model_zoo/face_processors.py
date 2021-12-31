@@ -10,7 +10,12 @@ def arcface_torch(model_path, backend, **kwargs):
     return model
 
 
-# Backend wrapper for Gender/Age estimation model, currently not working.
+# Backend wrapper for Gender/Age estimation model.
 def genderage_v1(model_path, backend, **kwargs):
     model = backend.FaceGenderage(rec_name=model_path, **kwargs)
+    return model
+
+# Backend wrapper for mask detection model.
+def mask_detector(model_path, backend, **kwargs):
+    model = backend.MaskDetection(rec_name=model_path, **kwargs)
     return model

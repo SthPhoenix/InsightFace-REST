@@ -47,7 +47,8 @@ def serialize_face(face: Face, return_face_data: bool, return_landmarks: bool = 
         landmarks=None,
         gender=face.gender,
         age=face.age,
-        mask_prob=None,
+        mask_probs=face.mask_probs,
+        mask=face.mask,
         norm=None,
         vec=None,
     )
@@ -66,9 +67,6 @@ def serialize_face(face: Face, return_face_data: bool, return_landmarks: bool = 
                 'landmarks': face.landmark.astype(int).tolist()
             })
 
-    if face.mask_prob:
-        _face_dict.update(mask_prob=float(face.mask_prob))
-
     if return_face_data:
         _face_dict.update({
             'facedata': base64.b64encode(cv2.imencode('.jpg', face.facedata)[1].tostring()).decode(
@@ -81,7 +79,8 @@ def serialize_face(face: Face, return_face_data: bool, return_landmarks: bool = 
 class Processing:
 
     def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
-                 ga_name: str = 'genderage_v1', device: str = 'cuda', max_size: List[int] = None,
+                 ga_name: str = 'genderage_v1', mask_detector: str = 'mask_detector', device: str = 'cuda',
+                 max_size: List[int] = None,
                  backend_name: str = 'trt', max_rec_batch_size: int = 1, max_det_batch_size: int = 1,
                  force_fp16: bool = False, triton_uri=None, root_dir: str = '/models'):
 
@@ -92,7 +91,8 @@ class Processing:
         self.max_det_batch_size = max_det_batch_size
         self.det_name = det_name
         self.max_size = max_size
-        self.model = FaceAnalysis(det_name=det_name, rec_name=rec_name, ga_name=ga_name, device=device,
+        self.model = FaceAnalysis(det_name=det_name, rec_name=rec_name, ga_name=ga_name,
+                                  mask_detector=mask_detector, device=device,
                                   max_size=self.max_size, max_rec_batch_size=self.max_rec_batch_size,
                                   max_det_batch_size=self.max_det_batch_size,
                                   backend_name=backend_name, force_fp16=force_fp16, triton_uri=triton_uri,
@@ -105,14 +105,14 @@ class Processing:
                 face = Face(facedata=face.get('data'))
                 yield face
 
-    def embed_crops(self, images, extract_embedding: bool = True, extract_ga: bool = True):
+    def embed_crops(self, images, extract_embedding: bool = True, extract_ga: bool = True, detect_masks: bool = False):
 
         t0 = time.time()
         output = dict(took_ms=None, data=[], status="ok")
 
         iterator = self.__iterate_images(images)
         faces = self.model.process_faces(iterator, extract_embedding=extract_embedding, extract_ga=extract_ga,
-                                         return_face_data=False)
+                                         return_face_data=False, detect_masks=detect_masks)
 
         try:
             for image in images:
@@ -135,12 +135,12 @@ class Processing:
 
     async def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
                     limit_faces: int = 0, return_face_data: bool = False, extract_embedding: bool = True,
-                    extract_ga: bool = True, return_landmarks: bool = False):
+                    extract_ga: bool = True, return_landmarks: bool = False, detect_masks: bool = False):
 
         _get = partial(self.model.get, max_size=max_size, threshold=threshold,
                        return_face_data=return_face_data,
                        extract_embedding=extract_embedding, extract_ga=extract_ga,
-                       limit_faces=limit_faces)
+                       limit_faces=limit_faces, detect_masks=detect_masks)
 
         _serialize = partial(serialize_face, return_face_data=return_face_data,
                              return_landmarks=return_landmarks)
@@ -176,6 +176,7 @@ class Processing:
     async def extract(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
                       limit_faces: int = 0, embed_only: bool = False, return_face_data: bool = False,
                       extract_embedding: bool = True, extract_ga: bool = True, return_landmarks: bool = False,
+                      detect_masks: bool = False,
                       verbose_timings=True, api_ver: str = "1"):
 
         if not max_size:
@@ -191,14 +192,16 @@ class Processing:
         serializer = Serializer()
 
         if embed_only:
-            _faces_dict = self.embed_crops(images, extract_embedding=extract_embedding, extract_ga=extract_ga)
+            _faces_dict = self.embed_crops(images, extract_embedding=extract_embedding, extract_ga=extract_ga,
+                                           detect_masks=detect_masks)
             return _faces_dict
 
         else:
             te0 = time.time()
             output = await self.embed(images, max_size=max_size, return_face_data=return_face_data, threshold=threshold,
                                       limit_faces=limit_faces, extract_embedding=extract_embedding,
-                                      extract_ga=extract_ga, return_landmarks=return_landmarks
+                                      extract_ga=extract_ga, return_landmarks=return_landmarks,
+                                      detect_masks=detect_masks
                                       )
             took_embed = time.time() - te0
             took = time.time() - t0
@@ -211,6 +214,7 @@ class Processing:
 
     async def draw(self, images: Union[Dict[str, list], bytes], threshold: float = 0.6,
                    draw_landmarks: bool = True, draw_scores: bool = True, draw_sizes: bool = True, limit_faces=0,
+                   detect_masks: bool = False,
                    multipart=False):
 
         if not multipart:
@@ -221,7 +225,8 @@ class Processing:
             image = cv2.imdecode(__bin, cv2.IMREAD_COLOR)
 
         faces = await self.model.get([image], threshold=threshold, return_face_data=False,
-                                     extract_embedding=False, extract_ga=False, limit_faces=limit_faces)
+                                     extract_embedding=False, extract_ga=False, limit_faces=limit_faces,
+                                     detect_masks=detect_masks)
 
         image = self.model.draw_faces(image, faces[0],
                                       draw_landmarks=draw_landmarks,

@@ -7,6 +7,7 @@ example_img = 'test_images/Stallone.jpg'
 # Read runtime settings from environment variables
 configs = EnvConfigs()
 
+
 class Images(BaseModel):
     data: Optional[List[str]] = pydantic.Field(default=None, example=None, description='List of base64 encoded images')
     urls: Optional[List[str]] = pydantic.Field(default=None,
@@ -45,6 +46,10 @@ class BodyExtract(BaseModel):
                                                 example=configs.defaults.extract_ga,
                                                 description='Extract gender/age')
 
+    detect_masks: Optional[bool] = pydantic.Field(default=configs.defaults.detect_masks,
+                                                  example=configs.defaults.detect_masks,
+                                                  description='Detect medical masks')
+
     limit_faces: Optional[int] = pydantic.Field(default=0,
                                                 example=0,
                                                 description='Maximum number of faces to be processed')
@@ -62,8 +67,8 @@ class BodyExtract(BaseModel):
                                             description='Output data serialization format.')
 
     msgpack: Optional[bool] = pydantic.Field(default=False,
-                                            example=False,
-                                            description='Use MSGPACK for response serialization')
+                                             example=False,
+                                             description='Use MSGPACK for response serialization')
 
 
 class BodyDraw(BaseModel):
@@ -92,3 +97,7 @@ class BodyDraw(BaseModel):
     min_face_size: Optional[int] = pydantic.Field(default=0,
                                                   example=0,
                                                   description='Ignore faces smaller than this size')
+
+    detect_masks: Optional[bool] = pydantic.Field(default=configs.defaults.detect_masks,
+                                                  example=configs.defaults.detect_masks,
+                                                  description='Detect medical masks')

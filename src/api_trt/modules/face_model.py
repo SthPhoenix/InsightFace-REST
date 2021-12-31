@@ -16,7 +16,7 @@ from modules.utils.helpers import to_chunks, colorize_log
 import asyncio
 
 Face = collections.namedtuple("Face", ['bbox', 'landmark', 'det_score', 'embedding', 'gender', 'age', 'embedding_norm',
-                                       'normed_embedding', 'facedata', 'scale', 'num_det', 'mask_prob'])
+                                       'normed_embedding', 'facedata', 'scale', 'num_det','mask','mask_probs'])
 
 Face.__new__.__defaults__ = (None,) * len(Face._fields)
 
@@ -48,15 +48,7 @@ class Detector:
         boxes = [e[:, 0:4] for e in bboxes]
         probs = [e[:, 4] for e in bboxes]
 
-        mask_probs = None
-        try:
-            if self.retina.masks == True:
-                mask_probs = [e[:, 5] for e in bboxes][0]
-            else:
-                mask_probs = np.empty_like(probs, dtype=None)
-        except:
-            pass
-        return boxes, probs, landmarks, mask_probs
+        return boxes, probs, landmarks
 
 
 # Translate bboxes and landmarks from resized to original image size
@@ -68,7 +60,7 @@ def reproject_points(dets, scale: float):
 
 class FaceAnalysis:
     def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
-                 ga_name: str = 'genderage_v1', device: str = 'cuda',
+                 ga_name: str = 'genderage_v1', mask_detector: str = 'mask_detector', device: str = 'cuda',
                  max_size=None, max_rec_batch_size: int = 1, max_det_batch_size: int = 1,
                  backend_name: str = 'mxnet', force_fp16: bool = False, triton_uri=None, root_dir: str ='/models'):
 
@@ -109,7 +101,15 @@ class FaceAnalysis:
         else:
             self.ga_model = None
 
-    def sort_boxes(self, boxes, probs, landmarks, mask_probs, shape, max_num=0):
+        if mask_detector is not None:
+            self.mask_model = get_model(mask_detector, backend_name=backend_name, force_fp16=force_fp16,
+                                      max_batch_size=self.max_rec_batch_size, root_dir=root_dir,
+                                      download_model=False, triton_uri=triton_uri)
+            self.mask_model.prepare(ctx_id=ctx)
+        else:
+            self.mask_model = None
+
+    def sort_boxes(self, boxes, probs, landmarks, shape, max_num=0):
         # Based on original InsightFace python package implementation
         if max_num > 0 and boxes.shape[0] > max_num:
             area = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
@@ -125,15 +125,13 @@ class FaceAnalysis:
 
             boxes = boxes[bindex, :]
             probs = probs[bindex]
-            if self.det_model.retina.masks:
-                mask_probs = mask_probs[bindex, :]
 
             landmarks = landmarks[bindex, :]
 
-        return boxes, probs, landmarks, mask_probs
+        return boxes, probs, landmarks
 
     def process_faces(self, faces: List[Face], extract_embedding: bool = True, extract_ga: bool = True,
-                      return_face_data: bool = False):
+                      return_face_data: bool = False, detect_masks: bool = True, mask_thresh: float = 0.89):
         chunked_faces = to_chunks(faces, self.max_rec_batch_size)
         for chunk in chunked_faces:
             chunk = list(chunk)
@@ -150,7 +148,7 @@ class FaceAnalysis:
                 logging.debug(
                     f'Embedding {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
 
-            if extract_ga:
+            if extract_ga and self.ga_model:
                 t0 = time.time()
                 ga = self.ga_model.get(crops)
                 t1 = time.time()
@@ -158,32 +156,55 @@ class FaceAnalysis:
                 logging.debug(
                     f'Extracting g/a for {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
 
+            if detect_masks and self.mask_model:
+                t0 = time.time()
+                masks = self.mask_model.get(crops)
+                t1 = time.time()
+                took = t1 - t0
+                logging.debug(
+                    f'Detecting masks for  {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
+
             for i, crop in enumerate(crops):
                 embedding_norm = None
                 normed_embedding = None
                 gender = None
                 age = None
+                mask = None
+                mask_probs = None
 
                 embedding = embeddings[i]
                 if extract_embedding:
                     embedding_norm = norm(embedding)
                     normed_embedding = embedding / embedding_norm
-                _ga = ga[i]
-                if extract_ga:
+
+                if extract_ga and self.ga_model:
+                    _ga = ga[i]
                     gender = int(_ga[0])
                     age = _ga[1]
+
+
+                if detect_masks and self.mask_model:
+                    _masks = masks[i]
+                    mask = False
+                    mask_prob = float(_masks[0])
+                    no_mask_prob = float(_masks[1])
+                    if mask_prob > no_mask_prob and mask_prob >= mask_thresh:
+                        mask = True
+                    mask_probs = dict(mask=mask_prob,
+                                      no_mask=no_mask_prob)
 
                 face = chunk[i]
                 if return_face_data is False:
                     face = face._replace(facedata=None)
 
                 face = face._replace(embedding=embedding, embedding_norm=embedding_norm,
-                                     normed_embedding=normed_embedding, gender=gender, age=age)
+                                     normed_embedding=normed_embedding, gender=gender, age=age, mask=mask, mask_probs=mask_probs)
                 yield face
 
     # Process single image
-    async def get(self, images, extract_embedding: bool = True, extract_ga: bool = True,
+    async def get(self, images, extract_embedding: bool = True, extract_ga: bool = True, detect_masks: bool = True,
                   return_face_data: bool = True, max_size: List[int] = None, threshold: float = 0.6,
+                  mask_thresh: float = 0.89,
                   limit_faces: int = 0):
 
         ts = time.time()
@@ -214,7 +235,7 @@ class FaceAnalysis:
                 await asyncio.sleep(0)
 
                 orig_id = (bid * self.max_det_batch_size) + idx
-                boxes, probs, landmarks, mask_probs = pred
+                boxes, probs, landmarks = pred
                 t1 = time.time()
                 logging.debug(f'Detection took: {(t1 - t0) * 1000:.3f} ms.')
 
@@ -223,7 +244,7 @@ class FaceAnalysis:
                 if not isinstance(boxes, type(None)):
                     t0 = time.time()
                     if limit_faces > 0:
-                        boxes, probs, landmarks, mask_probs = self.sort_boxes(boxes, probs, landmarks, mask_probs,
+                        boxes, probs, landmarks = self.sort_boxes(boxes, probs, landmarks,
                                                                               shape=batch_imgs[idx].shape,
                                                                               max_num=limit_faces)
 
@@ -231,19 +252,15 @@ class FaceAnalysis:
                     boxes = reproject_points(boxes, scales[idx])
                     landmarks = reproject_points(landmarks, scales[idx])
                     # Crop faces from original image instead of resized to improve quality
-                    if extract_ga or extract_embedding or return_face_data:
+                    if extract_ga or extract_embedding or return_face_data or detect_masks:
                         crops = face_align.norm_crop_batched(images[orig_id], landmarks)
                     else:
                         crops = [None] * len(boxes)
 
                     for i, _crop in enumerate(crops):
-                        if self.det_model.retina.masks:
-                            mask_prob = mask_probs[i]
-                        else:
-                            mask_prob = None
 
                         face = Face(bbox=boxes[i], landmark=landmarks[i], det_score=probs[i],
-                                    num_det=i, scale=scales[idx], mask_prob=mask_prob, facedata=_crop)
+                                    num_det=i, scale=scales[idx], facedata=_crop)
 
                         faces.append(face)
 
@@ -251,8 +268,11 @@ class FaceAnalysis:
                     logging.debug(f'Cropping {len(boxes)} faces took: {(t1 - t0) * 1000:.3f} ms.')
 
         # Process detected faces
-        faces = [e for e in self.process_faces(faces, extract_embedding=extract_embedding,
-                                               extract_ga=extract_ga, return_face_data=return_face_data)]
+        faces = [e for e in self.process_faces(faces,
+                                               extract_embedding=extract_embedding,
+                                               extract_ga=extract_ga,
+                                               return_face_data=return_face_data,
+                                               detect_masks=detect_masks, mask_thresh=mask_thresh)]
 
         faces_by_img = []
         offset = 0
@@ -276,9 +296,8 @@ class FaceAnalysis:
             x, y = pt1
             r, b = pt2
             w = r - x
-            if face.mask_prob:
-                if face.mask_prob >= 0.2:
-                    color = (0, 255, 255)
+            if face.mask is False:
+                    color = (0, 0, 255)
             cv2.rectangle(image, pt1, pt2, color, 1)
 
             if draw_landmarks:
@@ -297,7 +316,7 @@ class FaceAnalysis:
                 thickness = 1
                 border = int(thickness / 2)
                 cv2.rectangle(image, (x - border, y - 21, w + thickness, 21), color, -1, 16)
-                cv2.putText(image, text, pos, 0, 0.5, (0, 255, 0), 3, 16)
+                cv2.putText(image, text, pos, 0, 0.5, color, 3, 16)
                 cv2.putText(image, text, pos, 0, 0.5, textcolor, 1, 16)
             if draw_sizes:
                 text = f"w:{w}"

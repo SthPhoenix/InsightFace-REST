@@ -42,7 +42,8 @@ func_map = {
     'scrfd': scrfd,
     'scrfd_v2': scrfd_v2,
     'arcface_mxnet': arcface_mxnet,
-    'arcface_torch': arcface_torch
+    'arcface_torch': arcface_torch,
+    'mask_detector': mask_detector
 }
 
 

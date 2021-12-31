@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.7.1.0'
+TAG='v0.7.2.0'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -57,6 +57,12 @@ ga_model=genderage_v1
 ## Do not load genderage model:
 ga_ignore=True
 
+# Mask detection models
+## mask_detector
+mask_detector=mask_detector
+## Do not load mask detection model:
+mask_ignore=True
+
 # Triton Inference Server GRPC uri:port (optional)
 # Should be updated when INFERENCE_BACKEND=triton
 triton_uri='localhost:8001'
@@ -111,6 +117,8 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e DET_THRESH=$det_thresh\
         -e REC_NAME=$rec_model\
         -e REC_IGNORE=$rec_ignore\
+        -e MASK_DETECTOR=$mask_detector\
+        -e MASK_IGNORE=$mask_ignore\
         -e REC_BATCH_SIZE=$rec_batch_size\
         -e DET_BATCH_SIZE=$det_batch_size\
         -e GA_NAME=$ga_model\

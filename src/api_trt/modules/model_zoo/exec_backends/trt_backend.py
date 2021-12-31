@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import logging
 import cupy as cp
-
+import time
 from .trt_loader import TrtModel
 
 
@@ -15,6 +15,16 @@ def _normalize_on_device(input, stream, out, mean=0., std=1.):
         g_img = cp.transpose(g_img, (0, 3, 1, 2))
         g_img = cp.subtract(g_img, mean, dtype=cp.float32)
         out.device[:allocate_place] = cp.multiply(g_img, 1 / std).flatten()
+    return g_img.shape
+
+
+def _normalize_on_device_masks(input, stream, out):
+    allocate_place = np.prod(input.shape)
+    with stream:
+        g_img = cp.asarray(input)
+        g_img = g_img[..., ::-1]
+        g_img = cp.multiply(g_img, 1/127.5, dtype=cp.float32)
+        out.device[:allocate_place] = cp.subtract(g_img, 1.).flatten()
     return g_img.shape
 
 
@@ -82,15 +92,16 @@ class FaceGenderage:
         if not isinstance(face_img, list):
             face_img = [face_img]
 
+        face_img = np.stack(face_img)
+        imgs = face_img.copy()
+
         if not face_img[0].shape == (3, 112, 112):
-            for i, img in enumerate(face_img):
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                img = np.transpose(img, (2, 0, 1))
-                face_img[i] = img
-            face_img = np.stack(face_img)
+            imgs = imgs[..., ::-1]
+            imgs = np.transpose(imgs, (0, 3, 1, 2))
+
 
         _ga = []
-        ret = self.rec_model.run(face_img, deflatten=True)[0]
+        ret = self.rec_model.run(imgs, deflatten=True)[0]
         for e in ret:
             e = np.expand_dims(e, axis=0)
             g = e[:, 0:2].flatten()
@@ -100,6 +111,47 @@ class FaceGenderage:
             age = int(sum(a))
             _ga.append((gender, age))
         return _ga
+
+class MaskDetection:
+    def __init__(self, rec_name: str = '/models/trt-engines/mask_detection/mask_detection.plan', **kwargs):
+        self.rec_model = TrtModel(rec_name)
+        self.input_shape = None
+
+    # warmup
+    def prepare(self, **kwargs):
+        logging.info("Warming up mask detection TensorRT engine...")
+        self.rec_model.build()
+        self.input_shape = self.rec_model.input_shapes[0]
+        self.max_batch_size = self.rec_model.max_batch_size
+        self.stream = self.rec_model.stream
+        self.input_ptr = self.rec_model.input
+
+        if self.input_shape[0] == -1:
+            self.input_shape = (1,) + self.input_shape[1:]
+
+        self.rec_model.run(np.zeros(self.input_shape, np.float32))
+        logging.info(
+            f"Mask detection engine warmup complete! Expecting input shape: {self.input_shape}. Max batch size: {self.max_batch_size}")
+
+    def get(self, face_img):
+        if not isinstance(face_img, list):
+            face_img = [face_img]
+
+
+        if not face_img[0].shape == (224, 224, 3):
+            for i, img in enumerate(face_img):
+                img = cv2.resize(img, (224, 224))
+                face_img[i] = img
+            face_img = np.stack(face_img)
+
+        _mask = []
+        infer_shape = _normalize_on_device_masks(face_img, self.stream, self.input_ptr)
+        ret = self.rec_model.run(deflatten=True, from_device=True, infer_shape=infer_shape)[0]
+        for e in ret:
+            mask = e[0]
+            no_mask = e[1]
+            _mask .append((mask, no_mask))
+        return _mask
 
 
 class DetectorInfer:

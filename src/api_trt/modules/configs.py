@@ -272,6 +272,16 @@ models = {
         'dl_type': 'google'
     },
 
+    'mask_detector': {
+        'shape': (1, 224, 224, 3),
+        'allow_batching': True,
+        'reshape': False,
+        'in_package': False,
+        'function': 'mask_detector',
+        'link': '1RsQonthhpJDwwdcB0sYsVGMTqPgGdMGV',
+        'dl_type': 'google'
+    },
+
     # You can put your own pretrained ArcFace model to /models/onnx/custom_rec_model
     'custom_rec_model': {
         'in_package': False,
