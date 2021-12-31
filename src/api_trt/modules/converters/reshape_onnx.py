@@ -35,6 +35,9 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
             mode = 'scrfd'
         elif input_name == 'input.1' and out_shape == 512:
             mode = 'arcface'
+        if  model.graph.input[0].type.tensor_type.shape.dim[1].dim_value == 224:
+            mode = 'mask_detector'
+
 
     d = model.graph.input[0].type.tensor_type.shape.dim
     d[0].dim_value = n
@@ -50,7 +53,7 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
                 divisor = int(output.name.split('stride')[-1])
             d = output.type.tensor_type.shape.dim
             d[0].dim_value = n
-            if mode != 'arcface':
+            if mode not in  ('arcface', 'mask_detector'):
                 d[2].dim_value = math.ceil(h / divisor)
                 d[3].dim_value = math.ceil(w / divisor)
     logging.debug(f"Out shape: {d}")
