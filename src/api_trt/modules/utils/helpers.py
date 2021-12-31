@@ -1,6 +1,7 @@
 import os
 from itertools import chain, islice
 from distutils import util
+import logging
 
 def prepare_folders(paths):
     for path in paths:
@@ -38,3 +39,10 @@ def colorize_log(string, color):
         return string
     string = f"{col}{string}{reset}"
     return string
+
+def validate_max_size(max_size):
+    if max_size[0] % 32 != 0 or max_size[1] % 32 != 0:
+        max_size[0] = max_size[0] // 32 * 32
+        max_size[1] = max_size[1] // 32 * 32
+        logging.warning(f'Input image dimensions should be multiples of 32. Max size changed to: {max_size}')
+    return max_size
