@@ -11,7 +11,7 @@ from modules.utils import fast_face_align as face_align
 
 from modules.model_zoo.getter import get_model
 from modules.imagedata import ImageData, resize_image
-from modules.utils.helpers import to_chunks, colorize_log
+from modules.utils.helpers import to_chunks, colorize_log, validate_max_size
 
 import asyncio
 
@@ -67,7 +67,7 @@ class FaceAnalysis:
         if max_size is None:
             max_size = [640, 640]
 
-        self.max_size = max_size
+        self.max_size = validate_max_size(max_size)
         self.max_rec_batch_size = max_rec_batch_size
         self.max_det_batch_size = max_det_batch_size
         self.det_name = det_name
