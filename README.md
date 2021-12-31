@@ -81,10 +81,11 @@ API and converting models to ONNX and TensorRT using Docker.
 | glintr100              |     Yes*      |       Yes       | [official package][1]  | [link][dl13] |
 ### Other:
 
-|    Model     | Auto download | Inference code | Source                |   ONNX File   |
-|:------------:|:-------------:|:--------------:|:----------------------|:-------------:|
-| genderage_v1 |     Yes*      |      Yes       | [official package][1] | [link][dl14]  |
-|   2d106det   |      No       |       No       | [coordinateReg][8]    |     None      |
+| Model         | Auto download | Inference code | Source                   |  ONNX File   |
+|---------------|:-------------:|:--------------:|:-------------------------|:------------:|
+| genderage_v1  |     Yes*      |      Yes       | [official package][1]    | [link][dl14] |
+| mask_detector |     Yes*      |     Yes***     | [Face-Mask-Detection][8] | [link][dl19] |
+| 2d106det      |      No       |       No       | [coordinateReg][9]       |     None     |
 
 
 [1]: https://github.com/deepinsight/insightface/tree/master/python-package
@@ -94,7 +95,8 @@ API and converting models to ONNX and TensorRT using Docker.
 [5]: https://github.com/deepinsight/insightface/tree/master/recognition/SubCenter-ArcFace
 [6]: https://github.com/deepinsight/insightface/tree/master/recognition/partial_fc
 [7]: https://github.com/deepinsight/insightface/tree/master/recognition/arcface_torch
-[8]: https://github.com/deepinsight/insightface/tree/master/alignment/coordinateReg
+[8]: https://github.com/chandrikadeb7/Face-Mask-Detection
+[9]: https://github.com/deepinsight/insightface/tree/master/alignment/coordinateReg
 
 [dl1]: https://drive.google.com/file/d/1peUaq0TtNBhoXUbMqsCyQdL7t5JuhHMH/view?usp=sharing
 [dl2]: https://drive.google.com/file/d/12H4TXtGlAr1boEGtUukteolpQ9wfUTWe/view?usp=sharing
@@ -110,13 +112,15 @@ API and converting models to ONNX and TensorRT using Docker.
 [dl16]: https://drive.google.com/file/d/1v9nhtPWMLSedueeL6c3nJEoIFlSNSCvh/view?usp=sharing
 [dl17]: https://drive.google.com/file/d/1F__ILEeCTzeR71BAV-vInuyBezYmNMsB/view?usp=sharing
 [dl18]: https://drive.google.com/file/d/13OoTQlyDI2BkuA5oJUtuuvMlxvkM_-h7/view?usp=sharing
-
+[dl19]:https://drive.google.com/file/d/1RsQonthhpJDwwdcB0sYsVGMTqPgGdMGV/view?usp=sharing
  `*` - Models will be downloaded from Google Drive, which might be inaccessible in some regions like China.
 
 `**` - custom models retrained for this repo. Original SCRFD models have bug 
 ([deepinsight/insightface#1518](https://github.com/deepinsight/insightface/issues/1518)) with 
 detecting large faces occupying >40% of image. These models are retrained with Group Normalization instead of 
 Batch Normalization, which fixes bug, though at cost of some accuracy. 
+
+`***` - for now inference is available for TensorRT backend only
 
 Models accuracy on WiderFace benchmark:
 
