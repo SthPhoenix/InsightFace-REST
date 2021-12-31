@@ -84,7 +84,7 @@ API and converting models to ONNX and TensorRT using Docker.
 | Model         | Auto download | Inference code | Source                   |  ONNX File   |
 |---------------|:-------------:|:--------------:|:-------------------------|:------------:|
 | genderage_v1  |     Yes*      |      Yes       | [official package][1]    | [link][dl14] |
-| mask_detector |     Yes*      |     Yes***     | [Face-Mask-Detection][8] | [link][dl19] |
+| mask_detector |     Yes*      |      Yes       | [Face-Mask-Detection][8] | [link][dl19] |
 | 2d106det      |      No       |       No       | [coordinateReg][9]       |     None     |
 
 
@@ -120,7 +120,6 @@ API and converting models to ONNX and TensorRT using Docker.
 detecting large faces occupying >40% of image. These models are retrained with Group Normalization instead of 
 Batch Normalization, which fixes bug, though at cost of some accuracy. 
 
-`***` - for now inference is available for TensorRT backend only
 
 Models accuracy on WiderFace benchmark:
 
