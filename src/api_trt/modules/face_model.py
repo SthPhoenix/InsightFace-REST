@@ -34,8 +34,6 @@ class Detector:
         if max_size is None:
             max_size = [640, 480]
 
-        logging.info(f"MAX_BATCH_SIZE: {max_batch_size}")
-
         self.retina = get_model(det_name, backend_name=backend_name, force_fp16=force_fp16, im_size=max_size,
                                 root_dir=root_dir, download_model=False, triton_uri=triton_uri,
                                 max_batch_size=max_batch_size)
@@ -72,7 +70,6 @@ class FaceAnalysis:
         self.max_det_batch_size = max_det_batch_size
         self.det_name = det_name
         self.rec_name = rec_name
-        logging.info(self.max_det_batch_size)
         if backend_name not in ('trt', 'triton') and max_rec_batch_size != 1:
             logging.warning('Batch processing supported only for TensorRT & Triton backend. Fallback to 1.')
             self.max_rec_batch_size = 1
