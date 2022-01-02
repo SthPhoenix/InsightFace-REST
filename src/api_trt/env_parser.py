@@ -25,7 +25,7 @@ class Defaults:
 
 class Models:
     def __init__(self):
-        self.backend_name = os.getenv('INFERENCE_BACKEND', 'trt')
+        self.backend_name = os.getenv('INFERENCE_BACKEND', 'onnx')
         self.device = os.getenv("DEVICE", 'cuda')
         self.det_name = os.getenv("DET_NAME", "scrfd_10g_gnkps")
         self.rec_name = toNone(os.getenv("REC_NAME", "glintr100"))
