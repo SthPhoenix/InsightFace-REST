@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.7.2.0'
+TAG='v0.7.3.0'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -41,27 +41,24 @@ force_fp16=False
 ## Note: SCRFD family models requires input image shape dividable by 32, i.e 640x640, 1024x768.
 det_model=scrfd_10g_gnkps
 
-# REC MODELS:
-## arcface_r100_v1, glintr100, w600k_r50, w600k_mbf
-rec_model=glintr100
-## Do not load recognition model:
-rec_ignore=False
-## Maximum batch size for recognition model
-rec_batch_size=1
-## Maximum batch size for detection model, use only for building models for Triton Server
+## Maximum batch size for detection model
 det_batch_size=1
 
-# GENDER/AGE MODELS:
-## genderage_v1
-ga_model=genderage_v1
-## Do not load genderage model:
-ga_ignore=True
+# REC MODELS:
+## None, arcface_r100_v1, glintr100, w600k_r50, w600k_mbf
+rec_model=glintr100
+
+## Maximum batch size for recognition model (this value also applies for GA and mask detection models)
+rec_batch_size=64
+
 
 # Mask detection models
-## mask_detector
-mask_detector=mask_detector112
-## Do not load mask detection model:
-mask_ignore=True
+## None, mask_detector, mask_detector112
+mask_detector=None
+
+# GENDER/AGE MODELS:
+## None, genderage_v1
+ga_model=None
 
 # Triton Inference Server GRPC uri:port (optional)
 # Should be updated when INFERENCE_BACKEND=triton

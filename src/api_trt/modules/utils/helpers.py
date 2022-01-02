@@ -18,6 +18,12 @@ def tobool(input):
     except:
         return False
 
+def toNone(input):
+    if input.lower() in ['', 'none', 'null']:
+        return None
+    else:
+        return input
+
 def parse_size(size=None, def_size='640,480'):
     if size is None:
         size = def_size

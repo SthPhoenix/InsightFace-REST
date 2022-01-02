@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.7.2.0-cpu'
+TAG='v0.7.3.0-cpu'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -31,27 +31,26 @@ max_size=640,640
 ## scrfd_500m_bnkps, scrfd_2.5g_bnkps, scrfd_10g_bnkps
 ## scrfd_500m_gnkps, scrfd_2.5g_gnkps, scrfd_10g_gnkps
 ## Note: SCRFD family models requires input image shape dividable by 32, i.e 640x640, 1024x768.
-det_model=scrfd_2.5g_gnkps
+det_model=scrfd_10g_gnkps
+
+## Maximum batch size for detection model
+det_batch_size=1
 
 # REC MODELS:
-## arcface_r100_v1, glintr100
+## None, arcface_r100_v1, glintr100, w600k_r50, w600k_mbf
 rec_model=glintr100
-## Do not load recognition model:
-rec_ignore=False
-## Maximum batch size for recognition model
-rec_batch_size=1
 
-# GENDER/AGE MODELS:
-## genderage_v1
-ga_model=genderage_v1
-## Do not load genderage model:
-ga_ignore=True
+## Maximum batch size for recognition model (this value also applies for GA and mask detection models)
+rec_batch_size=64
+
 
 # Mask detection models
-## mask_detector
-mask_detector=mask_detector112
-## Do not load mask detection model:
-mask_ignore=True
+## None, mask_detector, mask_detector112
+mask_detector=None
+
+# GENDER/AGE MODELS:
+## None, genderage_v1
+ga_model=None
 
 # Default settings for inference requests, can be overridden inside
 # request body.

@@ -2,7 +2,7 @@ import os
 import json
 from json import JSONEncoder
 
-from modules.utils.helpers import parse_size, tobool
+from modules.utils.helpers import parse_size, tobool, toNone
 
 
 class MyEncoder(JSONEncoder):
@@ -27,24 +27,14 @@ class Models:
     def __init__(self):
         self.backend_name = os.getenv('INFERENCE_BACKEND', 'trt')
         self.device = os.getenv("DEVICE", 'cuda')
-        self.rec_name = os.getenv("REC_NAME", "arcface_r100_v1")
+        self.det_name = os.getenv("DET_NAME", "scrfd_10g_gnkps")
+        self.rec_name = toNone(os.getenv("REC_NAME", "glintr100"))
+        self.ga_name = toNone(os.getenv("GA_NAME", None))
+        self.mask_detector = toNone(os.getenv("MASK_DETECTOR", None))
         self.rec_batch_size = int(os.getenv('REC_BATCH_SIZE', 1))
         self.det_batch_size = int(os.getenv('DET_BATCH_SIZE', 1))
-        self.det_name = os.getenv("DET_NAME", "retinaface_mnet025_v2")
-        self.ga_name = os.getenv("GA_NAME", "genderage_v1")
-        self.mask_detector = os.getenv("MASK_DETECTOR", "mask_detector")
         self.fp16 = tobool(os.getenv('FORCE_FP16', False))
-        self.ga_ignore = tobool(os.getenv('GA_IGNORE', False))
-        self.rec_ignore = tobool(os.getenv('REC_IGNORE', False))
-        self.mask_ignore = tobool(os.getenv('MASK_IGNORE', False))
         self.triton_uri = os.getenv("TRITON_URI", None)
-
-        if self.rec_ignore:
-            self.rec_name = None
-        if self.ga_ignore:
-            self.ga_name = None
-        if self.mask_ignore:
-            self.mask_detector = None
 
 
 class EnvConfigs:

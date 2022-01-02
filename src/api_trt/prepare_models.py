@@ -4,6 +4,7 @@ import logging
 from modules.utils.helpers import parse_size, tobool, validate_max_size
 from modules.model_zoo.getter import prepare_backend
 from modules.configs import Configs
+from env_parser import EnvConfigs
 
 log_level = os.getenv('LOG_LEVEL', 'INFO')
 
@@ -14,47 +15,37 @@ logging.basicConfig(
 )
 
 
-
 def prepare_models(root_dir: str = '/models'):
-    backend_name = os.getenv('INFERENCE_BACKEND', 'trt')
-    rec_name = os.getenv("REC_NAME", "arcface_r100_v1")
-    rec_batch_size = int(os.getenv("REC_BATCH_SIZE", 1))
-    det_batch_size = int(os.getenv("DET_BATCH_SIZE", 1))
-    det_name = os.getenv("DET_NAME", "retinaface_mnet025_v2")
-    ga_name = os.getenv("GA_NAME", "genderage_v1")
-    ga_ignore = tobool(os.getenv("GA_IGNORE", False))
-    mask_detector = os.getenv("MASK_DETECTOR", "mask_detector")
-    mask_ignore = tobool(os.getenv('MASK_IGNORE', False))
+    model_configs = Configs(models_dir=root_dir)
+    env_configs = EnvConfigs()
+    rec_name = env_configs.models.rec_name
+    det_name = env_configs.models.det_name
+    ga_name = env_configs.models.ga_name
+    mask_detector = env_configs.models.mask_detector
 
-    force_fp16 = tobool(os.getenv('FORCE_FP16', False))
-
-    max_size = parse_size(os.getenv('MAX_SIZE'))
+    max_size = env_configs.defaults.max_size
 
     if max_size is None:
         max_size = [640, 640]
 
     max_size = validate_max_size(max_size)
 
-    config = Configs(models_dir=root_dir)
-
-    models = [rec_name, det_name]
-
-    if not ga_ignore:
-        models.append(ga_name)
-    if not mask_ignore:
-        models.append(mask_detector)
+    models = [model for model in [det_name, rec_name, ga_name, mask_detector] if model is not None]
 
     for model in models:
         batch_size = 1
-        if config.models[model].get('allow_batching'):
+        if model_configs.models[model].get('allow_batching'):
             if model == det_name:
-                batch_size = det_batch_size
+                batch_size = env_configs.models.det_batch_size
             else:
-                batch_size = rec_batch_size
+                batch_size = env_configs.models.rec_batch_size
         logging.info(f"Preparing '{model}' model...")
 
-        prepare_backend(model_name=model, backend_name=backend_name, im_size=max_size, force_fp16=force_fp16,
-                        max_batch_size=batch_size, config=config)
+        prepare_backend(model_name=model, backend_name=env_configs.models.backend_name, im_size=max_size,
+                        force_fp16=env_configs.models.fp16,
+                        max_batch_size=batch_size, config=model_configs)
+
+        logging.info(f"'{model}' model ready!")
 
 
 if __name__ == "__main__":
