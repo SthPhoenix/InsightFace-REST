@@ -31,7 +31,7 @@ max_size=640,640
 ## scrfd_500m_bnkps, scrfd_2.5g_bnkps, scrfd_10g_bnkps
 ## scrfd_500m_gnkps, scrfd_2.5g_gnkps, scrfd_10g_gnkps
 ## Note: SCRFD family models requires input image shape dividable by 32, i.e 640x640, 1024x768.
-det_model=scrfd_10g_gnkps
+det_model=scrfd_2.5g_gnkps
 
 ## Maximum batch size for detection model
 det_batch_size=1
