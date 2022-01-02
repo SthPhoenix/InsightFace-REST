@@ -91,8 +91,7 @@ class MaskDetection:
     def get(self, face_img):
         if not isinstance(face_img, list):
             face_img = [face_img]
-
-        if not face_img[0].shape == (224, 224, 3):
+        if not self.input.shape[1:3] == [112, 112]:
             for i, img in enumerate(face_img):
                 img = cv2.resize(img, (224, 224))
                 face_img[i] = img

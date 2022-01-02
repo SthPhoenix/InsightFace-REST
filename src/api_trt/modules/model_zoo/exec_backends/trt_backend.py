@@ -23,7 +23,7 @@ def _normalize_on_device_masks(input, stream, out):
     with stream:
         g_img = cp.asarray(input)
         g_img = g_img[..., ::-1]
-        g_img = cp.multiply(g_img, 1/127.5, dtype=cp.float32)
+        g_img = cp.multiply(g_img, 1 / 127.5, dtype=cp.float32)
         out.device[:allocate_place] = cp.subtract(g_img, 1.).flatten()
     return g_img.shape
 
@@ -99,7 +99,6 @@ class FaceGenderage:
             imgs = imgs[..., ::-1]
             imgs = np.transpose(imgs, (0, 3, 1, 2))
 
-
         _ga = []
         ret = self.rec_model.run(imgs, deflatten=True)[0]
         for e in ret:
@@ -111,6 +110,7 @@ class FaceGenderage:
             age = int(sum(a))
             _ga.append((gender, age))
         return _ga
+
 
 class MaskDetection:
     def __init__(self, rec_name: str = '/models/trt-engines/mask_detection/mask_detection.plan', **kwargs):
@@ -137,12 +137,12 @@ class MaskDetection:
         if not isinstance(face_img, list):
             face_img = [face_img]
 
-
-        if not face_img[0].shape == (224, 224, 3):
+        if not self.input_shape[1:3] == (112, 112):
             for i, img in enumerate(face_img):
                 img = cv2.resize(img, (224, 224))
                 face_img[i] = img
-            face_img = np.stack(face_img)
+
+        face_img = np.stack(face_img)
 
         _mask = []
         infer_shape = _normalize_on_device_masks(face_img, self.stream, self.input_ptr)
@@ -150,7 +150,7 @@ class MaskDetection:
         for e in ret:
             mask = e[0]
             no_mask = e[1]
-            _mask .append((mask, no_mask))
+            _mask.append((mask, no_mask))
         return _mask
 
 
