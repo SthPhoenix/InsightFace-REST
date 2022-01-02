@@ -35,13 +35,13 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
             mode = 'scrfd'
         elif input_name == 'input.1' and out_shape == 512:
             mode = 'arcface'
-        if  model.graph.input[0].type.tensor_type.shape.dim[1].dim_value == 224:
+        if  model.graph.input[0].type.tensor_type.shape.dim[3].dim_value == 3:
             mode = 'mask_detector'
 
 
     d = model.graph.input[0].type.tensor_type.shape.dim
     d[0].dim_value = n
-    logging.info(f"In shape: {d}")
+    logging.debug(f"In shape: {d}")
     if mode != 'arcface':
         d[2].dim_value = h
         d[3].dim_value = w
