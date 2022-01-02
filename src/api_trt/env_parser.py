@@ -9,6 +9,7 @@ class MyEncoder(JSONEncoder):
     def default(self, o):
         return o.__dict__
 
+
 class Defaults:
     def __init__(self):
         # Global parameters
@@ -21,9 +22,9 @@ class Defaults:
         self.detect_masks = tobool(os.getenv('DEF_DETECT_MASKS', False))
         self.api_ver = os.getenv('DEF_API_VER', "1")
 
+
 class Models:
     def __init__(self):
-        print("MASK_IGNORE", os.getenv('MASK_IGNORE', None))
         self.backend_name = os.getenv('INFERENCE_BACKEND', 'trt')
         self.device = os.getenv("DEVICE", 'cuda')
         self.rec_name = os.getenv("REC_NAME", "arcface_r100_v1")
@@ -38,16 +39,12 @@ class Models:
         self.mask_ignore = tobool(os.getenv('MASK_IGNORE', False))
         self.triton_uri = os.getenv("TRITON_URI", None)
 
-        print(self.mask_ignore)
-
         if self.rec_ignore:
             self.rec_name = None
         if self.ga_ignore:
             self.ga_name = None
         if self.mask_ignore:
             self.mask_detector = None
-
-
 
 
 class EnvConfigs:
@@ -57,5 +54,3 @@ class EnvConfigs:
 
         self.models = Models()
         self.defaults = Defaults()
-
-
