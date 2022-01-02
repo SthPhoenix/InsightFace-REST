@@ -81,11 +81,12 @@ API and converting models to ONNX and TensorRT using Docker.
 | glintr100              |     Yes*      |       Yes       | [official package][1]  | [link][dl13] |
 ### Other:
 
-| Model         | Auto download | Inference code | Source                   |  ONNX File   |
-|---------------|:-------------:|:--------------:|:-------------------------|:------------:|
-| genderage_v1  |     Yes*      |      Yes       | [official package][1]    | [link][dl14] |
-| mask_detector |     Yes*      |      Yes       | [Face-Mask-Detection][8] | [link][dl19] |
-| 2d106det      |      No       |       No       | [coordinateReg][9]       |     None     |
+| Model            | Auto download | Inference code | Source                      |  ONNX File   |
+|------------------|:-------------:|:--------------:|:----------------------------|:------------:|
+| genderage_v1     |     Yes*      |      Yes       | [official package][1]       | [link][dl14] |
+| mask_detector    |     Yes*      |      Yes       | [Face-Mask-Detection][8]    | [link][dl19] |
+| mask_detector112 |     Yes*      |      Yes       | [Face-Mask-Detection][8]*** | [link][dl20] |
+| 2d106det         |      No       |       No       | [coordinateReg][9]          |     None     |
 
 
 [1]: https://github.com/deepinsight/insightface/tree/master/python-package
@@ -113,6 +114,7 @@ API and converting models to ONNX and TensorRT using Docker.
 [dl17]: https://drive.google.com/file/d/1F__ILEeCTzeR71BAV-vInuyBezYmNMsB/view?usp=sharing
 [dl18]: https://drive.google.com/file/d/13OoTQlyDI2BkuA5oJUtuuvMlxvkM_-h7/view?usp=sharing
 [dl19]:https://drive.google.com/file/d/1RsQonthhpJDwwdcB0sYsVGMTqPgGdMGV/view?usp=sharing
+[dl20]:https://drive.google.com/file/d/1ghS0LEGV70Jdb5un5fVdDO-vmonVIe6Z/view?usp=sharing
  `*` - Models will be downloaded from Google Drive, which might be inaccessible in some regions like China.
 
 `**` - custom models retrained for this repo. Original SCRFD models have bug 
@@ -120,6 +122,8 @@ API and converting models to ONNX and TensorRT using Docker.
 detecting large faces occupying >40% of image. These models are retrained with Group Normalization instead of 
 Batch Normalization, which fixes bug, though at cost of some accuracy. 
 
+`***` - custom model retrained for 112x112 input size to remove excessive resize operations and
+improve performance.
 
 Models accuracy on WiderFace benchmark:
 
