@@ -59,7 +59,7 @@ ga_ignore=True
 
 # Mask detection models
 ## mask_detector
-mask_detector=mask_detector
+mask_detector=mask_detector112
 ## Do not load mask detection model:
 mask_ignore=True
 
