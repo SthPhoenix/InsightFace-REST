@@ -53,21 +53,26 @@ API and converting models to ONNX and TensorRT using Docker.
 ### Detection:
 
 
-| Model                 | Auto download  | Batch inference | Source                      |  ONNX File   |
-|:----------------------|:--------------:|:---------------:|:----------------------------|:------------:|
-| retinaface_r50_v1     |      Yes*      |                 | [official package][1]       | [link][dl1]  |
-| retinaface_mnet025_v1 |      Yes*      |                 | [official package][1]       | [link][dl2]  |
-| retinaface_mnet025_v2 |      Yes*      |                 | [official package][1]       | [link][dl3]  |
-| mnet_cov2             |      Yes*      |                 | [mnet_cov2][2]              | [link][dl4]  |
-| centerface            |      Yes       |                 | [Star-Clouds/CenterFace][3] | [link][dl5]  |
-| scrfd_10g_bnkps       |      Yes*      |       Yes       | [SCRFD][4]                  | [link][dl6]  |
-| scrfd_2.5g_bnkps      |      Yes*      |       Yes       | [SCRFD][4]                  | [link][dl7]  |
-| scrfd_500m_bnkps      |      Yes*      |       Yes       | [SCRFD][4]                  | [link][dl15] |
-| scrfd_10g_gnkps       |      Yes*      |       Yes       | [SCRFD][4]**                | [link][dl16] |
-| scrfd_2.5g_gnkps      |      Yes*      |       Yes       | [SCRFD][4]**                | [link][dl17] |
-| scrfd_500m_gnkps      |      Yes*      |       Yes       | [SCRFD][4]**                | [link][dl18] |
+| Model                 | Auto download  | Batch inference | Detection (ms) | Inference (ms) | GPU-Util (%) | Source                      |  ONNX File   |
+|:----------------------|:--------------:|:---------------:|:--------------:|:--------------:|:------------:|:----------------------------|:------------:|
+| retinaface_r50_v1     |      Yes*      |                 |      12.3      |      8.4       |      26      | [official package][1]       | [link][dl1]  |
+| retinaface_mnet025_v1 |      Yes*      |                 |      8.6       |      4.6       |      17      | [official package][1]       | [link][dl2]  |
+| retinaface_mnet025_v2 |      Yes*      |                 |      8.8       |      4.9       |      17      | [official package][1]       | [link][dl3]  |
+| mnet_cov2             |      Yes*      |                 |      8.7       |      4.6       |      18      | [mnet_cov2][2]              | [link][dl4]  |
+| centerface            |      Yes       |                 |      10.6      |      3.5       |      19      | [Star-Clouds/CenterFace][3] | [link][dl5]  |
+| scrfd_10g_bnkps       |      Yes*      |       Yes       |      3.3       |       2        |      16      | [SCRFD][4]                  | [link][dl6]  |
+| scrfd_2.5g_bnkps      |      Yes*      |       Yes       |      2.2       |      1.1       |      13      | [SCRFD][4]                  | [link][dl7]  |
+| scrfd_500m_bnkps      |      Yes*      |       Yes       |      1.9       |      0.8       |      13      | [SCRFD][4]                  | [link][dl15] |
+| scrfd_10g_gnkps       |      Yes*      |       Yes       |      3.3       |      2.2       |      17      | [SCRFD][4]**                | [link][dl16] |
+| scrfd_2.5g_gnkps      |      Yes*      |       Yes       |      2.3       |      1.2       |      14      | [SCRFD][4]**                | [link][dl17] |
+| scrfd_500m_gnkps      |      Yes*      |       Yes       |      2.1       |      1.3       |      14      | [SCRFD][4]**                | [link][dl18] |
 
-> Note: SCRFD family models requires input image shape dividable by 32, i.e 640x640, 1024x768.
+> Note: Performance metrics measured on NVIDIA RTX2080 SUPER + Intel Core i7-5820K (3.3Ghz * 6 cores) for 
+> `api/src/test_images/limia.jpg` with `force_fp16=True`, `det_batch_size=1` and `max_size=640,640`.
+> 
+> Detection time include pre- and postprocessing, but does not include image reading, decoding and resizing.
+
+> Note 2: SCRFD family models requires input image shape dividable by 32, i.e 640x640, 1024x768.
 
 ### Recognition:
 
