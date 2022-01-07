@@ -84,6 +84,9 @@ API and converting models to ONNX and TensorRT using Docker.
 | glint360k_r100FC_1.0   |      No       |       Yes       | [Partial-FC][6]        |     None     |
 | glint360k_r100FC_0.1   |      No       |       Yes       | [Partial-FC][6]        |     None     |
 | glintr100              |     Yes*      |       Yes       | [official package][1]  | [link][dl13] |
+| w600k_r50              |     Yes*      |       Yes       | [official package][1]  | [link][dl21] |
+| w600k_mbf              |     Yes*      |       Yes       | [official package][1]  | [link][dl22] |
+
 ### Other:
 
 | Model            | Auto download | Inference code | Source                      |  ONNX File   |
@@ -118,9 +121,12 @@ API and converting models to ONNX and TensorRT using Docker.
 [dl16]: https://drive.google.com/file/d/1v9nhtPWMLSedueeL6c3nJEoIFlSNSCvh/view?usp=sharing
 [dl17]: https://drive.google.com/file/d/1F__ILEeCTzeR71BAV-vInuyBezYmNMsB/view?usp=sharing
 [dl18]: https://drive.google.com/file/d/13OoTQlyDI2BkuA5oJUtuuvMlxvkM_-h7/view?usp=sharing
-[dl19]:https://drive.google.com/file/d/1RsQonthhpJDwwdcB0sYsVGMTqPgGdMGV/view?usp=sharing
-[dl20]:https://drive.google.com/file/d/1ghS0LEGV70Jdb5un5fVdDO-vmonVIe6Z/view?usp=sharing
- `*` - Models will be downloaded from Google Drive, which might be inaccessible in some regions like China.
+[dl19]: https://drive.google.com/file/d/1RsQonthhpJDwwdcB0sYsVGMTqPgGdMGV/view?usp=sharing
+[dl20]: https://drive.google.com/file/d/1ghS0LEGV70Jdb5un5fVdDO-vmonVIe6Z/view?usp=sharing
+[dl21]: https://drive.google.com/file/d/1_3WcTE64Mlt_12PZHNWdhVCRpoPiblwq/view?usp=sharing
+[dl22]: https://drive.google.com/file/d/1GtBKfGucgJDRLHvGWR3jOQovHYXY-Lpe/view?usp=sharing
+
+`*` - Models will be downloaded from Google Drive, which might be inaccessible in some regions like China.
 
 `**` - custom models retrained for this repo. Original SCRFD models have bug 
 ([deepinsight/insightface#1518](https://github.com/deepinsight/insightface/issues/1518)) with 
