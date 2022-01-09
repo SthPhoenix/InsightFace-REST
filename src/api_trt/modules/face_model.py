@@ -228,13 +228,14 @@ class FaceAnalysis:
             batch_imgs, scales = zip(*batch)
             t0 = time.time()
             det_predictions = zip(*_partial_detect(batch_imgs))
+            t1 = time.time()
+            logging.debug(f'Detection took: {(t1 - t0) * 1000:.3f} ms.')
             for idx, pred in enumerate(det_predictions):
                 await asyncio.sleep(0)
 
                 orig_id = (bid * self.max_det_batch_size) + idx
                 boxes, probs, landmarks = pred
-                t1 = time.time()
-                logging.debug(f'Detection took: {(t1 - t0) * 1000:.3f} ms.')
+
 
                 faces_per_img[orig_id] = len(boxes)
 

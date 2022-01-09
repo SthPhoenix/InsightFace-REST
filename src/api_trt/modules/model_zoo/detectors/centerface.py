@@ -44,7 +44,7 @@ class CenterFace(object):
             t0 = time.time()
             heatmap, scale, offset, lms = self.net.run(blob)
             t1 = time.time()
-            logging.debug(f"Centerface inference took: {t1 - t0}")
+            logging.debug(f"Inference took: {(t1 - t0)*1000:.3f} ms.")
             det, landmarks = self.postprocess(heatmap, lms, offset, scale, (h, w), threshold)
             det_list.append(det)
             lmk_list.append(landmarks)
@@ -66,8 +66,7 @@ class CenterFace(object):
             if self.landmarks:
                 lms = np.empty(shape=[0, 10], dtype=np.float32)
         t1 = time.time()
-        logging.debug(f'Centerface detections: {len(dets)}')
-        logging.debug(f"Centerface postprocess took: {t1 - t0}")
+        logging.debug(f"Postprocess took: {(t1 - t0)*1000:.3f} ms.")
 
         if self.landmarks:
             return dets, lms

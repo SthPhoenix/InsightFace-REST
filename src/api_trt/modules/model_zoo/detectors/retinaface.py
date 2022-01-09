@@ -269,7 +269,7 @@ class RetinaFace:
             t0 = time.time()
             net_out = self.model.run(input_blob)
             t1 = time.time()
-            logging.debug(f"Retina inference took: {t1 - t0}")
+            logging.debug(f"Inference took: {(t1 - t0)*1000:.3f} ms.")
             det, landmarks = self.postprocess(net_out, threshold)
             det_list.append(det)
             lmk_list.append(landmarks)
@@ -378,5 +378,5 @@ class RetinaFace:
         if self.use_landmarks:
             landmarks = landmarks[keep]
         t1 = time.time()
-        logging.debug(f"Retina postprocess took: {t1 - t0}")
+        logging.debug(f"Postprocess took: {(t1 - t0)*1000:.3f} ms.")
         return det, landmarks

@@ -122,6 +122,7 @@ class Processing:
                 else:
                     _face_dict = serialize_face(face=next(faces), return_face_data=False,
                                                 return_landmarks=False)
+                    _face_dict['status'] = 'ok'
                 output['data'].append(_face_dict)
         except Exception as e:
             tb = traceback.format_exc()
@@ -151,7 +152,7 @@ class Processing:
         faces_by_img = (e for e in await _get([img.facedata for img in imgs_iterable]))
 
         for img in images:
-            _faces_dict = dict(status='', took_ms=0., faces=[])
+            _faces_dict = dict(status='failed', took_ms=0., faces=[])
             try:
                 if img.get('traceback') is not None:
                     _faces_dict['status'] = 'failed'

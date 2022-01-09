@@ -62,10 +62,13 @@ class Arcface:
             face_img = [face_img]
         face_img = np.stack(face_img)
 
+        t0 = time.perf_counter()
         infer_shape = _normalize_on_device(face_img, self.stream, self.input_ptr, mean=self.input_mean,
                                            std=self.input_std)
 
         embeddings = self.rec_model.run(deflatten=True, from_device=True, infer_shape=infer_shape)[0]
+        took = time.perf_counter() - t0
+        logging.debug(f'Rec inference cost: {took*1000:.3f} ms.')
         return embeddings
 
 
