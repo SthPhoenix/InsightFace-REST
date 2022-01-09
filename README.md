@@ -24,7 +24,10 @@ API and converting models to ONNX and TensorRT using Docker.
   optimizations, FP16 inference and batch inference of detected faces
   with ArcFace model.
 - Support for older Retinaface detectors and MXNet based ArcFace models, 
-  as well as newer SCRFD detectors and PyTorch based `glintr100` model.
+  as well as newer `SCRFD` detectors and PyTorch based recognition models (`glintr100`,`w600k_r50`, `w600k_mbf`).
+- Up to 2x faster `SCRFD` postprocessing implementation.
+- Batch inference supported both for recognition and detection models 
+  (currently `SCRFD` family only)
 - Inference on CPU with ONNX-Runtime.
 
 ## Contents
@@ -54,7 +57,7 @@ API and converting models to ONNX and TensorRT using Docker.
 
 
 | Model                 | Auto download  | Batch inference | Detection (ms) | Inference (ms) | GPU-Util (%) | Source                      |  ONNX File   |
-|:----------------------|:--------------:|:---------------:|:--------------:|:--------------:|:------------:|:----------------------------|:------------:|
+|-----------------------|:--------------:|:---------------:|:--------------:|:--------------:|:------------:|:----------------------------|:------------:|
 | retinaface_r50_v1     |      Yes*      |                 |      12.3      |      8.4       |      26      | [official package][1]       | [link][dl1]  |
 | retinaface_mnet025_v1 |      Yes*      |                 |      8.6       |      4.6       |      17      | [official package][1]       | [link][dl2]  |
 | retinaface_mnet025_v2 |      Yes*      |                 |      8.8       |      4.9       |      17      | [official package][1]       | [link][dl3]  |
@@ -68,24 +71,24 @@ API and converting models to ONNX and TensorRT using Docker.
 | scrfd_500m_gnkps      |      Yes*      |       Yes       |      2.1       |      1.3       |      14      | [SCRFD][4]**                | [link][dl18] |
 
 > Note: Performance metrics measured on NVIDIA RTX2080 SUPER + Intel Core i7-5820K (3.3Ghz * 6 cores) for 
-> `api/src/test_images/limia.jpg` with `force_fp16=True`, `det_batch_size=1` and `max_size=640,640`.
+> `api/src/test_images/lumia.jpg` with `force_fp16=True`, `det_batch_size=1` and `max_size=640,640`.
 > 
-> Detection time include pre- and postprocessing, but does not include image reading, decoding and resizing.
+> Detection time include inference, pre- and postprocessing, but does not include image reading, decoding and resizing.
 
 > Note 2: SCRFD family models requires input image shape dividable by 32, i.e 640x640, 1024x768.
 
 ### Recognition:
 
-| Model                  | Auto download | Batch inference | Source                 |  ONNX File   |
-|:-----------------------|:-------------:|:---------------:|:-----------------------|:------------:|
-| arcface_r100_v1        |     Yes*      |       Yes       | [official package][1]  | [link][dl8]  |
-| r100-arcface-msfdrop75 |      No       |       Yes       | [SubCenter-ArcFace][5] |     None     |
-| r50-arcface-msfdrop75  |      No       |       Yes       | [SubCenter-ArcFace][5] |     None     |
-| glint360k_r100FC_1.0   |      No       |       Yes       | [Partial-FC][6]        |     None     |
-| glint360k_r100FC_0.1   |      No       |       Yes       | [Partial-FC][6]        |     None     |
-| glintr100              |     Yes*      |       Yes       | [official package][1]  | [link][dl13] |
-| w600k_r50              |     Yes*      |       Yes       | [official package][1]  | [link][dl21] |
-| w600k_mbf              |     Yes*      |       Yes       | [official package][1]  | [link][dl22] |
+| Model                  | Auto download | Batch inference | Inference b=1 (ms) | Inference b=64 (ms) | Source                 |  ONNX File   |
+|------------------------|:-------------:|:---------------:|:------------------:|:-------------------:|:-----------------------|:------------:|
+| arcface_r100_v1        |     Yes*      |       Yes       |        2.6         |        54.8         | [official package][1]  | [link][dl8]  |
+| r100-arcface-msfdrop75 |      No       |       Yes       |         -          |          -          | [SubCenter-ArcFace][5] |     None     |
+| r50-arcface-msfdrop75  |      No       |       Yes       |         -          |          -          | [SubCenter-ArcFace][5] |     None     |
+| glint360k_r100FC_1.0   |      No       |       Yes       |         -          |          -          | [Partial-FC][6]        |     None     |
+| glint360k_r100FC_0.1   |      No       |       Yes       |         -          |          -          | [Partial-FC][6]        |     None     |
+| glintr100              |     Yes*      |       Yes       |        2.6         |        54.7         | [official package][1]  | [link][dl13] |
+| w600k_r50              |     Yes*      |       Yes       |        1.9         |        33.2         | [official package][1]  | [link][dl21] |
+| w600k_mbf              |     Yes*      |       Yes       |        0.7         |         9.9         | [official package][1]  | [link][dl22] |
 
 ### Other:
 
@@ -95,6 +98,24 @@ API and converting models to ONNX and TensorRT using Docker.
 | mask_detector    |     Yes*      |      Yes       | [Face-Mask-Detection][8]    | [link][dl19] |
 | mask_detector112 |     Yes*      |      Yes       | [Face-Mask-Detection][8]*** | [link][dl20] |
 | 2d106det         |      No       |       No       | [coordinateReg][9]          |     None     |
+
+`*` - Models will be downloaded from Google Drive, which might be inaccessible in some regions like China.
+
+`**` - custom models retrained for this repo. Original SCRFD models have bug 
+([deepinsight/insightface#1518](https://github.com/deepinsight/insightface/issues/1518)) with 
+detecting large faces occupying >40% of image. These models are retrained with Group Normalization instead of 
+Batch Normalization, which fixes bug, though at cost of some accuracy. 
+
+Models accuracy on WiderFace benchmark:
+
+| Model               |  Easy   |   Medium   | Hard  |
+|:--------------------|:-------:|:----------:|:-----:|
+| scrfd_10g_gnkps     |  95.51  |   94.12    | 82.14 |
+| scrfd_2.5g_gnkps    |  93.57  |   91.70    | 76.08 |
+| scrfd_500m_gnkps    |  88.70  |   86.11    | 63.57 |
+
+`***` - custom model retrained for 112x112 input size to remove excessive resize operations and
+improve performance.
 
 
 [1]: https://github.com/deepinsight/insightface/tree/master/python-package
@@ -126,23 +147,6 @@ API and converting models to ONNX and TensorRT using Docker.
 [dl21]: https://drive.google.com/file/d/1_3WcTE64Mlt_12PZHNWdhVCRpoPiblwq/view?usp=sharing
 [dl22]: https://drive.google.com/file/d/1GtBKfGucgJDRLHvGWR3jOQovHYXY-Lpe/view?usp=sharing
 
-`*` - Models will be downloaded from Google Drive, which might be inaccessible in some regions like China.
-
-`**` - custom models retrained for this repo. Original SCRFD models have bug 
-([deepinsight/insightface#1518](https://github.com/deepinsight/insightface/issues/1518)) with 
-detecting large faces occupying >40% of image. These models are retrained with Group Normalization instead of 
-Batch Normalization, which fixes bug, though at cost of some accuracy. 
-
-`***` - custom model retrained for 112x112 input size to remove excessive resize operations and
-improve performance.
-
-Models accuracy on WiderFace benchmark:
-
-|        Model        |  Easy   |   Medium   | Hard  |
-|:-------------------:|:-------:|:----------:|:-----:|
-|   scrfd_10g_gnkps   |  95.51  |   94.12    | 82.14 |
-|  scrfd_2.5g_gnkps   |  93.57  |   91.70    | 76.08 |
-|  scrfd_500m_gnkps   |  88.70  |   86.11    | 63.57 |
 
 
 ## Requirements:
@@ -180,80 +184,9 @@ inference backend.
 
 ## API usage:
 
-> _This documentation might be outdated, please referer  
-> to builtin API documentation for latest version_
-> ![Swagger docs](misc/images/api_sample.jpg)
+For example of API usage example please refer to
+[demo_client.py](https://github.com/SthPhoenix/InsightFace-REST/blob/master/demo_client.py) code.
 
-### `/extract` endpoint
-
-
-Extract endpoint accepts list of images and return faces bounding boxes
-with corresponding embeddings.
-
-API accept JSON in following format:
-
-```
-{
-  "images":{
-      "data":[
-          base64_encoded_image1,  
-          base64_encoded_image2
-      ]
-  },
-  "max_size":[640,480]
-}
-```
-
-Where `max_size` is maximum image dimension, images with dimensions
-greater than `max_size` will be downsized to provided value.
-
-If `max_size` is set to **0**, image won't be resized.
-
-To call API from Python you can use following sample code:
-
-```python
-import os
-import json
-import base64
-import requests
-
-def file2base64(path):
-    with open(path, mode='rb') as fl:
-        encoded = base64.b64encode(fl.read()).decode('ascii')
-        return encoded
-
-
-def extract_vecs(ims,max_size=[640,480]):
-    target = [file2base64(im) for im in ims]
-    req = {"images": {"data": target},"max_size":max_size}
-    resp = requests.post('http://localhost:18081/extract', json=req)
-    data = resp.json()
-    return data
-    
-images_path = 'src/api/test_images'
-images = os.path.listdir(images_path)
-data = extract_vecs(images)
-
-```
-
-Response is in following format:
-
-```json
-[
-    [
-        {"vec": [0.322431242,0.53545632,], "det": 0, "prob": 0.999, "bbox": [100,100,200,200]},
-        {"vec": [0.235334567,-0.2342546,], "det": 1, "prob": 0.998, "bbox": [200,200,300,300]},
-    ],
-    [
-        {"vec": [0.322431242,0.53545632,], "det": 0, "prob": 0.999, "bbox": [100,100,200,200]},
-        {"vec": [0.235334567,-0.2342546,], "det": 1, "prob": 0.998, "bbox": [200,200,300,300]},
-    ]
-]
-```
-
-First level is list in order the images were sent, second level are
-faces detected per each image as dictionary containing face embedding,
-bounding box, detection probability and detection number.
 
 
 ## Work in progress:
@@ -278,11 +211,11 @@ Comparing to previous release (v0.6.2.0)  this release brings improved performan
 Here is performance comparison on GPU `Nvidia RTX 2080 Super` for `scrfd_10g_gnkps` detector paired with 
 `glintr100` recognition model (all tests are using `src/api_trt/test_images/Stallone.jpg`, 1 face per image):
 
-| Num workers    | Client threads   | FPS v0.6.2.0  | FPS v0.7.0.0 | Speed-up |
-| -------------- | ---------------- |-------------- | ------------ | -------- | 
-|  1             | 1                | 56            | 103          | 83.9%    |
-|  1             | 30               | 72            | 128          | 77.7%    |
-|  6             | 30               | 145           | 179          | 23.4%    |
+| Num workers | Client threads | FPS v0.6.2.0 | FPS v0.7.0.0 | Speed-up |
+|:-----------:|:--------------:|:------------:|:------------:|:--------:|
+|      1      |       1        |      56      |     103      |  83.9%   |
+|      1      |       30       |      72      |     128      |  77.7%   |
+|      6      |       30       |     145      |     179      |  23.4%   |
 
 
 Additions:
