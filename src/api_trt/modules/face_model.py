@@ -138,25 +138,24 @@ class FaceAnalysis:
             ga = [[None, None]] * total
 
             if extract_embedding:
-                t0 = time.time()
+                t0 = time.perf_counter()
                 embeddings = self.rec_model.get_embedding(crops)
-                t1 = time.time()
-                took = t1 - t0
+                took = time.perf_counter() - t0
                 logging.debug(
                     f'Embedding {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
 
             if extract_ga and self.ga_model:
-                t0 = time.time()
+                t0 = time.perf_counter()
                 ga = self.ga_model.get(crops)
-                t1 = time.time()
+                t1 = time.perf_counter()
                 took = t1 - t0
                 logging.debug(
                     f'Extracting g/a for {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
 
             if detect_masks and self.mask_model:
-                t0 = time.time()
+                t0 = time.perf_counter()
                 masks = self.mask_model.get(crops)
-                t1 = time.time()
+                t1 = time.perf_counter()
                 took = t1 - t0
                 logging.debug(
                     f'Detecting masks for  {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
@@ -204,7 +203,7 @@ class FaceAnalysis:
                   mask_thresh: float = 0.89,
                   limit_faces: int = 0):
 
-        ts = time.time()
+        ts = time.perf_counter()
 
         # If detector has input_shape attribute, use it instead of provided value
         try:
@@ -226,9 +225,9 @@ class FaceAnalysis:
 
         for bid, batch in enumerate(batches):
             batch_imgs, scales = zip(*batch)
-            t0 = time.time()
+            t0 = time.perf_counter()
             det_predictions = zip(*_partial_detect(batch_imgs))
-            t1 = time.time()
+            t1 = time.perf_counter()
             logging.debug(f'Detection took: {(t1 - t0) * 1000:.3f} ms.')
             for idx, pred in enumerate(det_predictions):
                 await asyncio.sleep(0)
@@ -240,7 +239,7 @@ class FaceAnalysis:
                 faces_per_img[orig_id] = len(boxes)
 
                 if not isinstance(boxes, type(None)):
-                    t0 = time.time()
+                    t0 = time.perf_counter()
                     if limit_faces > 0:
                         boxes, probs, landmarks = self.sort_boxes(boxes, probs, landmarks,
                                                                               shape=batch_imgs[idx].shape,
@@ -262,15 +261,15 @@ class FaceAnalysis:
 
                         faces.append(face)
 
-                    t1 = time.time()
+                    t1 = time.perf_counter()
                     logging.debug(f'Cropping {len(boxes)} faces took: {(t1 - t0) * 1000:.3f} ms.')
 
         # Process detected faces
-        faces = [e for e in self.process_faces(faces,
-                                               extract_embedding=extract_embedding,
-                                               extract_ga=extract_ga,
-                                               return_face_data=return_face_data,
-                                               detect_masks=detect_masks, mask_thresh=mask_thresh)]
+        faces = list(self.process_faces(faces,
+                                   extract_embedding=extract_embedding,
+                                   extract_ga=extract_ga,
+                                   return_face_data=return_face_data,
+                                   detect_masks=detect_masks, mask_thresh=mask_thresh))
 
         faces_by_img = []
         offset = 0
@@ -279,7 +278,7 @@ class FaceAnalysis:
             faces_by_img.append(faces[offset:offset + value])
             offset += value
 
-        tf = time.time()
+        tf = time.perf_counter()
 
         logging.debug(colorize_log(f'Full processing took: {(tf - ts) * 1000:.3f} ms.', 'red'))
         return faces_by_img
