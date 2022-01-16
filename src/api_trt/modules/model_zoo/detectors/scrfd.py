@@ -183,9 +183,9 @@ class SCRFD:
         max_prop_len = self._get_max_prop_len(self.input_shape,
                                               self._feat_stride_fpn,
                                               self._num_anchors)
-        self.score_list = np.zeros((max_prop_len, 1))
-        self.bbox_list = np.zeros((max_prop_len, 4))
-        self.kpss_list = np.zeros((max_prop_len, 10))
+        self.score_list = np.zeros((max_prop_len, 1), dtype='float32')
+        self.bbox_list = np.zeros((max_prop_len, 4), dtype='float32')
+        self.kpss_list = np.zeros((max_prop_len, 10), dtype='float32')
 
         # Check if exec backend provides CUDA stream
         try:
