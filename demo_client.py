@@ -71,11 +71,15 @@ class IFRClient:
             backend_name = info['models']['backend_name']
             det_name = info['models']['det_name']
             rec_name = info['models']['rec_name']
+            rec_batch_size = info['models']['rec_batch_size']
+            det_batch_size = info['models']['rec_batch_size']
 
             print(f'Server: {server_uri}\n'
-                  f'    Inference backend: {backend_name}\n'
-                  f'    Detection model:   {det_name}\n'
-                  f'    Recognition model: {rec_name}\n')
+                  f'    Inference backend:    {backend_name}\n'
+                  f'    Detection model:      {det_name}\n'
+                  f'    Detection batch size: {det_batch_size}\n'
+                  f'    Recognition model:    {rec_name}\n'
+                  f'    Detection batch size: {rec_batch_size}')
 
         return info
 
@@ -139,7 +143,9 @@ if __name__ == "__main__":
     parser.add_argument('-b', '--batch', default=1, type=int, help='Batch size')
     parser.add_argument('-d', '--dir', default=None, type=str, help='Path to directory with images')
     parser.add_argument('-n', '--num_files', default=1000, type=int, help='Number of files per test')
+    parser.add_argument('-lf', '--limit_faces', default=0, type=int, help='Number of files per test')
     parser.add_argument('--embed', default='True', type=str, help='Extract embeddings, otherwise run detection only')
+    parser.add_argument('--embed_only', default='False', type=str, help='Omit detection step. Expects already cropped 112x112 images')
 
     args = parser.parse_args()
 
@@ -154,15 +160,21 @@ if __name__ == "__main__":
     print('---')
     client.server_info(show=True)
     print('Benchmark configs:')
-    print(f"    Number of iterations: {args.iters}")
-    print(f"    Minimum num. of files per iter: {args.num_files}")
-    print(f"    Number of threads: {args.threads}")
+    print(f"    Embed detected faces:        {args.embed}")
+    print(f"    Run in embed only mode:      {args.embed}")
+    print(f'    Request batch size:          {args.batch}')
+    print(f"    Min. num. of files per iter: {args.num_files}")
+    print(f"    Number of iterations:        {args.iters}")
+    print(f"    Number of threads:           {args.threads}")
     print('---')
 
     mode = 'paths'
     if args.dir is None:
         # Test single face per image
-        files = ['test_images/Stallone.jpg']
+        if to_bool(args.embed_only):
+            files = ['test_images/TH.png']
+        else:
+            files = ['test_images/Stallone.jpg']
         print(f'No data directory provided. Using `{files[0]}` for testing.')
     else:
         files = glob.glob(os.path.join(args.dir, '*/*.*'))
@@ -185,7 +197,8 @@ if __name__ == "__main__":
     im_batches = to_chunks(files, args.batch)
     im_batches = [list(chunk) for chunk in im_batches]
 
-    _part_extract_vecs = partial(client.extract, extract_embedding=to_bool(args.embed), mode=mode)
+    _part_extract_vecs = partial(client.extract, extract_embedding=to_bool(args.embed), embed_only=to_bool(args.embed_only), mode=mode,
+                                 limit_faces = args.limit_faces)
 
     pool = multiprocessing.Pool(args.threads)
     speeds = []
