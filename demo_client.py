@@ -75,11 +75,11 @@ class IFRClient:
             det_batch_size = info['models']['rec_batch_size']
 
             print(f'Server: {server_uri}\n'
-                  f'    Inference backend:    {backend_name}\n'
-                  f'    Detection model:      {det_name}\n'
-                  f'    Detection batch size: {det_batch_size}\n'
-                  f'    Recognition model:    {rec_name}\n'
-                  f'    Detection batch size: {rec_batch_size}')
+                  f'    Inference backend:      {backend_name}\n'
+                  f'    Detection model:        {det_name}\n'
+                  f'    Detection batch size:   {det_batch_size}\n'
+                  f'    Recognition model:      {rec_name}\n'
+                  f'    Recognition batch size: {rec_batch_size}')
 
         return info
 
