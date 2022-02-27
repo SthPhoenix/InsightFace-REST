@@ -1,17 +1,33 @@
-FROM nvcr.io/nvidia/tensorrt:21.12-py3
+FROM nvcr.io/nvidia/l4t-ml:r32.6.1-py3
 
-ENV LC_ALL=C.UTF-8
-ENV LANG=C.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
 
-RUN apt-get update && apt-get install -y libgl1-mesa-glx protobuf-compiler libprotoc-dev libb64-0d libturbojpeg
-ENV PIP_INSTALL="python -m pip --no-cache-dir install --upgrade"
-RUN $PIP_INSTALL requests tqdm opencv-python scikit-image fastapi uvicorn ujson numba aiofiles python-multipart httpx cupy-cuda114 icc_rt
-RUN $PIP_INSTALL onnx==1.8.0
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata --upgrade
+RUN apt-get install -y libgl1-mesa-glx protobuf-compiler libprotoc-dev libb64-0d libturbojpeg python3-pip
+ENV PIP_INSTALL="python3 -m pip --no-cache-dir install --upgrade"
+RUN $PIP_INSTALL pip
+RUN $PIP_INSTALL requests tqdm
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales
+
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    dpkg-reconfigure --frontend=noninteractive locales && \
+    update-locale LANG=en_US.UTF-8
+
+RUN $PIP_INSTALL scikit-image
+
+RUN $PIP_INSTALL fastapi uvicorn ujson aiofiles python-multipart httpx
+RUN apt-get install -y cmake git
+RUN git clone --recursive https://github.com/onnx/optimizer onnxoptimizer && cd onnxoptimizer && pip3 install -e . && cd ~ && rm -rf onnxoptimizer
 RUN $PIP_INSTALL onnx-simplifier
-RUN $PIP_INSTALL nvidia-pyindex && pip install tritonclient[http,grpc]
+RUN $PIP_INSTALL nvidia-pyindex
+RUN $PIP_INSTALL tritonclient[http,grpc]
 RUN $PIP_INSTALL git+git://github.com/lilohuang/PyTurboJPEG.git msgpack
-RUN $PIP_INSTALL pynvjpeg
-
+COPY Tegra_Multimedia_API_R32.2.1_aarch64.tbz2 /tmp
+RUN tar xvjf /tmp/Tegra_Multimedia_API_R32.2.1_aarch64.tbz2 && rm /tmp/Tegra_Multimedia_API_R32.2.1_aarch64.tbz2
+RUN mv tegra_multimedia_api /usr/src/jetson_multimedia_api
+#RUN $PIP_INSTALL pynvjpeg
 
 WORKDIR /app
 COPY api_trt /app

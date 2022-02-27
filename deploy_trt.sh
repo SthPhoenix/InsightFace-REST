@@ -31,7 +31,7 @@ max_size=640,640
 # Force FP16 mode for building TensorRT engines, even if it's not supported.
 # Please check that your GPU supports FP16, otherwise performance may drop.
 # For GPUs supporting it gives about 2x performance boost.
-force_fp16=False
+force_fp16=True
 
 
 # DET MODELS:
@@ -100,7 +100,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
     docker rm $name;
     echo --- Starting container $name  with $device  at port $port;
     ((p++));
-    docker run  -p $port:18080\
+    docker run --runtime=nvidia -p $port:18080\
         --gpus $device\
         -d\
         -e LOG_LEVEL=$log_level\
