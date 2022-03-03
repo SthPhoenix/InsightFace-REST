@@ -48,9 +48,10 @@ def download_from_gdrive(id, destination):
             if key.startswith('download_warning'):
                 return value
 
-        m = re.search('.*confirm=([^\"]*)', response.text, re.M)
-        if m and m.groups():
-            return m.groups()[0]
+        if 'text/html' in response.headers['Content-Type']:
+            m = re.search('.*confirm=([^\"]*)', response.text, re.M)
+            if m and m.groups():
+                return m.groups()[0]
 
         return None
 
