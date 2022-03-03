@@ -1,7 +1,7 @@
 import requests
 import hashlib
 from tqdm import tqdm
-
+import re
 
 
 def check_hash(filename, hash, algo='md5'):
@@ -47,6 +47,11 @@ def download_from_gdrive(id, destination):
         for key, value in response.cookies.items():
             if key.startswith('download_warning'):
                 return value
+
+        if 'text/html' in response.headers['Content-Type']:
+            m = re.search('.*confirm=([^\"]*)', response.text, re.M)
+            if m and m.groups():
+                return m.groups()[0]
 
         return None
 
