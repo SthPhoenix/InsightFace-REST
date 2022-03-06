@@ -32,7 +32,7 @@ client = httpx.AsyncClient(headers=headers)
 def read_as_bytes(path, **kwargs):
     with open(path, mode='rb') as fl:
         data = fl.read()
-        _bytes = np.frombuffer(data, dtype='int8')
+        _bytes = np.frombuffer(data, dtype='uint8')
         return _bytes
 
 
@@ -41,7 +41,7 @@ def b64_to_bytes(b64encoded, **kwargs):
     try:
         __bin = b64encoded.split(",")[-1]
         __bin = base64.b64decode(__bin)
-        __bin = np.frombuffer(__bin, dtype='int8')
+        __bin = np.frombuffer(__bin, dtype='uint8')
 
     except Exception:
         tb = traceback.format_exc()
@@ -67,7 +67,7 @@ async def dl_image(path, **kwargs):
     try:
         if path.startswith('http'):
             resp = await client.get(path)
-            __bin = np.frombuffer(resp.content, dtype='int8')
+            __bin = np.frombuffer(resp.content, dtype='uint8')
         else:
             if not os.path.exists(path):
                 tb = f"File: '{path}' not found"
