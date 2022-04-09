@@ -14,3 +14,4 @@ scikit-image
 onnx==1.8.0
 onnx-simplifier
 git+https://github.com/lilohuang/PyTurboJPEG.git
+tritonclient[http,grpc]

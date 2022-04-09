@@ -20,7 +20,6 @@ RUN apt-get update &&\
 
 COPY requirements.txt .
 RUN $PIP_INSTALL -r requirements.txt
-RUN $PIP_INSTALL nvidia-pyindex && pip install tritonclient[http,grpc]
 
 WORKDIR /app
 COPY api_trt /app

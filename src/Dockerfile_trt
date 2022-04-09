@@ -15,7 +15,6 @@ RUN apt-get update &&\
 
 COPY requirements.txt .
 RUN $PIP_INSTALL -r requirements.txt
-RUN $PIP_INSTALL nvidia-pyindex && pip install tritonclient[http,grpc]
 # GPU specific packages
 RUN $PIP_INSTALL cupy-cuda114 pynvjpeg
 
