@@ -41,7 +41,7 @@ det_batch_size=1
 rec_model=glintr100
 
 ## Maximum batch size for recognition model (this value also applies for GA and mask detection models)
-rec_batch_size=64
+rec_batch_size=1
 
 
 # Mask detection models
