@@ -19,7 +19,7 @@ def tobool(input):
         return False
 
 def toNone(input):
-    if input.lower() in ['', 'none', 'null']:
+    if str(input).lower() in ['', 'none', 'null']:
         return None
     else:
         return input
