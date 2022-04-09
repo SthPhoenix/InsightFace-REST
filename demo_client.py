@@ -72,7 +72,7 @@ class IFRClient:
             det_name = info['models']['det_name']
             rec_name = info['models']['rec_name']
             rec_batch_size = info['models']['rec_batch_size']
-            det_batch_size = info['models']['rec_batch_size']
+            det_batch_size = info['models']['det_batch_size']
 
             print(f'Server: {server_uri}\n'
                   f'    Inference backend:      {backend_name}\n'
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     client.server_info(show=True)
     print('Benchmark configs:')
     print(f"    Embed detected faces:        {args.embed}")
-    print(f"    Run in embed only mode:      {args.embed}")
+    print(f"    Run in embed only mode:      {args.embed_only}")
     print(f'    Request batch size:          {args.batch}')
     print(f"    Min. num. of files per iter: {args.num_files}")
     print(f"    Number of iterations:        {args.iters}")
