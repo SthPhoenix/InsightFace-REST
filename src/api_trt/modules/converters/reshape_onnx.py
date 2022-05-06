@@ -37,6 +37,8 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
             mode = 'arcface'
         if  model.graph.input[0].type.tensor_type.shape.dim[3].dim_value == 3:
             mode = 'mask_detector'
+        if len(model.graph.output) == 1 and len(model.graph.output[0].type.tensor_type.shape.dim) == 3:
+            mode = 'yolov5-face'
 
 
     d = model.graph.input[0].type.tensor_type.shape.dim
@@ -47,7 +49,14 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
         d[3].dim_value = w
     divisor = 4
     logging.debug(f"Mode: {mode}")
-    if mode != 'scrfd':
+    if mode == 'yolov5-face':
+        d = model.graph.output[0].type.tensor_type.shape.dim
+        mx = (h * w) / 16
+        s = mx - mx / 64
+        d[0].dim_value = n
+        d[1].dim_value = int(s)
+        d[2].dim_value = 16
+    elif mode != 'scrfd':
         for output in model.graph.output:
             if mode == 'retinaface':
                 divisor = int(output.name.split('stride')[-1])
