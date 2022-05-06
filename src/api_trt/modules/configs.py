@@ -34,6 +34,7 @@ anticov_outputs = [
 centerface_outputs = ['537', '538', '539', '540']
 dbface_outputs = ["hm", "tlrb", "landmark"]
 scrfd_outputs = ['score_8', 'score_16', 'score_32', 'bbox_8', 'bbox_16', 'bbox_32', 'kps_8', 'kps_16', 'kps_32']
+yolo_outputs = ['output']
 
 models = {
     'retinaface_mnet025_v0': {
@@ -198,6 +199,56 @@ models = {
         'allow_batching': True,
         'link': '14BuXR6L73w1mwKXHPIcZlc9LYaid4Evl',
         'md5': '1d9b64bb0e6e18d4838872c9e7efd709',
+        'dl_type': 'google'
+    },
+    'yolov5l-face': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'function': 'yolov5_face',
+        'outputs': yolo_outputs,
+        'allow_batching': True,
+        'link': '1PL52lvybe1nJU5k09twbfKNRWw904HgS',
+        'dl_type': 'google'
+    },
+    'yolov5m-face': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'function': 'yolov5_face',
+        'outputs': yolo_outputs,
+        'allow_batching': True,
+        'link': '1degIq0DEFML97PFvfpi-mMN8mfzRzy5z',
+        'dl_type': 'google'
+    },
+    'yolov5s-face': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'function': 'yolov5_face',
+        'outputs': yolo_outputs,
+        'allow_batching': True,
+        'link': '14Ah6jfXJ5QuzaN2OsKE-g61x3-_hBnQV',
+        'dl_type': 'google'
+    },
+    'yolov5n-face': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'function': 'yolov5_face',
+        'outputs': yolo_outputs,
+        'allow_batching': True,
+        'link': '1P9u9vEGA9J2v1riAe3jIqZ-Zu5OrUCQN',
+        'dl_type': 'google'
+    },
+    'yolov5n-0.5': {
+        'in_package': False,
+        'shape': (1, 3, 640, 640),
+        'reshape': True,
+        'function': 'yolov5_face',
+        'outputs': yolo_outputs,
+        'allow_batching': True,
+        'link': '16gNzkxSByVtyYOMxRDRDn_qKfVxco1p0',
         'dl_type': 'google'
     },
     'scrfd_10g_gnkps_norm': {

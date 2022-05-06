@@ -2,6 +2,7 @@ from .detectors.retinaface import RetinaFace
 from .detectors.centerface import CenterFace
 from .detectors.dbface import DBFace
 from .detectors.scrfd import SCRFD
+from .detectors.yolov5_face import YoloV5
 
 
 def get_retinaface(model_path, backend, outputs, rac, masks=False, **kwargs):
@@ -50,4 +51,9 @@ def scrfd(model_path, backend, outputs, **kwargs):
 def scrfd_v2(model_path, backend, outputs, **kwargs):
     inference_backend = backend.DetectorInfer(model=model_path, output_order=outputs, **kwargs)
     model = SCRFD(inference_backend=inference_backend, ver=2)
+    return model
+
+def yolov5_face(model_path, backend, outputs, **kwargs):
+    inference_backend = backend.DetectorInfer(model=model_path, output_order=outputs, **kwargs)
+    model = YoloV5(inference_backend=inference_backend)
     return model
