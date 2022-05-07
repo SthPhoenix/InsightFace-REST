@@ -87,7 +87,7 @@ async def extract(data: BodyExtract, accept: Optional[List[str]] = Header(None))
 
 
     if data.msgpack or 'application/x-msgpack' in accept:
-        return PlainTextResponse(msgpack.dumps(output), media_type='application/x-msgpack')
+        return PlainTextResponse(msgpack.dumps(output, use_single_float=True), media_type='application/x-msgpack')
     else:
         return UJSONResponse(output)
 
