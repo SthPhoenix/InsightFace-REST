@@ -38,40 +38,28 @@ class Serializer:
         return data
 
 
-def serialize_face(face: Face, return_face_data: bool, return_landmarks: bool = False):
-    _face_dict = dict(
-        det=face.num_det,
-        prob=None,
-        bbox=None,
-        size=None,
-        landmarks=None,
-        gender=face.gender,
-        age=face.age,
-        mask_probs=face.mask_probs,
-        mask=face.mask,
-        norm=None,
-        vec=None,
-    )
+def serialize_face(_face_dict: dict, return_face_data: bool, return_landmarks: bool = False):
 
-    if face.embedding_norm:
-        _face_dict.update(vec=face.normed_embedding.tolist(),
-                          norm=float(face.embedding_norm))
+    if _face_dict.get('norm'):
+        _face_dict.update(vec=_face_dict['vec'].tolist(),
+                          norm=float(_face_dict['norm']))
     # Warkaround for embed_only flag
-    if face.det_score:
-        _face_dict.update(prob=float(face.det_score),
-                          bbox=face.bbox.astype(int).tolist(),
-                          size=int(face.bbox[2] - face.bbox[0]))
+    if _face_dict.get('prob'):
+        _face_dict.update(prob=float(_face_dict['prob']),
+                          bbox=_face_dict['bbox'].astype(int).tolist(),
+                          size=int(_face_dict['bbox'][2] - _face_dict['bbox'][0]))
 
-        if return_landmarks:
-            _face_dict.update({
-                'landmarks': face.landmark.astype(int).tolist()
-            })
+
+    if return_landmarks:
+        _face_dict['landmarks'] = _face_dict['landmarks'].astype(int).tolist()
+    else:
+        _face_dict.pop('landmarks', None)
 
     if return_face_data:
-        _face_dict.update({
-            'facedata': base64.b64encode(cv2.imencode('.jpg', face.facedata)[1].tostring()).decode(
-                'utf-8')
-        })
+        _face_dict['facedata'] = base64.b64encode(cv2.imencode('.jpg', _face_dict['facedata'])[1].tostring()).decode('ascii')
+    else:
+        _face_dict.pop('facedata', None)
+
 
     return _face_dict
 
@@ -102,7 +90,7 @@ class Processing:
     def __iterate_images(self, crops):
         for face in crops:
             if face.get('traceback') is None:
-                face = Face(facedata=face.get('data'))
+                face = face.get('data')
                 yield face
 
     def embed_crops(self, images, extract_embedding: bool = True, extract_ga: bool = True, detect_masks: bool = False):
@@ -111,6 +99,7 @@ class Processing:
         output = dict(took_ms=None, data=[], status="ok")
 
         iterator = self.__iterate_images(images)
+        iterator = ({'facedata': e} for e in iterator)
         faces = self.model.process_faces(iterator, extract_embedding=extract_embedding, extract_ga=extract_ga,
                                          return_face_data=False, detect_masks=detect_masks)
 
@@ -120,7 +109,7 @@ class Processing:
                     _face_dict = dict(status='failed',
                                       traceback=image.get('traceback'))
                 else:
-                    _face_dict = serialize_face(face=next(faces), return_face_data=False,
+                    _face_dict = serialize_face(_face_dict=next(faces), return_face_data=False,
                                                 return_landmarks=False)
                     _face_dict['status'] = 'ok'
                 output['data'].append(_face_dict)
@@ -149,7 +138,8 @@ class Processing:
         output = dict(took={}, data=[])
 
         imgs_iterable = self.__iterate_images(images)
-        faces_by_img = (e for e in await _get([img.facedata for img in imgs_iterable]))
+
+        faces_by_img = (e for e in await _get([img for img in imgs_iterable]))
 
         for img in images:
             _faces_dict = dict(status='failed', took_ms=0., faces=[])
@@ -160,7 +150,10 @@ class Processing:
                 else:
                     t0 = time.perf_counter()
                     faces = faces_by_img.__next__()
+                    tss = time.perf_counter()
                     _faces_dict['faces'] = list(map(_serialize, faces))
+                    tsf = time.perf_counter()
+                    logging.debug(f'Serializing took: {(tsf - tss) * 1000} ms.')
                     took = time.perf_counter() - t0
                     _faces_dict['took_ms'] = took * 1000
                     _faces_dict['status'] = 'ok'

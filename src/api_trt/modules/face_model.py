@@ -127,12 +127,12 @@ class FaceAnalysis:
 
         return boxes, probs, landmarks
 
-    def process_faces(self, faces: List[Face], extract_embedding: bool = True, extract_ga: bool = True,
+    def process_faces(self, faces: List[dict], extract_embedding: bool = True, extract_ga: bool = True,
                       return_face_data: bool = False, detect_masks: bool = True, mask_thresh: float = 0.89):
         chunked_faces = to_chunks(faces, self.max_rec_batch_size)
         for chunk in chunked_faces:
             chunk = list(chunk)
-            crops = [e.facedata for e in chunk]
+            crops = [e['facedata'] for e in chunk]
             total = len(crops)
             embeddings = [None] * total
             ga = [[None, None]] * total
@@ -191,10 +191,16 @@ class FaceAnalysis:
 
                 face = chunk[i]
                 if return_face_data is False:
-                    face = face._replace(facedata=None)
+                    face['facedata'] = None
 
-                face = face._replace(embedding=embedding, embedding_norm=embedding_norm,
-                                     normed_embedding=normed_embedding, gender=gender, age=age, mask=mask, mask_probs=mask_probs)
+                #face['raw_vec'] = embedding
+                face['norm'] = embedding_norm
+                face['vec'] = normed_embedding
+                face['gender'] = gender
+                face['age'] = age
+                face['mask'] = mask
+                face['mask_probs'] = mask_probs
+
                 yield face
 
     # Process single image
@@ -229,13 +235,11 @@ class FaceAnalysis:
             det_predictions = zip(*_partial_detect(batch_imgs))
             t1 = time.perf_counter()
             logging.debug(f'Detection took: {(t1 - t0) * 1000:.3f} ms.')
+
             for idx, pred in enumerate(det_predictions):
                 await asyncio.sleep(0)
-
                 orig_id = (bid * self.max_det_batch_size) + idx
                 boxes, probs, landmarks = pred
-
-
                 faces_per_img[orig_id] = len(boxes)
 
                 if not isinstance(boxes, type(None)):
@@ -244,9 +248,11 @@ class FaceAnalysis:
                         boxes, probs, landmarks = self.sort_boxes(boxes, probs, landmarks,
                                                                               shape=batch_imgs[idx].shape,
                                                                               max_num=limit_faces)
+                        faces_per_img[orig_id] = len(boxes)
 
                     # Translate points to original image size
                     boxes = reproject_points(boxes, scales[idx])
+                    logging.debug(landmarks.shape)
                     landmarks = reproject_points(landmarks, scales[idx])
                     # Crop faces from original image instead of resized to improve quality
                     if extract_ga or extract_embedding or return_face_data or detect_masks:
@@ -256,8 +262,10 @@ class FaceAnalysis:
 
                     for i, _crop in enumerate(crops):
 
-                        face = Face(bbox=boxes[i], landmark=landmarks[i], det_score=probs[i],
-                                    num_det=i, scale=scales[idx], facedata=_crop)
+                        face = dict(
+                            bbox=boxes[i], landmarks=landmarks[i], prob=probs[i],
+                            num_det=i, scale=scales[idx], facedata=_crop
+                        )
 
                         faces.append(face)
 
@@ -265,14 +273,18 @@ class FaceAnalysis:
                     logging.debug(f'Cropping {len(boxes)} faces took: {(t1 - t0) * 1000:.3f} ms.')
 
         # Process detected faces
-        faces = list(self.process_faces(faces,
-                                   extract_embedding=extract_embedding,
-                                   extract_ga=extract_ga,
-                                   return_face_data=return_face_data,
-                                   detect_masks=detect_masks, mask_thresh=mask_thresh))
-
+        tps = time.perf_counter()
+        if extract_ga or extract_embedding or detect_masks:
+            faces = list(self.process_faces(faces,
+                                       extract_embedding=extract_embedding,
+                                       extract_ga=extract_ga,
+                                       return_face_data=return_face_data,
+                                       detect_masks=detect_masks, mask_thresh=mask_thresh))
+        tpf = time.perf_counter()
+        logging.debug(colorize_log(f'Processing faces took: {(tpf - tps) * 1000:.3f} ms.', 'green'))
         faces_by_img = []
         offset = 0
+
         for key in faces_per_img:
             value = faces_per_img[key]
             faces_by_img.append(faces[offset:offset + value])
@@ -286,19 +298,19 @@ class FaceAnalysis:
     def draw_faces(self, image, faces, draw_landmarks=True, draw_scores=True, draw_sizes=True):
 
         for face in faces:
-            bbox = face.bbox.astype(int)
+            bbox = face["bbox"].astype(int)
             pt1 = tuple(bbox[0:2])
             pt2 = tuple(bbox[2:4])
             color = (0, 255, 0)
             x, y = pt1
             r, b = pt2
             w = r - x
-            if face.mask is False:
+            if face.get("mask") is False:
                     color = (0, 0, 255)
             cv2.rectangle(image, pt1, pt2, color, 1)
 
             if draw_landmarks:
-                lms = face.landmark.astype(int)
+                lms = face["landmarks"].astype(int)
                 pt_size = int(w * 0.05)
                 cv2.circle(image, (lms[0][0], lms[0][1]), 1, (0, 0, 255), pt_size)
                 cv2.circle(image, (lms[1][0], lms[1][1]), 1, (0, 255, 255), pt_size)
@@ -307,7 +319,7 @@ class FaceAnalysis:
                 cv2.circle(image, (lms[4][0], lms[4][1]), 1, (255, 0, 0), pt_size)
 
             if draw_scores:
-                text = f"{face.det_score:.3f}"
+                text = f"{face['prob']:.3f}"
                 pos = (x + 3, y - 5)
                 textcolor = (0, 0, 0)
                 thickness = 1
