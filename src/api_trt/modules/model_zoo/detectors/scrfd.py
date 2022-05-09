@@ -116,16 +116,12 @@ def filter(bboxes_list: np.ndarray, kpss_list: np.ndarray,
     :return: Face bboxes with scores [t,l,b,r,score], and key points
     """
 
-    scores_ravel: np.ndarray = scores_list.reshape(-1)
-    order: np.ndarray = scores_ravel.argsort()[::-1]
     pre_det = np.hstack((bboxes_list, scores_list))
-    pre_det = pre_det[order, :]
     keep = nms(pre_det, thresh=nms_threshold)
     keep = np.asarray(keep)
     det = pre_det[keep, :]
-    kpss = kpss_list.reshape((kpss_list.shape[0], -1, 2))
-    kpss = kpss[order, :, :]
-    kpss = kpss[keep, :, :]
+    kpss = kpss_list[keep, :]
+    kpss = kpss.reshape((kpss.shape[0], -1, 2))
 
     return det, kpss
 
