@@ -27,6 +27,19 @@ def xywh2xyxy(x):
     x[:, 3] = x[:, 1] + x[:, 3]  # bottom right y
     return x
 
+@njit(cache=True, fastmath=True)
+def _filter(dets, threshold, nms_threshold):
+    order = np.where(dets[:, 4] >= threshold)[0]
+    dets = dets[order, :]
+    pre_det = dets[:, 0:5]
+    lmks = dets[:, 5:15]
+    pre_det = xywh2xyxy(pre_det)
+    keep = nms(pre_det, thresh=nms_threshold)
+    keep = np.asarray(keep)
+    det_out = pre_det[keep, :]
+    lmks = lmks[keep, :]
+    lmks = lmks.reshape((lmks.shape[0], -1, 2))
+    return det_out, lmks
 
 def _normalize_on_device(input, stream, out):
     """
@@ -157,19 +170,10 @@ class YoloV5:
         for i in range(batch_size):
 
             dets = net_outs[0][i]
-            order = np.where(dets[:, 4] >= threshold)[0]
-            dets = dets[order, :]
-            pre_det = dets[:, 0:5]
-            lmks = dets[:, 5:15]
-
-            pre_det = xywh2xyxy(pre_det)
-            keep = nms(pre_det, thresh=self.nms_threshold)
-            det_out = pre_det[keep, :]
-            lmks = lmks[keep, :]
-            if lmks.shape[0] > 0:
-                lmks = lmks.reshape((lmks.shape[0], -1, 2))
-
+            det_out, lmks = _filter(dets, threshold, self.nms_threshold)
             dets_list.append(det_out)
             kpss_list.append(lmks)
 
         return dets_list, kpss_list
+
+
