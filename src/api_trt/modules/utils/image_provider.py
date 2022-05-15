@@ -86,7 +86,11 @@ def make_im_data(__bin,tb, decode=True):
             data = decode_img_bytes(__bin)
         else:
             data = __bin
-    else:
+
+        if isinstance(data, type(None)):
+            tb = "Can't decode file, possibly not an image"
+
+    if tb:
         data = None
         traceback = tb
         logging.warning(tb)
