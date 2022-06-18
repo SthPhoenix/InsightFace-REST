@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import Dict
 import time
@@ -7,6 +8,8 @@ import base64
 import numpy as np
 import cv2
 import httpx
+import aiofiles
+
 from modules.utils.helpers import tobool
 
 from turbojpeg import TurboJPEG
@@ -29,9 +32,9 @@ headers = {
 
 client = httpx.AsyncClient(headers=headers, follow_redirects=True)
 
-def read_as_bytes(path, **kwargs):
-    with open(path, mode='rb') as fl:
-        data = fl.read()
+async def read_as_bytes(path, **kwargs):
+    async with aiofiles.open(path, mode='rb') as fl:
+        data = await fl.read()
         _bytes = np.frombuffer(data, dtype='uint8')
         return _bytes
 
@@ -72,7 +75,7 @@ async def dl_image(path, **kwargs):
             if not os.path.exists(path):
                 tb = f"File: '{path}' not found"
                 return __bin, tb
-            __bin = read_as_bytes(path)
+            __bin = await read_as_bytes(path)
     except Exception:
         tb = traceback.format_exc()
         logging.warning(tb)
@@ -105,8 +108,13 @@ async def get_images(data: Dict[str, list], decode=True, **kwargs):
 
     if data.get('urls') is not None:
         urls = data['urls']
+        tasks = []
         for url in urls:
-            __bin, tb = await dl_image(url)
+            tasks.append(asyncio.ensure_future(dl_image(url)))
+
+        results = await asyncio.gather(*tasks)
+        for res in results:
+            __bin, tb = res
             im_data = make_im_data(__bin, tb, decode=decode)
             images.append(im_data)
 
