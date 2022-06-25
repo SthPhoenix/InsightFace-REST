@@ -56,19 +56,22 @@ API and converting models to ONNX and TensorRT using Docker.
 ### Detection:
 
 
-| Model                 | Auto download  | Batch inference | Detection (ms) | Inference (ms) | GPU-Util (%) | Source                      |  ONNX File   |
-|-----------------------|:--------------:|:---------------:|:--------------:|:--------------:|:------------:|:----------------------------|:------------:|
-| retinaface_r50_v1     |      Yes*      |                 |      12.3      |      8.4       |      26      | [official package][1]       | [link][dl1]  |
-| retinaface_mnet025_v1 |      Yes*      |                 |      8.6       |      4.6       |      17      | [official package][1]       | [link][dl2]  |
-| retinaface_mnet025_v2 |      Yes*      |                 |      8.8       |      4.9       |      17      | [official package][1]       | [link][dl3]  |
-| mnet_cov2             |      Yes*      |                 |      8.7       |      4.6       |      18      | [mnet_cov2][2]              | [link][dl4]  |
-| centerface            |      Yes       |                 |      10.6      |      3.5       |      19      | [Star-Clouds/CenterFace][3] | [link][dl5]  |
-| scrfd_10g_bnkps       |      Yes*      |       Yes       |      3.3       |       2        |      16      | [SCRFD][4]                  | [link][dl6]  |
-| scrfd_2.5g_bnkps      |      Yes*      |       Yes       |      2.2       |      1.1       |      13      | [SCRFD][4]                  | [link][dl7]  |
-| scrfd_500m_bnkps      |      Yes*      |       Yes       |      1.9       |      0.8       |      13      | [SCRFD][4]                  | [link][dl15] |
-| scrfd_10g_gnkps       |      Yes*      |       Yes       |      3.3       |      2.2       |      17      | [SCRFD][4]**                | [link][dl16] |
-| scrfd_2.5g_gnkps      |      Yes*      |       Yes       |      2.3       |      1.2       |      14      | [SCRFD][4]**                | [link][dl17] |
-| scrfd_500m_gnkps      |      Yes*      |       Yes       |      2.1       |      1.3       |      14      | [SCRFD][4]**                | [link][dl18] |
+| Model                 | Auto download | Batch inference | Detection (ms) | Inference (ms) | GPU-Util (%) | Source                      |  ONNX File   |
+|-----------------------|:-------------:|:---------------:|:--------------:|:--------------:|:------------:|:----------------------------|:------------:|
+| retinaface_r50_v1     |     Yes*      |                 |      12.3      |      8.4       |      26      | [official package][1]       | [link][dl1]  |
+| retinaface_mnet025_v1 |     Yes*      |                 |      8.6       |      4.6       |      17      | [official package][1]       | [link][dl2]  |
+| retinaface_mnet025_v2 |     Yes*      |                 |      8.8       |      4.9       |      17      | [official package][1]       | [link][dl3]  |
+| mnet_cov2             |     Yes*      |                 |      8.7       |      4.6       |      18      | [mnet_cov2][2]              | [link][dl4]  |
+| centerface            |      Yes      |                 |      10.6      |      3.5       |      19      | [Star-Clouds/CenterFace][3] | [link][dl5]  |
+| scrfd_10g_bnkps       |     Yes*      |       Yes       |      3.3       |       2        |      16      | [SCRFD][4]                  | [link][dl6]  |
+| scrfd_2.5g_bnkps      |     Yes*      |       Yes       |      2.2       |      1.1       |      13      | [SCRFD][4]                  | [link][dl7]  |
+| scrfd_500m_bnkps      |     Yes*      |       Yes       |      1.9       |      0.8       |      13      | [SCRFD][4]                  | [link][dl15] |
+| scrfd_10g_gnkps       |     Yes*      |       Yes       |      3.3       |      2.2       |      17      | [SCRFD][4]**                | [link][dl16] |
+| scrfd_2.5g_gnkps      |     Yes*      |       Yes       |      2.3       |      1.2       |      14      | [SCRFD][4]**                | [link][dl17] |
+| scrfd_500m_gnkps      |     Yes*      |       Yes       |      2.1       |      1.3       |      14      | [SCRFD][4]**                | [link][dl18] |
+| yolov5s-face          |     Yes*      |       Yes       |                |                |              | [yolov5-face][10]           | [link][dl23] |
+| yolov5m-face          |     Yes*      |       Yes       |                |                |              | [yolov5-face][10]           | [link][dl24] |
+| yolov5l-face          |     Yes*      |       Yes       |                |                |              | [yolov5-face][10]           | [link][dl25] |
 
 > Note: Performance metrics measured on NVIDIA RTX2080 SUPER + Intel Core i7-5820K (3.3Ghz * 6 cores) for 
 > `api/src/test_images/lumia.jpg` with `force_fp16=True`, `det_batch_size=1` and `max_size=640,640`.
@@ -127,6 +130,7 @@ improve performance.
 [7]: https://github.com/deepinsight/insightface/tree/master/recognition/arcface_torch
 [8]: https://github.com/chandrikadeb7/Face-Mask-Detection
 [9]: https://github.com/deepinsight/insightface/tree/master/alignment/coordinateReg
+[10]: https://github.com/deepcam-cn/yolov5-face
 
 [dl1]: https://drive.google.com/file/d/1peUaq0TtNBhoXUbMqsCyQdL7t5JuhHMH/view?usp=sharing
 [dl2]: https://drive.google.com/file/d/12H4TXtGlAr1boEGtUukteolpQ9wfUTWe/view?usp=sharing
@@ -146,7 +150,9 @@ improve performance.
 [dl20]: https://drive.google.com/file/d/1ghS0LEGV70Jdb5un5fVdDO-vmonVIe6Z/view?usp=sharing
 [dl21]: https://drive.google.com/file/d/1_3WcTE64Mlt_12PZHNWdhVCRpoPiblwq/view?usp=sharing
 [dl22]: https://drive.google.com/file/d/1GtBKfGucgJDRLHvGWR3jOQovHYXY-Lpe/view?usp=sharing
-
+[dl23]: https://drive.google.com/file/d/14Ah6jfXJ5QuzaN2OsKE-g61x3-_hBnQV/view?usp=sharing
+[dl24]: https://drive.google.com/file/d/1degIq0DEFML97PFvfpi-mMN8mfzRzy5z/view?usp=sharing
+[dl25]: https://drive.google.com/file/d/1PL52lvybe1nJU5k09twbfKNRWw904HgS/view?usp=sharing
 
 
 ## Requirements:
