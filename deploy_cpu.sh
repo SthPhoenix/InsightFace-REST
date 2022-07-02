@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.7.3.0-cpu'
+TAG='v0.8.0.0-cpu'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -79,8 +79,7 @@ echo "Starting $n_workers workers on CPU";
 
 name=$IMAGE-cpu;
 
-docker stop $name;
-docker rm $name;
+docker rm -f $name;
 echo --- Starting container $name  with CPU  at port $START_PORT;
 
 docker run  -p $START_PORT:18080\
@@ -93,11 +92,8 @@ docker run  -p $START_PORT:18080\
     -e DET_NAME=$det_model\
     -e DET_THRESH=$det_thresh\
     -e REC_NAME=$rec_model\
-    -e REC_IGNORE=$rec_ignore\
     -e MASK_DETECTOR=$mask_detector\
-    -e MASK_IGNORE=$mask_ignore\
     -e GA_NAME=$ga_model\
-    -e GA_IGNORE=$ga_ignore\
     -e KEEP_ALL=True\
     -e MAX_SIZE=$max_size\
     -e DEF_RETURN_FACE_DATA=$return_face_data\

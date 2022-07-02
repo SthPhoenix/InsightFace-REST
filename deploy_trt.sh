@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.7.3.0'
+TAG='v0.8.0.0'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -97,8 +97,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
     port=$((START_PORT + $p));
     name=$IMAGE-gpu$i-trt;
 
-    docker stop $name;
-    docker rm $name;
+    docker rm -f $name;
     echo --- Starting container $name  with $device  at port $port;
     ((p++));
     docker run  -p $port:18080\
@@ -114,13 +113,10 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e DET_NAME=$det_model\
         -e DET_THRESH=$det_thresh\
         -e REC_NAME=$rec_model\
-        -e REC_IGNORE=$rec_ignore\
         -e MASK_DETECTOR=$mask_detector\
-        -e MASK_IGNORE=$mask_ignore\
         -e REC_BATCH_SIZE=$rec_batch_size\
         -e DET_BATCH_SIZE=$det_batch_size\
         -e GA_NAME=$ga_model\
-        -e GA_IGNORE=$ga_ignore\
         -e TRITON_URI=$triton_uri\
         -e KEEP_ALL=True\
         -e MAX_SIZE=$max_size\
