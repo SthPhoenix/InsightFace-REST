@@ -57,8 +57,9 @@ class FaceGenderage:
 
 
         if not face_img[0].shape == (3, 112, 112):
-            imgs = imgs[..., ::-1]
-            imgs = np.transpose(imgs, (0, 3, 1, 2))
+            input_size = tuple(face_img[0].shape[0:2][::-1])
+            imgs = cv2.dnn.blobFromImages(face_img, 1.0, input_size,
+                                          (0., 0., 0.), swapRB=True)
 
         _ga = []
 
