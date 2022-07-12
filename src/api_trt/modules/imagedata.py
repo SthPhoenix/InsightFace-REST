@@ -67,7 +67,7 @@ def resize_image(image, max_size: list = None):
     scale_factor = min(cw / w, ch / h)
     # If image is too small, it may contain only single face, which leads to decreased detection accuracy,
     # so we reduce scale factor by some factor
-    if scale_factor > 3:
+    if scale_factor > 2:
         scale_factor = scale_factor * 0.7
 
     transformed_image = cv2.resize(image, (0, 0), fx=scale_factor,
