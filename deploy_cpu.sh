@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.8.0.0-cpu'
+TAG='v0.8.0.1-cpu'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO

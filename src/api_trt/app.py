@@ -20,7 +20,7 @@ from modules.processing import Processing
 from env_parser import EnvConfigs
 from schemas import BodyDraw, BodyExtract
 
-__version__ = "0.8.0.0"
+__version__ = "0.8.0.1"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
