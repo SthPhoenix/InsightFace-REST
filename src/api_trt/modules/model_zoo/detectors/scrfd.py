@@ -338,7 +338,7 @@ class SCRFD:
         :return: filtered bboxes, keypoints and scores
         """
 
-        offset = 0
+
 
         batch_size = self.infer_shape[0]
         bboxes_by_img = []
@@ -346,6 +346,7 @@ class SCRFD:
         scores_by_img = []
 
         for n_img in range(batch_size):
+            offset = 0
             for idx, stride in enumerate(self._feat_stride_fpn):
                 score_blob = net_outs[idx][n_img]
                 bbox_blob = net_outs[idx + self.fmc][n_img]
