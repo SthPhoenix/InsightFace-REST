@@ -360,8 +360,8 @@ class SCRFD:
                                                                                             self.kpss_list, offset)
                 offset = total
 
-            bboxes_by_img.append(self.bbox_list[:offset])
-            kpss_by_img.append(self.kpss_list[:offset])
-            scores_by_img.append(self.score_list[:offset])
+            bboxes_by_img.append(np.copy(self.bbox_list[:offset]))
+            kpss_by_img.append(np.copy(self.kpss_list[:offset]))
+            scores_by_img.append(np.copy(self.score_list[:offset]))
 
         return bboxes_by_img, kpss_by_img, scores_by_img
