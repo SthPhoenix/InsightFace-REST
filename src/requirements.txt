@@ -13,6 +13,7 @@ numba
 opencv-python
 scikit-image
 onnx==1.8.0
+onnxruntime
 onnx-simplifier
 git+https://github.com/lilohuang/PyTurboJPEG.git
 tritonclient[http,grpc]
