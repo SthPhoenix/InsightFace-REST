@@ -1,11 +1,10 @@
 import pydantic
 from pydantic import BaseModel
 from typing import Optional, List
-from env_parser import EnvConfigs
-
+from settings import Settings
 example_img = 'test_images/Stallone.jpg'
 # Read runtime settings from environment variables
-configs = EnvConfigs()
+settings = Settings()
 
 
 class Images(BaseModel):
@@ -17,37 +16,37 @@ class Images(BaseModel):
 
 class BodyExtract(BaseModel):
     images: Images
-    max_size: Optional[List[int]] = pydantic.Field(default=configs.defaults.max_size,
-                                                   example=configs.defaults.max_size,
+    max_size: Optional[List[int]] = pydantic.Field(default=settings.models.max_size,
+                                                   example=settings.models.max_size,
                                                    description='Resize all images to this proportions')
 
-    threshold: Optional[float] = pydantic.Field(default=configs.defaults.threshold,
-                                                example=configs.defaults.threshold,
+    threshold: Optional[float] = pydantic.Field(default=settings.models.det_thresh,
+                                                example=settings.models.det_thresh,
                                                 description='Detector threshold')
 
     embed_only: Optional[bool] = pydantic.Field(default=False,
                                                 example=False,
                                                 description='Treat input images as face crops and omit detection step')
 
-    return_face_data: Optional[bool] = pydantic.Field(default=configs.defaults.return_face_data,
-                                                      example=configs.defaults.return_face_data,
+    return_face_data: Optional[bool] = pydantic.Field(default=settings.defaults.return_face_data,
+                                                      example=settings.defaults.return_face_data,
                                                       description='Return face crops encoded in base64')
 
-    return_landmarks: Optional[bool] = pydantic.Field(default=configs.defaults.return_landmarks,
-                                                      example=configs.defaults.return_landmarks,
+    return_landmarks: Optional[bool] = pydantic.Field(default=settings.defaults.return_landmarks,
+                                                      example=settings.defaults.return_landmarks,
                                                       description='Return face landmarks')
 
-    extract_embedding: Optional[bool] = pydantic.Field(default=configs.defaults.extract_embedding,
-                                                       example=configs.defaults.extract_embedding,
+    extract_embedding: Optional[bool] = pydantic.Field(default=settings.defaults.extract_embedding,
+                                                       example=settings.defaults.extract_embedding,
                                                        description='Extract face embeddings (otherwise only detect \
                                                        faces)')
 
-    extract_ga: Optional[bool] = pydantic.Field(default=configs.defaults.extract_ga,
-                                                example=configs.defaults.extract_ga,
+    extract_ga: Optional[bool] = pydantic.Field(default=settings.defaults.extract_ga,
+                                                example=settings.defaults.extract_ga,
                                                 description='Extract gender/age')
 
-    detect_masks: Optional[bool] = pydantic.Field(default=configs.defaults.detect_masks,
-                                                  example=configs.defaults.detect_masks,
+    detect_masks: Optional[bool] = pydantic.Field(default=settings.defaults.detect_masks,
+                                                  example=settings.defaults.detect_masks,
                                                   description='Detect medical masks')
 
     limit_faces: Optional[int] = pydantic.Field(default=0,
@@ -62,7 +61,7 @@ class BodyExtract(BaseModel):
                                                      example=True,
                                                      description='Return all timings.')
 
-    api_ver: Optional[str] = pydantic.Field(default=configs.defaults.api_ver,
+    api_ver: Optional[str] = pydantic.Field(default=settings.defaults.api_ver,
                                             example='2',
                                             description='Output data serialization format.')
 
@@ -74,8 +73,8 @@ class BodyExtract(BaseModel):
 class BodyDraw(BaseModel):
     images: Images
 
-    threshold: Optional[float] = pydantic.Field(default=configs.defaults.threshold,
-                                                example=configs.defaults.threshold,
+    threshold: Optional[float] = pydantic.Field(default=settings.models.det_thresh,
+                                                example=settings.models.det_thresh,
                                                 description='Detector threshold')
 
     draw_landmarks: Optional[bool] = pydantic.Field(default=True,
@@ -98,6 +97,6 @@ class BodyDraw(BaseModel):
                                                   example=0,
                                                   description='Ignore faces smaller than this size')
 
-    detect_masks: Optional[bool] = pydantic.Field(default=configs.defaults.detect_masks,
-                                                  example=configs.defaults.detect_masks,
+    detect_masks: Optional[bool] = pydantic.Field(default=settings.defaults.detect_masks,
+                                                  example=settings.defaults.detect_masks,
                                                   description='Detect medical masks')
