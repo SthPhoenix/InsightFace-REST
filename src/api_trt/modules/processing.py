@@ -1,18 +1,16 @@
-from typing import Dict, List, Optional, Union
-import traceback
-import io
 import base64
-import time
-import os
+import io
 import logging
-import httpx
-
-import numpy as np
-import cv2
+import time
+import traceback
 from functools import partial
+from typing import Dict, List, Union
 
-from .face_model import FaceAnalysis, Face
+import cv2
+import numpy as np
 from modules.utils.image_provider import get_images
+
+from .face_model import FaceAnalysis
 
 
 class Serializer:
@@ -39,7 +37,6 @@ class Serializer:
 
 
 def serialize_face(_face_dict: dict, return_face_data: bool, return_landmarks: bool = False):
-
     if _face_dict.get('norm'):
         _face_dict.update(vec=_face_dict['vec'].tolist(),
                           norm=float(_face_dict['norm']))
@@ -49,17 +46,16 @@ def serialize_face(_face_dict: dict, return_face_data: bool, return_landmarks: b
                           bbox=_face_dict['bbox'].astype(int).tolist(),
                           size=int(_face_dict['bbox'][2] - _face_dict['bbox'][0]))
 
-
     if return_landmarks:
         _face_dict['landmarks'] = _face_dict['landmarks'].astype(int).tolist()
     else:
         _face_dict.pop('landmarks', None)
 
     if return_face_data:
-        _face_dict['facedata'] = base64.b64encode(cv2.imencode('.jpg', _face_dict['facedata'])[1].tostring()).decode('ascii')
+        _face_dict['facedata'] = base64.b64encode(cv2.imencode('.jpg', _face_dict['facedata'])[1].tostring()).decode(
+            'ascii')
     else:
         _face_dict.pop('facedata', None)
-
 
     return _face_dict
 
@@ -67,7 +63,7 @@ def serialize_face(_face_dict: dict, return_face_data: bool, return_landmarks: b
 class Processing:
 
     def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
-                 ga_name: str = 'genderage_v1', mask_detector: str = 'mask_detector', device: str = 'cuda',
+                 ga_name: str = 'genderage_v1', mask_detector: str = 'mask_detector',
                  max_size: List[int] = None,
                  backend_name: str = 'trt', max_rec_batch_size: int = 1, max_det_batch_size: int = 1,
                  force_fp16: bool = False, triton_uri=None, root_dir: str = '/models'):
@@ -79,11 +75,16 @@ class Processing:
         self.max_det_batch_size = max_det_batch_size
         self.det_name = det_name
         self.max_size = max_size
-        self.model = FaceAnalysis(det_name=det_name, rec_name=rec_name, ga_name=ga_name,
-                                  mask_detector=mask_detector, device=device,
-                                  max_size=self.max_size, max_rec_batch_size=self.max_rec_batch_size,
+        self.model = FaceAnalysis(det_name=det_name,
+                                  rec_name=rec_name,
+                                  ga_name=ga_name,
+                                  mask_detector=mask_detector,
+                                  max_size=self.max_size,
+                                  max_rec_batch_size=self.max_rec_batch_size,
                                   max_det_batch_size=self.max_det_batch_size,
-                                  backend_name=backend_name, force_fp16=force_fp16, triton_uri=triton_uri,
+                                  backend_name=backend_name,
+                                  force_fp16=force_fp16,
+                                  triton_uri=triton_uri,
                                   root_dir=root_dir
                                   )
 

@@ -1,48 +1,45 @@
-import os
 import logging
-import time
+import os
 from typing import Optional, List
 
 import msgpack
-
-from fastapi import FastAPI, File, Form, UploadFile, Header
+from fastapi import FastAPI, File, Form, Header
 from fastapi.encoders import jsonable_encoder
-from starlette.staticfiles import StaticFiles
-from starlette.responses import StreamingResponse, RedirectResponse, PlainTextResponse
-from fastapi.responses import UJSONResponse
 from fastapi.openapi.docs import (
     get_redoc_html,
     get_swagger_ui_html,
     get_swagger_ui_oauth2_redirect_html,
 )
+from fastapi.responses import UJSONResponse
+from starlette.responses import StreamingResponse, RedirectResponse, PlainTextResponse
+from starlette.staticfiles import StaticFiles
 
 from modules.processing import Processing
-from env_parser import EnvConfigs
 from schemas import BodyDraw, BodyExtract
+from settings import Settings
 
 __version__ = "0.8.0.1"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # Read runtime settings from environment variables
-configs = EnvConfigs()
+settings = Settings()
 
 logging.basicConfig(
-    level=configs.log_level,
+    level=settings.log_level,
     format='%(asctime)s %(levelname)s - %(message)s',
     datefmt='[%H:%M:%S]',
 )
 
-processing = Processing(det_name=configs.models.det_name, rec_name=configs.models.rec_name,
-                        ga_name=configs.models.ga_name,
-                        mask_detector=configs.models.mask_detector,
-                        device=configs.models.device,
-                        max_size=configs.defaults.max_size,
-                        max_rec_batch_size=configs.models.rec_batch_size,
-                        max_det_batch_size=configs.models.det_batch_size,
-                        backend_name=configs.models.backend_name,
-                        force_fp16=configs.models.fp16,
-                        triton_uri=configs.models.triton_uri,
+processing = Processing(det_name=settings.models.det_name, rec_name=settings.models.rec_name,
+                        ga_name=settings.models.ga_name,
+                        mask_detector=settings.models.mask_detector,
+                        max_size=settings.models.max_size,
+                        max_rec_batch_size=settings.models.rec_batch_size,
+                        max_det_batch_size=settings.models.det_batch_size,
+                        backend_name=settings.models.inference_backend,
+                        force_fp16=settings.models.force_fp16,
+                        triton_uri=settings.models.triton_uri,
                         root_dir='/models'
                         )
 
@@ -53,6 +50,7 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None
 )
+
 
 @app.post('/extract', tags=['Detection & recognition'])
 async def extract(data: BodyExtract, accept: Optional[List[str]] = Header(None)):
@@ -81,10 +79,8 @@ async def extract(data: BodyExtract, accept: Optional[List[str]] = Header(None))
                                       embed_only=data.embed_only, extract_embedding=data.extract_embedding,
                                       threshold=data.threshold, extract_ga=data.extract_ga,
                                       limit_faces=data.limit_faces, return_landmarks=data.return_landmarks,
-                                      detect_masks = data.detect_masks,
+                                      detect_masks=data.detect_masks,
                                       verbose_timings=data.verbose_timings, api_ver=data.api_ver)
-
-
 
     if data.msgpack or 'application/x-msgpack' in accept:
         return PlainTextResponse(msgpack.dumps(output, use_single_float=True), media_type='application/x-msgpack')
@@ -109,7 +105,8 @@ async def draw(data: BodyDraw):
     images = jsonable_encoder(data.images)
     output = await processing.draw(images, threshold=data.threshold,
                                    draw_landmarks=data.draw_landmarks, draw_scores=data.draw_scores,
-                                   limit_faces=data.limit_faces, draw_sizes=data.draw_sizes,detect_masks=data.detect_masks)
+                                   limit_faces=data.limit_faces, draw_sizes=data.draw_sizes,
+                                   detect_masks=data.detect_masks)
     output.seek(0)
     return StreamingResponse(output, media_type="image/png")
 
@@ -147,9 +144,9 @@ def info():
     about = dict(
         version=__version__,
         tensorrt_version=os.getenv('TRT_VERSION', os.getenv('TENSORRT_VERSION')),
-        log_level=configs.log_level,
-        models=vars(configs.models),
-        defaults=vars(configs.defaults),
+        log_level=settings.log_level,
+        models=settings.models.dict(),
+        defaults=settings.defaults.dict(),
     )
     about['models'].pop('ga_ignore', None)
     about['models'].pop('rec_ignore', None)

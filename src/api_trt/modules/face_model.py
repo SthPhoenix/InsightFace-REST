@@ -1,34 +1,27 @@
-import collections
-from typing import Dict, List, Optional
-import numpy as np
-from numpy.linalg import norm
-import cv2
-import logging
-from functools import partial
-
-import time
-from modules.utils import fast_face_align as face_align
-
-from modules.model_zoo.getter import get_model
-from modules.imagedata import ImageData, resize_image
-from modules.utils.helpers import to_chunks, colorize_log, validate_max_size
-
 import asyncio
+import collections
+import logging
+import time
+from functools import partial
+from typing import List
+
+import cv2
+import numpy as np
+from modules.imagedata import resize_image
+from modules.model_zoo.getter import get_model
+from modules.utils import fast_face_align as face_align
+from modules.utils.helpers import to_chunks, colorize_log, validate_max_size
+from numpy.linalg import norm
 
 Face = collections.namedtuple("Face", ['bbox', 'landmark', 'det_score', 'embedding', 'gender', 'age', 'embedding_norm',
-                                       'normed_embedding', 'facedata', 'scale', 'num_det','mask','mask_probs'])
+                                       'normed_embedding', 'facedata', 'scale', 'num_det', 'mask', 'mask_probs'])
 
 Face.__new__.__defaults__ = (None,) * len(Face._fields)
-
-device2ctx = {
-    'cpu': -1,
-    'cuda': 0
-}
 
 
 # Wrapper for insightface detection model
 class Detector:
-    def __init__(self, device: str = 'cuda', det_name: str = 'retinaface_r50_v1', max_size=None,
+    def __init__(self, det_name: str = 'retinaface_r50_v1', max_size=None,
                  backend_name: str = 'trt', force_fp16: bool = False, triton_uri=None, max_batch_size: int = 1,
                  root_dir='/models'):
         if max_size is None:
@@ -38,7 +31,7 @@ class Detector:
                                 root_dir=root_dir, download_model=False, triton_uri=triton_uri,
                                 max_batch_size=max_batch_size)
 
-        self.retina.prepare(ctx_id=device2ctx[device], nms=0.35)
+        self.retina.prepare(nms=0.35)
 
     def detect(self, data, threshold=0.3):
         bboxes, landmarks = self.retina.detect(data, threshold=threshold)
@@ -58,9 +51,9 @@ def reproject_points(dets, scale: float):
 
 class FaceAnalysis:
     def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
-                 ga_name: str = 'genderage_v1', mask_detector: str = 'mask_detector', device: str = 'cuda',
+                 ga_name: str = 'genderage_v1', mask_detector: str = 'mask_detector',
                  max_size=None, max_rec_batch_size: int = 1, max_det_batch_size: int = 1,
-                 backend_name: str = 'mxnet', force_fp16: bool = False, triton_uri=None, root_dir: str ='/models'):
+                 backend_name: str = 'mxnet', force_fp16: bool = False, triton_uri=None, root_dir: str = '/models'):
 
         if max_size is None:
             max_size = [640, 640]
@@ -76,9 +69,7 @@ class FaceAnalysis:
 
         assert det_name is not None
 
-        ctx = device2ctx[device]
-
-        self.det_model = Detector(det_name=det_name, device=device, max_size=self.max_size,
+        self.det_model = Detector(det_name=det_name, max_size=self.max_size,
                                   max_batch_size=self.max_det_batch_size, backend_name=backend_name,
                                   force_fp16=force_fp16, triton_uri=triton_uri, root_dir=root_dir)
 
@@ -86,7 +77,7 @@ class FaceAnalysis:
             self.rec_model = get_model(rec_name, backend_name=backend_name, force_fp16=force_fp16,
                                        max_batch_size=self.max_rec_batch_size, root_dir=root_dir,
                                        download_model=False, triton_uri=triton_uri)
-            self.rec_model.prepare(ctx_id=ctx)
+            self.rec_model.prepare()
         else:
             self.rec_model = None
 
@@ -94,15 +85,16 @@ class FaceAnalysis:
             self.ga_model = get_model(ga_name, backend_name=backend_name, force_fp16=force_fp16,
                                       max_batch_size=self.max_rec_batch_size, root_dir=root_dir,
                                       download_model=False, triton_uri=triton_uri)
-            self.ga_model.prepare(ctx_id=ctx)
+            self.ga_model.prepare()
         else:
             self.ga_model = None
 
         if mask_detector is not None:
             self.mask_model = get_model(mask_detector, backend_name=backend_name, force_fp16=force_fp16,
-                                      max_batch_size=self.max_rec_batch_size, root_dir=root_dir,
-                                      download_model=False, triton_uri=triton_uri)
-            self.mask_model.prepare(ctx_id=ctx)
+                                        max_batch_size=self.max_rec_batch_size, root_dir=root_dir,
+                                        download_model=False, triton_uri=triton_uri)
+
+            self.mask_model.prepare()
         else:
             self.mask_model = None
 
@@ -178,7 +170,6 @@ class FaceAnalysis:
                     gender = int(_ga[0])
                     age = _ga[1]
 
-
                 if detect_masks and self.mask_model:
                     _masks = masks[i]
                     mask = False
@@ -193,7 +184,7 @@ class FaceAnalysis:
                 if return_face_data is False:
                     face['facedata'] = None
 
-                #face['raw_vec'] = embedding
+                # face['raw_vec'] = embedding
                 face['norm'] = embedding_norm
                 face['vec'] = normed_embedding
                 face['gender'] = gender
@@ -246,8 +237,8 @@ class FaceAnalysis:
                     t0 = time.perf_counter()
                     if limit_faces > 0:
                         boxes, probs, landmarks = self.sort_boxes(boxes, probs, landmarks,
-                                                                              shape=batch_imgs[idx].shape,
-                                                                              max_num=limit_faces)
+                                                                  shape=batch_imgs[idx].shape,
+                                                                  max_num=limit_faces)
                         faces_per_img[orig_id] = len(boxes)
 
                     # Translate points to original image size
@@ -261,7 +252,6 @@ class FaceAnalysis:
                         crops = [None] * len(boxes)
 
                     for i, _crop in enumerate(crops):
-
                         face = dict(
                             bbox=boxes[i], landmarks=landmarks[i], prob=probs[i],
                             num_det=i, scale=scales[idx], facedata=_crop
@@ -276,10 +266,10 @@ class FaceAnalysis:
         tps = time.perf_counter()
         if extract_ga or extract_embedding or detect_masks:
             faces = list(self.process_faces(faces,
-                                       extract_embedding=extract_embedding,
-                                       extract_ga=extract_ga,
-                                       return_face_data=return_face_data,
-                                       detect_masks=detect_masks, mask_thresh=mask_thresh))
+                                            extract_embedding=extract_embedding,
+                                            extract_ga=extract_ga,
+                                            return_face_data=return_face_data,
+                                            detect_masks=detect_masks, mask_thresh=mask_thresh))
         tpf = time.perf_counter()
         logging.debug(colorize_log(f'Processing faces took: {(tpf - tps) * 1000:.3f} ms.', 'green'))
         faces_by_img = []
@@ -306,7 +296,7 @@ class FaceAnalysis:
             r, b = pt2
             w = r - x
             if face.get("mask") is False:
-                    color = (0, 0, 255)
+                color = (0, 0, 255)
             cv2.rectangle(image, pt1, pt2, color, 1)
 
             if draw_landmarks:
