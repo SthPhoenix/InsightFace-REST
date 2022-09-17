@@ -1,18 +1,19 @@
-import os
-import base64
-import requests
-import time
-import glob
-import multiprocessing
-import numpy as np
-from itertools import chain, islice, cycle
-from functools import partial
-from distutils import util
-import ujson
-import logging
-import shutil
 import argparse
+import base64
+import glob
+import logging
+import multiprocessing
+import os
+import shutil
+import time
+from distutils import util
+from functools import partial
+from itertools import chain, islice, cycle
+
 import msgpack
+import numpy as np
+import requests
+import ujson
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 test_cat = os.path.join(dir_path, 'images')
@@ -68,24 +69,33 @@ class IFRClient:
 
         if show:
             server_uri = self.server
-            backend_name = info['models']['backend_name']
+            backend_name = info['models']['inference_backend']
             det_name = info['models']['det_name']
             rec_name = info['models']['rec_name']
             rec_batch_size = info['models']['rec_batch_size']
             det_batch_size = info['models']['det_batch_size']
+            det_max_size = info['models']['max_size']
 
             print(f'Server: {server_uri}\n'
                   f'    Inference backend:      {backend_name}\n'
                   f'    Detection model:        {det_name}\n'
+                  f'    Detection image size:   {det_max_size}\n'
                   f'    Detection batch size:   {det_batch_size}\n'
                   f'    Recognition model:      {rec_name}\n'
                   f'    Recognition batch size: {rec_batch_size}')
 
         return info
 
-    def extract(self, data: list, mode: str = 'paths', server: str = None,
-                threshold: float = 0.6, extract_embedding=True, return_face_data=False,
-                embed_only=False, limit_faces=0, use_msgpack=True):
+    def extract(self, data: list,
+                mode: str = 'paths',
+                server: str = None,
+                threshold: float = 0.6,
+                extract_embedding=True,
+                return_face_data=False,
+                return_landmarks=False,
+                embed_only=False,
+                limit_faces=0,
+                use_msgpack=True):
 
         if server is None:
             server = self.server
@@ -102,6 +112,7 @@ class IFRClient:
                    extract_ga=False,
                    extract_embedding=extract_embedding,
                    return_face_data=return_face_data,
+                   return_landmarks=return_landmarks,
                    embed_only=embed_only,  # If set to true API expects each image to be 112x112 face crop
                    limit_faces=limit_faces,  # Limit maximum number of processed faces, 0 = no limit
                    api_ver='2',
@@ -127,7 +138,8 @@ class IFRClient:
                 size = face.get('size')
                 facedata = face.get('facedata')
                 if facedata:
-                    save_crop(facedata, f'crops/{i}_{size}_{norm:2.0f}_{prob}.jpg')
+                    if size > 20 and norm > 14:
+                        save_crop(facedata, f'crops/{i}_{size}_{norm:2.0f}_{prob}.jpg')
 
         return content
 
@@ -145,7 +157,8 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--num_files', default=1000, type=int, help='Number of files per test')
     parser.add_argument('-lf', '--limit_faces', default=0, type=int, help='Number of files per test')
     parser.add_argument('--embed', default='True', type=str, help='Extract embeddings, otherwise run detection only')
-    parser.add_argument('--embed_only', default='False', type=str, help='Omit detection step. Expects already cropped 112x112 images')
+    parser.add_argument('--embed_only', default='False', type=str,
+                        help='Omit detection step. Expects already cropped 112x112 images')
 
     args = parser.parse_args()
 
@@ -197,8 +210,9 @@ if __name__ == "__main__":
     im_batches = to_chunks(files, args.batch)
     im_batches = [list(chunk) for chunk in im_batches]
 
-    _part_extract_vecs = partial(client.extract, extract_embedding=to_bool(args.embed), embed_only=to_bool(args.embed_only), mode=mode,
-                                 limit_faces = args.limit_faces)
+    _part_extract_vecs = partial(client.extract, extract_embedding=to_bool(args.embed),
+                                 embed_only=to_bool(args.embed_only), mode=mode,
+                                 limit_faces=args.limit_faces)
 
     pool = multiprocessing.Pool(args.threads)
     speeds = []
