@@ -89,6 +89,7 @@ models = {
         'in_package': False,
         'function': 'arcface_mxnet',
         'link': '1sj170K3rbo5iOdjvjHw-hKWvXgH4dld3',
+        'md5sum': '8868eace383b8137afd97bcb7f322731',
         'dl_type': 'google'
     },
     'genderage_v1': {
@@ -209,6 +210,7 @@ models = {
         'outputs': yolo_outputs,
         'allow_batching': True,
         'link': '1PL52lvybe1nJU5k09twbfKNRWw904HgS',
+        'md5': 'e3ec0aa70e3a1f985a54baef788cabec',
         'dl_type': 'google'
     },
     'yolov5m-face': {
@@ -219,6 +221,7 @@ models = {
         'outputs': yolo_outputs,
         'allow_batching': True,
         'link': '1degIq0DEFML97PFvfpi-mMN8mfzRzy5z',
+        'md5': '0211fba2d9bd2000109c9aba9d096715',
         'dl_type': 'google'
     },
     'yolov5s-face': {
@@ -229,6 +232,7 @@ models = {
         'outputs': yolo_outputs,
         'allow_batching': True,
         'link': '14Ah6jfXJ5QuzaN2OsKE-g61x3-_hBnQV',
+        'md5': 'ab86397847fe907aec5aba3399beb4ac',
         'dl_type': 'google'
     },
     'yolov5n-face': {
@@ -239,6 +243,7 @@ models = {
         'outputs': yolo_outputs,
         'allow_batching': True,
         'link': '1P9u9vEGA9J2v1riAe3jIqZ-Zu5OrUCQN',
+        'md5': '3f6fa74b4cf49ac17e2954d53c59a569',
         'dl_type': 'google'
     },
     'yolov5n-0.5': {
@@ -249,6 +254,7 @@ models = {
         'outputs': yolo_outputs,
         'allow_batching': True,
         'link': '16gNzkxSByVtyYOMxRDRDn_qKfVxco1p0',
+        'md5': '32bf1a3c244e565c3a0b86e881fbbf99',
         'dl_type': 'google'
     },
     'scrfd_10g_gnkps_norm': {
@@ -301,6 +307,7 @@ models = {
         'reshape': False,
         'function': 'arcface_torch',
         'link': '1TR_ImGvuY7Dt22a9BOAUAlHasFfkrJp-',
+        'md5': '3b366b98f786426f79629ddb2e56629c',
         'dl_type': 'google'
     },
     'w600k_r50': {
@@ -310,6 +317,7 @@ models = {
         'function': 'arcface_torch',
         'reshape': False,
         'link': '1_3WcTE64Mlt_12PZHNWdhVCRpoPiblwq',
+        'md5': '80248d427976241cbd1343889ed132b3',
         'dl_type': 'google'
     },
 
@@ -320,6 +328,7 @@ models = {
         'function': 'arcface_torch',
         'reshape': False,
         'link': '1GtBKfGucgJDRLHvGWR3jOQovHYXY-Lpe',
+        'md5': 'c5b029527cb6f874e057613fc10bae1b',
         'dl_type': 'google'
     },
 
