@@ -6,7 +6,7 @@ TAG='v0.1'
 docker rm $(docker stop $(docker ps -a -q --filter ancestor=$IMAGE:$TAG --format="{{.ID}}"))
 
 #docker image rm $IMAGE:$TAG
-docker build -t $IMAGE:$TAG -f src/Dockerfile.converter src/.
+docker build -t $IMAGE:$TAG -f Dockerfile.converter .
 
 docker run\
     --gpus all\
