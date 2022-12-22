@@ -1,0 +1,98 @@
+version: '3.9'
+
+x-common-variables: &common-variables
+  DET_NAME: ${DET_NAME}
+  REC_NAME: ${REC_NAME}
+  GA_MODEL: ${GA_MODEL}
+  MASK_DETECTOR: ${MASK_DETECTOR}
+  REC_BATCH_SIZE: ${REC_BATCH_SIZE}
+  DET_BATCH_SIZE: ${DET_BATCH_SIZE}
+  MAX_SIZE: ${MAX_SIZE}
+  DEF_API_VER: ${DEF_API_VER}
+  DEF_EXTRACT_GA: ${DEF_EXTRACT_GA}
+  DEF_DET_THRESH: ${DEF_DET_THRESH}
+  DEF_RETURN_FACE_DATA: ${DEF_RETURN_FACE_DATA}
+  DEF_EXTRACT_EMBEDDING: ${DEF_EXTRACT_EMBEDDING}
+  FORCE_FP16: ${FORCE_FP16}
+  USE_NVJPEG: ${USE_NVJPEG}
+  LOG_LEVEL: ${LOG_LEVEL}
+
+x-base_service: &base_service
+    ports:
+      - "18081:18080"
+    volumes:
+      - &v1 ../models:/models
+      - &v2 ../src/api_trt:/app
+      - &v_nginx ../misc/nginx_conf/conf.d:/etc/nginx/conf.d
+
+
+services:
+  ifr-trt-gpu0:
+    <<: *base_service
+    profiles: ['gpu', 'mgpu']
+    image: insightface-rest:${IFR_VERSION}
+    build:
+      context: ../src
+      dockerfile: ../src/Dockerfile_trt
+    hostname: ifr
+    environment:
+      <<: *common-variables
+      INFERENCE_BACKEND: ${INFERENCE_BACKEND}
+      NUM_WORKERS: ${NUM_WORKERS}
+    volumes:
+      - *v1
+      - *v2
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+
+  ifr-trt-gpu1:
+    <<: *base_service
+    profiles: ['gpu', 'mgpu']
+    image: insightface-rest:${IFR_VERSION}
+    build:
+      context: ../src
+      dockerfile: ../src/Dockerfile_trt
+    hostname: ifr
+    environment:
+      <<: *common-variables
+      INFERENCE_BACKEND: ${INFERENCE_BACKEND}
+      NUM_WORKERS: ${NUM_WORKERS}
+    volumes:
+      - *v1
+      - *v2
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+
+
+  ifr-cpu:
+    <<: *base_service
+    profiles: ['cpu']
+    image: insightface-rest:${IFR_VERSION}
+    build:
+      context: ../src
+      dockerfile: ../src/Dockerfile_cpu
+    hostname: ifr
+    environment:
+      <<: *common-variables
+      INFERENCE_BACKEND: onnx
+      NUM_WORKERS: 1
+    volumes:
+      - *v1
+      - *v2
+
+
+networks:
+  default:
+    name: milvus
+    external: true
+

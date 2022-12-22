@@ -1,0 +1,87 @@
+version: '3.5'
+
+services:
+  ifr-trt-gpu0:
+    image: insightface-rest:${IFR_VERSION}
+    build:
+      context: ../src
+      dockerfile: ../src/Dockerfile_trt
+    hostname: ifr
+    environment:
+      DET_NAME: ${DET_NAME}
+      REC_NAME: ${REC_NAME}
+      GA_MODEL: ${GA_MODEL}
+      MASK_DETECTOR: ${MASK_DETECTOR}
+      REC_BATCH_SIZE: ${REC_BATCH_SIZE}
+      DET_BATCH_SIZE: ${DET_BATCH_SIZE}
+      MAX_SIZE: ${MAX_SIZE}
+      DEF_API_VER: ${DEF_API_VER}
+      DEF_EXTRACT_GA: ${DEF_EXTRACT_GA}
+      DEF_DET_THRESH: ${DEF_DET_THRESH}
+      DEF_RETURN_FACE_DATA: ${DEF_RETURN_FACE_DATA}
+      DEF_EXTRACT_EMBEDDING: ${DEF_EXTRACT_EMBEDDING}
+      INFERENCE_BACKEND: ${INFERENCE_BACKEND}
+      FORCE_FP16: ${FORCE_FP16}
+      NUM_WORKERS: ${NUM_WORKERS}
+      USE_NVJPEG: ${USE_NVJPEG}
+      LOG_LEVEL: ${LOG_LEVEL}
+    volumes:
+      - ../models:/models
+      - ../src/api_trt:/app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+
+#  ifr-trt-gpu1:
+#    image: insightface-rest:${IFR_VERSION}
+#    build:
+#      context: ../src
+#      dockerfile: ../src/Dockerfile_trt
+#    hostname: ifr
+#    environment:
+#      DET_NAME: ${DET_NAME}
+#      REC_NAME: ${REC_NAME}
+#      GA_MODEL: ${GA_MODEL}
+#      MASK_DETECTOR: ${MASK_DETECTOR}
+#      REC_BATCH_SIZE: ${REC_BATCH_SIZE}
+#      DET_BATCH_SIZE: ${DET_BATCH_SIZE}
+#      MAX_SIZE: ${MAX_SIZE}
+#      DEF_API_VER: ${DEF_API_VER}
+#      DEF_EXTRACT_GA: ${DEF_EXTRACT_GA}
+#      DEF_DET_THRESH: ${DEF_DET_THRESH}
+#      DEF_RETURN_FACE_DATA: ${DEF_RETURN_FACE_DATA}
+#      DEF_EXTRACT_EMBEDDING: ${DEF_EXTRACT_EMBEDDING}
+#      INFERENCE_BACKEND: ${INFERENCE_BACKEND}
+#      FORCE_FP16: ${FORCE_FP16}
+#      NUM_WORKERS: ${NUM_WORKERS}
+#      USE_NVJPEG: ${USE_NVJPEG}
+#      LOG_LEVEL: ${LOG_LEVEL}
+#    volumes:
+#      - ../models:/models
+#      - ../src/api_trt:/app
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              device_ids: ['1']
+#              capabilities: [gpu]
+
+
+  nginx:
+    image: nginx:1.21.0-alpine
+    container_name: nginx-ifr
+    volumes:
+      - ../misc/nginx_conf/conf.d:/etc/nginx/conf.d
+    ports:
+      - 18081:18080
+    depends_on:
+      - ifr-trt-gpu0
+    ulimits:
+      nofile:
+        soft: 200000
+        hard: 200000
