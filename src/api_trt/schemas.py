@@ -20,8 +20,8 @@ class BodyExtract(BaseModel):
                                                    example=settings.models.max_size,
                                                    description='Resize all images to this proportions')
 
-    threshold: Optional[float] = pydantic.Field(default=settings.models.det_thresh,
-                                                example=settings.models.det_thresh,
+    threshold: Optional[float] = pydantic.Field(default=settings.defaults.det_thresh,
+                                                example=settings.defaults.det_thresh,
                                                 description='Detector threshold')
 
     embed_only: Optional[bool] = pydantic.Field(default=False,
@@ -73,8 +73,8 @@ class BodyExtract(BaseModel):
 class BodyDraw(BaseModel):
     images: Images
 
-    threshold: Optional[float] = pydantic.Field(default=settings.models.det_thresh,
-                                                example=settings.models.det_thresh,
+    threshold: Optional[float] = pydantic.Field(default=settings.defaults.det_thresh,
+                                                example=settings.defaults.det_thresh,
                                                 description='Detector threshold')
 
     draw_landmarks: Optional[bool] = pydantic.Field(default=True,

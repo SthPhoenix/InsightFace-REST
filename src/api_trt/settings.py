@@ -37,6 +37,7 @@ class Defaults(BaseSettings):
     extract_embedding: bool = True
     extract_ga: bool = False
     detect_masks: bool = False
+    det_thresh: float = 0.6
     api_ver: str = "1"
 
     class Config:
@@ -47,7 +48,6 @@ class Models(BaseSettings):
     inference_backend: str = 'onnx'
     det_name: str = 'scrfd_10g_gnkps'
     rec_name: str = 'glintr100'
-    det_thresh: float = 0.6
     max_size: Union[StrToIntList, List[int]] = [640, 640]
     ga_name: Union[EmptyStrToNone, None, str] = None
     mask_detector: Union[EmptyStrToNone, None, str] = None
