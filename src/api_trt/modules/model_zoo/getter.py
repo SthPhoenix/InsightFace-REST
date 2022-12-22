@@ -49,10 +49,14 @@ func_map = {
 
 
 def sniff_output_order(model_path, save_dir):
-    model = onnx.load(model_path)
-    output = [node.name for node in model.graph.output]
-    with open(os.path.join(save_dir, 'output_order.json'), mode='w') as fl:
-        fl.write(json.dumps(output))
+    outputs_file = os.path.join(save_dir, 'output_order.json')
+    if not os.path.exists(outputs_file):
+        model = onnx.load(model_path)
+        output = [node.name for node in model.graph.output]
+        with open(outputs_file, mode='w') as fl:
+            fl.write(json.dumps(output))
+    else:
+        output = read_outputs_order(save_dir)
     return output
 
 
