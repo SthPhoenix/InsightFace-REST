@@ -78,7 +78,7 @@ services:
     volumes:
       - ../misc/nginx_conf/conf.d:/etc/nginx/conf.d
     ports:
-      - 18081:18080
+      - 18080:18080
     depends_on:
       - ifr-trt-gpu0
     ulimits:

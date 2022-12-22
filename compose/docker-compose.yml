@@ -38,8 +38,3 @@ services:
               device_ids: ['0']
               capabilities: [gpu]
 
-networks:
-  default:
-    name: milvus
-    external: true
-

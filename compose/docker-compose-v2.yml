@@ -18,8 +18,6 @@ x-common-variables: &common-variables
   LOG_LEVEL: ${LOG_LEVEL}
 
 x-base_service: &base_service
-    ports:
-      - "18081:18080"
     volumes:
       - &v1 ../models:/models
       - &v2 ../src/api_trt:/app
@@ -35,6 +33,8 @@ services:
       context: ../src
       dockerfile: ../src/Dockerfile_trt
     hostname: ifr
+    ports:
+      - "18081:18080"
     environment:
       <<: *common-variables
       INFERENCE_BACKEND: ${INFERENCE_BACKEND}
@@ -105,9 +105,4 @@ services:
         soft: 200000
         hard: 200000
 
-
-networks:
-  default:
-    name: milvus
-    external: true
 
