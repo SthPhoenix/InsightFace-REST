@@ -68,3 +68,14 @@ for multiple GPUs.
 Also keep in mind that TRT engines are locked to exact GPU model, so in case you are using different models of
 GPUs on single system you should specify different model dirs for different GPUs to ensure they use correct TRT `.plan`
 files.
+
+## Changing default configuration
+
+All configs  related to detection and recognition models, num workers, etc., are located in `.env` file. 
+
+For meaning of each parameter you can refer to [deploy_trt.sh](../deploy_trt.sh) script.
+
+As starting point it's recommended to adjust `NUM_WORKERS` parameter to value which fits to your GPU
+model without causing CUDA Out of Memory errors (on modern GPUs usually about 4-6 workers can fit in memory and achieve 
+maximum performance, larger number of workers usually gives no performance boost)
+
