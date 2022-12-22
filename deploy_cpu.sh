@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.8.0.1-cpu'
+TAG='v0.8.1.0-cpu'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -39,7 +39,7 @@ det_batch_size=1
 
 # REC MODELS:
 ## None, arcface_r100_v1, glintr100, w600k_r50, w600k_mbf
-rec_model=glintr100
+rec_model=w600k_r50
 
 ## Maximum batch size for recognition model (this value also applies for GA and mask detection models)
 rec_batch_size=1
