@@ -23,7 +23,7 @@ from .exec_backends import onnxrt_backend as onnx_backend
 try:
     from .exec_backends import trt_backend
     from .exec_backends import triton_backend as triton_backend
-    from ..converters.onnx_to_trt import convert_onnx
+    from ..converters.onnx_to_trt import convert_onnx, check_fp16
 except Exception as e:
     print(e)
     trt_backend = None
@@ -129,11 +129,13 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
         return model.SerializeToString()
 
     if backend_name == "trt":
+        has_fp16 = check_fp16()
+
         if reshape_allowed is True:
             trt_path = trt_path.replace('.plan', f'_{shape[3]}_{shape[2]}.plan')
         if max_batch_size > 1:
             trt_path = trt_path.replace('.plan', f'_batch{max_batch_size}.plan')
-        if force_fp16 is True:
+        if force_fp16 or has_fp16:
             trt_path = trt_path.replace('.plan', '_fp16.plan')
 
         prepare_folders([trt_dir])

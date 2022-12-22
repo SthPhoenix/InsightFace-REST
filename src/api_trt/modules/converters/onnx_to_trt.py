@@ -28,13 +28,14 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
             builder.create_network(EXPLICIT_BATCH) as network, \
             builder.create_builder_config() as config, \
             trt.OnnxParser(network, TRT_LOGGER) as parser:
-
-        if force_fp16 is True:
+        has_fp16 = builder.platform_has_fast_fp16
+        if force_fp16 or has_fp16:
             logging.info('Building TensorRT engine with FP16 support.')
-            has_fp16 = builder.platform_has_fast_fp16
             if not has_fp16:
-                logging.warning('Builder report no fast FP16 support. Performance drop expected')
+                logging.warning('Builder reports no fast FP16 support. Performance drop expected.')
             config.set_flag(trt.BuilderFlag.FP16)
+        else:
+            logging.warning('Building engine in FP32 mode.')
 
         config.max_workspace_size = max_workspace * 1024 * 1024
 
@@ -43,7 +44,6 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
             for error in range(parser.num_errors):
                 print(parser.get_error(error))
             sys.exit(1)
-
 
         if max_batch_size != 1:
             logging.warning('Batch size !=1 is used. Ensure your inference code supports it.')
@@ -62,9 +62,14 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
         return builder.build_engine(network, config=config)
 
 
+def check_fp16():
+    builder = trt.Builder(TRT_LOGGER)
+    has_fp16 = builder.platform_has_fast_fp16
+    return has_fp16
+
 
 def convert_onnx(input_onnx: Union[str, bytes], engine_file_path: str, force_fp16: bool = False,
-                 max_batch_size: int = 1,):
+                 max_batch_size: int = 1):
     '''
     Creates TensorRT engine and serializes it to disk
     :param input_onnx: Path to ONNX file on disk or serialized ONNX model.
