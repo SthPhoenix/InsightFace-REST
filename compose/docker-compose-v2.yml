@@ -77,7 +77,7 @@ services:
   ifr-cpu:
     <<: *base_service
     profiles: ['cpu']
-    image: insightface-rest:${IFR_VERSION}
+    image: insightface-rest:${IFR_VERSION}-cpu
     build:
       context: ../src
       dockerfile: ../src/Dockerfile_cpu
@@ -89,6 +89,21 @@ services:
     volumes:
       - *v1
       - *v2
+
+  nginx:
+    profiles: ['mgpu']
+    image: nginx:1.21.0-alpine
+    container_name: nginx-ifr
+    volumes:
+      - ../misc/nginx_conf/conf.d:/etc/nginx/conf.d
+    ports:
+      - 18080:18080
+    depends_on:
+      - ifr-trt-gpu0
+    ulimits:
+      nofile:
+        soft: 200000
+        hard: 200000
 
 
 networks:
