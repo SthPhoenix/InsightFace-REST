@@ -223,6 +223,7 @@ class Processing:
                                      extract_embedding=False, extract_ga=False, limit_faces=limit_faces,
                                      detect_masks=detect_masks)
 
+        image = np.ascontiguousarray(image)
         image = self.model.draw_faces(image, faces[0],
                                       draw_landmarks=draw_landmarks,
                                       draw_scores=draw_scores,
