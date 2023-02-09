@@ -1,4 +1,5 @@
 import asyncio
+import io
 import os
 from typing import Dict
 import time
@@ -13,6 +14,7 @@ import aiofiles
 from modules.utils.helpers import tobool
 
 from turbojpeg import TurboJPEG
+import exifread
 
 if tobool(os.getenv('USE_NVJPEG', False)):
     try:
@@ -32,11 +34,25 @@ headers = {
 
 client = httpx.AsyncClient(headers=headers, follow_redirects=True)
 
+def transposeImage(image, orientation):
+    """See Orientation in https://www.exif.org/Exif2-2.PDF for details."""
+    if orientation == None: return image
+    val = orientation.values[0]
+    if val == 1: return image
+    elif val == 2: return np.fliplr(image)
+    elif val == 3: return np.rot90(image, 2)
+    elif val == 4: return np.flipud(image)
+    elif val == 5: return np.rot90(np.flipud(image), -1)
+    elif val == 6: return np.rot90(image, -1)
+    elif val == 7: return np.rot90(np.flipud(image))
+    elif val == 8: return np.rot90(image)
+
 async def read_as_bytes(path, **kwargs):
     async with aiofiles.open(path, mode='rb') as fl:
         data = await fl.read()
         _bytes = np.frombuffer(data, dtype='uint8')
         return _bytes
+
 
 
 def b64_to_bytes(b64encoded, **kwargs):
@@ -45,7 +61,6 @@ def b64_to_bytes(b64encoded, **kwargs):
         __bin = b64encoded.split(",")[-1]
         __bin = base64.b64decode(__bin)
         __bin = np.frombuffer(__bin, dtype='uint8')
-
     except Exception:
         tb = traceback.format_exc()
         logging.warning(tb)
@@ -56,7 +71,9 @@ def b64_to_bytes(b64encoded, **kwargs):
 def decode_img_bytes(im_bytes, **kwargs):
     t0 = time.perf_counter()
     try:
+        rot = exifread.process_file(io.BytesIO(im_bytes)).get('Image Orientation', None)
         _image = jpeg.decode(im_bytes)
+        _image = transposeImage(_image, orientation=rot)
     except:
         logging.debug('JPEG decoder failed, fallback to cv2.imdecode')
         _image = cv2.imdecode(im_bytes, cv2.IMREAD_COLOR)

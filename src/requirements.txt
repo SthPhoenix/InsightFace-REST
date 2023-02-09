@@ -16,4 +16,5 @@ onnx==1.8.0
 onnxruntime
 onnx-simplifier
 git+https://github.com/lilohuang/PyTurboJPEG.git
+exifread
 tritonclient[http,grpc]
