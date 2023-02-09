@@ -18,7 +18,7 @@ from modules.processing import Processing
 from schemas import BodyDraw, BodyExtract
 from settings import Settings
 
-__version__ = "0.8.1.0"
+__version__ = "0.8.2.0"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
