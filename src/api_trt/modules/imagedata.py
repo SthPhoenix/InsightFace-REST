@@ -70,9 +70,18 @@ def resize_image(image, max_size: list = None):
     if scale_factor > 2:
         scale_factor = scale_factor * 0.7
 
-    transformed_image = cv2.resize(image, (0, 0), fx=scale_factor,
-                                             fy=scale_factor,
-                                             interpolation=cv2.INTER_LINEAR)
+    if scale_factor <= 1.:
+        interp = cv2.INTER_AREA
+    else:
+        interp = cv2.INTER_LINEAR
+
+    if scale_factor == 1.:
+        transformed_image = image
+    else:
+        transformed_image = cv2.resize(image, (0, 0), fx=scale_factor,
+                                       fy=scale_factor,
+                                       interpolation=interp)
+
     h, w, _ = transformed_image.shape
 
     if w < cw:
