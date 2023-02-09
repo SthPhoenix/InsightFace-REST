@@ -2,7 +2,7 @@ import os
 import logging
 import json
 from typing import List
-
+import traceback
 import onnx
 
 from .face_detectors import *
@@ -22,10 +22,11 @@ from .exec_backends import onnxrt_backend as onnx_backend
 # Since TensorRT, TritonClient and PyCUDA are optional dependencies it might be not available
 try:
     from .exec_backends import trt_backend
-    from .exec_backends import triton_backend as triton_backend
+    #from .exec_backends import triton_backend as triton_backend
     from ..converters.onnx_to_trt import convert_onnx, check_fp16
 except Exception as e:
     print(e)
+
     trt_backend = None
     triton_backend = None
     convert_onnx = None
@@ -194,7 +195,7 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
         'onnx': onnx_backend,
         'trt': trt_backend,
         'mxnet': 'mxnet',
-        'triton': triton_backend
+        #'triton': triton_backend
     }
 
     if backend_name not in backends:
