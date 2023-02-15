@@ -34,25 +34,36 @@ headers = {
 
 client = httpx.AsyncClient(headers=headers, follow_redirects=True)
 
+
 def transposeImage(image, orientation):
     """See Orientation in https://www.exif.org/Exif2-2.PDF for details."""
     if orientation == None: return image
     val = orientation.values[0]
-    if val == 1: return image
-    elif val == 2: return np.fliplr(image)
-    elif val == 3: return np.rot90(image, 2)
-    elif val == 4: return np.flipud(image)
-    elif val == 5: return np.rot90(np.flipud(image), -1)
-    elif val == 6: return np.rot90(image, -1)
-    elif val == 7: return np.rot90(np.flipud(image))
-    elif val == 8: return np.rot90(image)
+    if val == 1:
+        return image
+    elif val == 2:
+        return np.fliplr(image)
+    elif val == 3:
+        return np.rot90(image, 2)
+    elif val == 4:
+        return np.flipud(image)
+    elif val == 5:
+        return np.rot90(np.flipud(image), -1)
+    elif val == 6:
+        return np.rot90(image, -1)
+    elif val == 7:
+        return np.rot90(np.flipud(image))
+    elif val == 8:
+        return np.rot90(image)
+    else:
+        return image
+
 
 async def read_as_bytes(path, **kwargs):
     async with aiofiles.open(path, mode='rb') as fl:
         data = await fl.read()
         _bytes = np.frombuffer(data, dtype='uint8')
         return _bytes
-
 
 
 def b64_to_bytes(b64encoded, **kwargs):
@@ -99,24 +110,31 @@ async def dl_image(path, **kwargs):
         return __bin, tb
     return __bin, None
 
-def make_im_data(__bin,tb, decode=True):
-    traceback = None
+
+def make_im_data(__bin, tb, decode=True):
+    traceback_msg = None
     if tb is None:
         if decode:
-            data = decode_img_bytes(__bin)
+            try:
+                data = decode_img_bytes(__bin)
+            except Exception:
+                data = None
+                tb = traceback.format_exc()
+                logging.warning(tb)
         else:
             data = __bin
 
         if isinstance(data, type(None)):
-            tb = "Can't decode file, possibly not an image"
+            if tb is None:
+                tb = "Can't decode file, possibly not an image"
 
     if tb:
         data = None
-        traceback = tb
+        traceback_msg = tb
         logging.warning(tb)
 
     im_data = dict(data=data,
-                   traceback=traceback)
+                   traceback=traceback_msg)
     return im_data
 
 
