@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tensorrt:22.12-py3
+FROM nvcr.io/nvidia/tensorrt:23.05-py3
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
@@ -16,7 +16,7 @@ RUN apt-get update &&\
 COPY requirements.txt .
 RUN $PIP_INSTALL -r requirements.txt
 # GPU specific packages
-RUN $PIP_INSTALL cupy-cuda11x pynvjpeg
+RUN $PIP_INSTALL cupy-cuda12x pynvjpeg
 
 WORKDIR /app
 COPY api_trt /app
