@@ -35,6 +35,8 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
             mode = 'scrfd'
         elif input_name == 'input.1' and out_shape == 512:
             mode = 'arcface'
+        elif input_name == 'input' and model.graph.input[0].type.tensor_type.shape.dim[2].dim_value == 112:
+            mode = 'arcface'
         if  model.graph.input[0].type.tensor_type.shape.dim[3].dim_value == 3:
             mode = 'mask_detector'
         if len(model.graph.output) == 1 and len(model.graph.output[0].type.tensor_type.shape.dim) == 3:
