@@ -3,10 +3,12 @@ import collections
 import logging
 import time
 from functools import partial
-from typing import List
+from typing import Dict, List, Union
+import traceback
 
 import cv2
 import numpy as np
+import base64
 from modules.imagedata import resize_image
 from modules.model_zoo.getter import get_model
 from modules.utils import fast_face_align as face_align
@@ -17,6 +19,30 @@ Face = collections.namedtuple("Face", ['bbox', 'landmark', 'det_score', 'embeddi
                                        'normed_embedding', 'facedata', 'scale', 'num_det', 'mask', 'mask_probs'])
 
 Face.__new__.__defaults__ = (None,) * len(Face._fields)
+
+
+def serialize_face(_face_dict: dict, return_face_data: bool, return_landmarks: bool = False):
+    if _face_dict.get('norm'):
+        _face_dict.update(vec=_face_dict['vec'].tolist(),
+                          norm=float(_face_dict['norm']))
+    # Warkaround for embed_only flag
+    if _face_dict.get('prob'):
+        _face_dict.update(prob=float(_face_dict['prob']),
+                          bbox=_face_dict['bbox'].astype(int).tolist(),
+                          size=int(_face_dict['bbox'][2] - _face_dict['bbox'][0]))
+
+    if return_landmarks:
+        _face_dict['landmarks'] = _face_dict['landmarks'].astype(int).tolist()
+    else:
+        _face_dict.pop('landmarks', None)
+
+    if return_face_data:
+        _face_dict['facedata'] = base64.b64encode(cv2.imencode('.jpg', _face_dict['facedata'])[1].tostring()).decode(
+            'ascii')
+    else:
+        _face_dict.pop('facedata', None)
+
+    return _face_dict
 
 
 # Wrapper for insightface detection model
@@ -197,8 +223,10 @@ class FaceAnalysis:
     # Process single image
     async def get(self, images, extract_embedding: bool = True, extract_ga: bool = True, detect_masks: bool = True,
                   return_face_data: bool = True, max_size: List[int] = None, threshold: float = 0.6,
+                  min_face_size: int = 0,
                   mask_thresh: float = 0.89,
-                  limit_faces: int = 0):
+                  limit_faces: int = 0,
+                  use_rotation: bool = False):
 
         ts = time.perf_counter()
 
@@ -256,8 +284,12 @@ class FaceAnalysis:
                             bbox=boxes[i], landmarks=landmarks[i], prob=probs[i],
                             num_det=i, scale=scales[idx], facedata=_crop
                         )
-
-                        faces.append(face)
+                        if min_face_size > 0:
+                            w = boxes[i][2] - boxes[i][0]
+                            if w >= min_face_size:
+                                faces.append(face)
+                        else:
+                            faces.append(face)
 
                     t1 = time.perf_counter()
                     logging.debug(f'Cropping {len(boxes)} faces took: {(t1 - t0) * 1000:.3f} ms.')
@@ -284,6 +316,90 @@ class FaceAnalysis:
 
         logging.debug(colorize_log(f'Full processing took: {(tf - ts) * 1000:.3f} ms.', 'red'))
         return faces_by_img
+
+    def __iterate_images(self, crops):
+        for face in crops:
+            if face.get('traceback') is None:
+                face = face.get('data')
+                yield face
+
+    def embed_crops(self, images, extract_embedding: bool = True, extract_ga: bool = True, detect_masks: bool = False):
+
+        t0 = time.time()
+        output = dict(took_ms=None, data=[], status="ok")
+
+        iterator = self.__iterate_images(images)
+        iterator = ({'facedata': e} for e in iterator)
+        faces = self.process_faces(iterator, extract_embedding=extract_embedding, extract_ga=extract_ga,
+                                   return_face_data=False, detect_masks=detect_masks)
+
+        try:
+            for image in images:
+                if image.get('traceback') is not None:
+                    _face_dict = dict(status='failed',
+                                      traceback=image.get('traceback'))
+                else:
+                    _face_dict = serialize_face(_face_dict=next(faces), return_face_data=False,
+                                                return_landmarks=False)
+                    _face_dict['status'] = 'ok'
+                output['data'].append(_face_dict)
+        except Exception as e:
+            tb = traceback.format_exc()
+            print(tb)
+            output['status'] = 'failed'
+            output['traceback'] = tb
+
+        took = time.time() - t0
+        output['took_ms'] = took * 1000
+        return output
+
+    async def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
+                    limit_faces: int = 0, min_face_size: int = 0, return_face_data: bool = False,
+                    extract_embedding: bool = True, extract_ga: bool = True, return_landmarks: bool = False,
+                    detect_masks: bool = False, use_rotation: bool = False):
+
+        _get = partial(self.get, max_size=max_size, threshold=threshold,
+                       return_face_data=return_face_data,
+                       extract_embedding=extract_embedding, extract_ga=extract_ga,
+                       limit_faces=limit_faces,
+                       min_face_size=min_face_size,
+                       detect_masks=detect_masks,
+                       use_rotation=use_rotation)
+
+        _serialize = partial(serialize_face, return_face_data=return_face_data,
+                             return_landmarks=return_landmarks)
+
+        output = dict(took={}, data=[])
+
+        imgs_iterable = self.__iterate_images(images)
+
+        faces_by_img = (e for e in await _get([img for img in imgs_iterable]))
+
+        for img in images:
+            _faces_dict = dict(status='failed', took_ms=0., faces=[])
+            try:
+                if img.get('traceback') is not None:
+                    _faces_dict['status'] = 'failed'
+                    _faces_dict['traceback'] = img.get('traceback')
+                else:
+                    t0 = time.perf_counter()
+                    faces = faces_by_img.__next__()
+                    tss = time.perf_counter()
+                    _faces_dict['faces'] = list(map(_serialize, faces))
+                    tsf = time.perf_counter()
+                    logging.debug(f'Serializing took: {(tsf - tss) * 1000} ms.')
+                    took = time.perf_counter() - t0
+                    _faces_dict['took_ms'] = took * 1000
+                    _faces_dict['status'] = 'ok'
+            except Exception as e:
+                tb = traceback.format_exc()
+                print(tb)
+                _faces_dict['status'] = 'failed'
+                _faces_dict['traceback'] = tb
+
+            output['data'].append(_faces_dict)
+
+        return output
 
     def draw_faces(self, image, faces, draw_landmarks=True, draw_scores=True, draw_sizes=True):
 
