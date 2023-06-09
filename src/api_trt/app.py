@@ -78,9 +78,11 @@ async def extract(data: BodyExtract, accept: Optional[List[str]] = Header(None))
     output = await processing.extract(images, max_size=data.max_size, return_face_data=data.return_face_data,
                                       embed_only=data.embed_only, extract_embedding=data.extract_embedding,
                                       threshold=data.threshold, extract_ga=data.extract_ga,
-                                      limit_faces=data.limit_faces, return_landmarks=data.return_landmarks,
+                                      limit_faces=data.limit_faces, min_face_size=data.min_face_size,
+                                      return_landmarks=data.return_landmarks,
                                       detect_masks=data.detect_masks,
-                                      verbose_timings=data.verbose_timings, api_ver=data.api_ver)
+                                      verbose_timings=data.verbose_timings, api_ver=data.api_ver,
+                                      use_rotation=data.use_rotation)
 
     if data.msgpack or 'application/x-msgpack' in accept:
         return PlainTextResponse(msgpack.dumps(output, use_single_float=True), media_type='application/x-msgpack')
@@ -105,8 +107,10 @@ async def draw(data: BodyDraw):
     images = jsonable_encoder(data.images)
     output = await processing.draw(images, threshold=data.threshold,
                                    draw_landmarks=data.draw_landmarks, draw_scores=data.draw_scores,
-                                   limit_faces=data.limit_faces, draw_sizes=data.draw_sizes,
-                                   detect_masks=data.detect_masks)
+                                   limit_faces=data.limit_faces, min_face_size=data.min_face_size,
+                                   draw_sizes=data.draw_sizes,
+                                   detect_masks=data.detect_masks,
+                                   use_rotation=data.use_rotation)
     output.seek(0)
     return StreamingResponse(output, media_type="image/png")
 
