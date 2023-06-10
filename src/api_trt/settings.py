@@ -38,7 +38,6 @@ class Defaults(BaseSettings):
     extract_ga: bool = False
     detect_masks: bool = False
     det_thresh: float = 0.6
-    api_ver: str = "1"
 
     class Config:
         env_prefix = 'DEF_'

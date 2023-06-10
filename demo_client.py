@@ -115,7 +115,7 @@ class IFRClient:
                    return_landmarks=return_landmarks,
                    embed_only=embed_only,  # If set to true API expects each image to be 112x112 face crop
                    limit_faces=limit_faces,  # Limit maximum number of processed faces, 0 = no limit
-                   api_ver='2',
+                   use_rotation=True,
                    msgpack=use_msgpack,
                    )
 
@@ -151,10 +151,10 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--port', default=18081, type=int, help='Port')
     parser.add_argument('-u', '--uri', default='http://localhost', type=str, help='Server hostname or ip with protocol')
     parser.add_argument('-i', '--iters', default=10, type=int, help='Number of iterations')
-    parser.add_argument('-t', '--threads', default=10, type=int, help='Number of threads')
-    parser.add_argument('-b', '--batch', default=1, type=int, help='Batch size')
+    parser.add_argument('-t', '--threads', default=12, type=int, help='Number of threads')
+    parser.add_argument('-b', '--batch', default=64, type=int, help='Batch size')
     parser.add_argument('-d', '--dir', default=None, type=str, help='Path to directory with images')
-    parser.add_argument('-n', '--num_files', default=1000, type=int, help='Number of files per test')
+    parser.add_argument('-n', '--num_files', default=10000, type=int, help='Number of files per test')
     parser.add_argument('-lf', '--limit_faces', default=0, type=int, help='Number of files per test')
     parser.add_argument('--embed', default='True', type=str, help='Extract embeddings, otherwise run detection only')
     parser.add_argument('--embed_only', default='False', type=str,

@@ -1,6 +1,7 @@
 import base64
 import io
 import logging
+import os
 import time
 import traceback
 from functools import partial
@@ -11,30 +12,6 @@ import numpy as np
 from modules.utils.image_provider import get_images
 
 from .face_model import FaceAnalysis
-
-decode=True
-
-class Serializer:
-
-    def serialize(self, data, api_ver: str = '1'):
-        serializer = self.get_serializer(api_ver)
-        return serializer(data)
-
-    def get_serializer(self, api_ver):
-        if api_ver == '1':
-            return self._serializer_v1
-        else:
-            return self._serializer_v2
-
-    def _serializer_v1(self, data):
-        data = data.get('data', [])
-        resp = [img.get('faces') for img in data]
-        return resp
-
-    def _serializer_v2(self, data):
-
-        # Response data is by default in v2 format
-        return data
 
 
 class Processing:
@@ -69,7 +46,7 @@ class Processing:
                       limit_faces: int = 0, min_face_size: int = 0, embed_only: bool = False,
                       return_face_data: bool = False, extract_embedding: bool = True,
                       extract_ga: bool = True, return_landmarks: bool = False, detect_masks: bool = False,
-                      use_rotation: bool = False, verbose_timings=True, api_ver: str = "1"):
+                      use_rotation: bool = False, verbose_timings=True):
 
         if not max_size:
             max_size = self.max_size
@@ -81,7 +58,6 @@ class Processing:
         tl1 = time.time()
         took_loading = tl1 - tl0
         logging.debug(f'Reading images took: {took_loading * 1000:.3f} ms.')
-        serializer = Serializer()
 
         if embed_only:
             _faces_dict = self.model.embed_crops(images, extract_embedding=extract_embedding, extract_ga=extract_ga,
@@ -103,7 +79,7 @@ class Processing:
                 output['took']['read_imgs_ms'] = took_loading * 1000
                 output['took']['embed_all_ms'] = took_embed * 1000
 
-            return serializer.serialize(output, api_ver=api_ver)
+            return output
 
     async def draw(self, images: Union[Dict[str, list], bytes], threshold: float = 0.6,
                    draw_landmarks: bool = True, draw_scores: bool = True, draw_sizes: bool = True, limit_faces=0,

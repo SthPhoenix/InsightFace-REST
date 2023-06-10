@@ -10,7 +10,9 @@ RUN apt-get update &&\
             protobuf-compiler \
             libprotoc-dev \
             libb64-0d \
-            libturbojpeg &&\
+            libturbojpeg \
+            python3-opencv \
+            ffmpeg &&\
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
