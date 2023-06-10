@@ -12,7 +12,7 @@ import numpy as np
 from modules.utils.image_provider import get_images
 
 from .face_model import FaceAnalysis
-
+decode=True
 
 class Processing:
 
