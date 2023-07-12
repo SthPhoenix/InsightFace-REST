@@ -1,7 +1,7 @@
 from typing import Union, Optional, List
 
-from pydantic import BaseSettings
-from pydantic.validators import str_validator
+from pydantic.v1.env_settings import BaseSettings
+from pydantic.v1.validators import str_validator
 
 
 def empty_to_none(v: str) -> Optional[str]:
