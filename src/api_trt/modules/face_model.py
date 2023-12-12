@@ -84,6 +84,7 @@ class FaceAnalysis:
         if max_size is None:
             max_size = [640, 640]
 
+        self.decode_requred = True
         self.max_size = validate_max_size(max_size)
         self.max_rec_batch_size = max_rec_batch_size
         self.max_det_batch_size = max_det_batch_size
