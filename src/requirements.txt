@@ -1,4 +1,5 @@
 fastapi
+fastapi-offline
 uvicorn
 gunicorn
 aiofiles
@@ -12,8 +13,8 @@ icc-rt
 numba
 opencv-python
 scikit-image
-onnx==1.13.0
-onnxruntime
+onnx==1.15.0
+onnxruntime==1.16.3
 onnx-simplifier
 git+https://github.com/lilohuang/PyTurboJPEG.git
 exifread
