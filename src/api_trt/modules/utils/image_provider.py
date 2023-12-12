@@ -10,6 +10,7 @@ import numpy as np
 import cv2
 import httpx
 import aiofiles
+import imageio
 
 from modules.utils.helpers import tobool
 
@@ -34,6 +35,23 @@ headers = {
 
 client = httpx.AsyncClient(headers=headers, follow_redirects=True)
 
+def sniff_gif(data):
+    try:
+        if b"GIF" in data[:32]:
+            print(f"Image is a GIF")
+            sequence = imageio.get_reader(data, '.gif')
+            binary = None
+            for frame in sequence:
+                outp = io.BytesIO()
+                imageio.imwrite(outp, frame, format='jpeg')
+                outp.seek(0)
+                binary = outp.read()
+                break
+            return binary
+        else:
+            return data
+    except:
+        return data
 
 def transposeImage(image, orientation):
     """See Orientation in https://www.exif.org/Exif2-2.PDF for details."""
@@ -62,6 +80,7 @@ def transposeImage(image, orientation):
 async def read_as_bytes(path, **kwargs):
     async with aiofiles.open(path, mode='rb') as fl:
         data = await fl.read()
+        data = sniff_gif(data)
         _bytes = np.frombuffer(data, dtype='uint8')
         return _bytes
 
@@ -71,12 +90,16 @@ def b64_to_bytes(b64encoded, **kwargs):
     try:
         __bin = b64encoded.split(",")[-1]
         __bin = base64.b64decode(__bin)
+        __bin = sniff_gif(__bin)
         __bin = np.frombuffer(__bin, dtype='uint8')
     except Exception:
         tb = traceback.format_exc()
         logging.warning(tb)
         return __bin, tb
     return __bin, None
+
+
+
 
 
 def decode_img_bytes(im_bytes, **kwargs):
@@ -98,7 +121,8 @@ async def dl_image(path, **kwargs):
     try:
         if path.startswith('http'):
             resp = await client.get(path)
-            __bin = np.frombuffer(resp.content, dtype='uint8')
+            data = sniff_gif(resp.content)
+            __bin = np.frombuffer(data, dtype='uint8')
         else:
             if not os.path.exists(path):
                 tb = f"File: '{path}' not found"

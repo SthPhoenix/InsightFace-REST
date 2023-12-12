@@ -18,3 +18,4 @@ onnx-simplifier
 git+https://github.com/lilohuang/PyTurboJPEG.git
 exifread
 tritonclient[http,grpc]
+imageio
