@@ -8,10 +8,12 @@ class Arcface:
     def __init__(self, rec_name='/models/onnx/arcface_r100_v1/arcface_r100_v1.onnx',
                  input_mean: float = 0.,
                  input_std: float = 1.,
+                 swapRB=True,
                  **kwargs):
         self.rec_model = onnxruntime.InferenceSession(rec_name)
         self.input_mean = input_mean
         self.input_std = input_std
+        self.swapRB = swapRB
         self.outputs = [e.name for e in self.rec_model.get_outputs()]
 
     # warmup
@@ -27,7 +29,7 @@ class Arcface:
 
         input_size = tuple(face_img[0].shape[0:2][::-1])
         blob = cv2.dnn.blobFromImages(face_img, 1.0 / self.input_std, input_size,
-                                      (self.input_mean, self.input_mean, self.input_mean), swapRB=True)
+                                      (self.input_mean, self.input_mean, self.input_mean), swapRB=self.swapRB)
 
         net_out = self.rec_model.run(self.outputs, {self.rec_model.get_inputs()[0].name: blob})
         return net_out[0]

@@ -7,11 +7,12 @@ import time
 from .trt_loader import TrtModel
 
 
-def _normalize_on_device(input, stream, out, mean=0., std=1.):
+def _normalize_on_device(input, stream, out, mean=0., std=1., swapRB=True):
     allocate_place = np.prod(input.shape)
     with stream:
         g_img = cp.asarray(input)
-        g_img = g_img[..., ::-1]
+        if swapRB:
+            g_img = g_img[..., ::-1]
         g_img = cp.transpose(g_img, (0, 3, 1, 2))
         g_img = cp.subtract(g_img, mean, dtype=cp.float32)
         out.device[:allocate_place] = cp.multiply(g_img, 1 / std).flatten()
@@ -33,11 +34,13 @@ class Arcface:
     def __init__(self, rec_name: str = '/models/trt-engines/arcface_r100_v1/arcface_r100_v1.plan',
                  input_mean: float = 0.,
                  input_std: float = 1.,
+                 swapRB=False,
                  **kwargs):
         self.rec_model = TrtModel(rec_name)
         self.input_mean = input_mean
         self.input_std = input_std
         self.input_shape = None
+        self.swapRB=swapRB
         self.max_batch_size = 1
         self.stream = None
         self.input_ptr = None
@@ -64,7 +67,7 @@ class Arcface:
 
         t0 = time.perf_counter()
         infer_shape = _normalize_on_device(face_img, self.stream, self.input_ptr, mean=self.input_mean,
-                                           std=self.input_std)
+                                           std=self.input_std, swapRB=self.swapRB)
 
         embeddings = self.rec_model.run(deflatten=True, from_device=True, infer_shape=infer_shape)[0]
         took = time.perf_counter() - t0

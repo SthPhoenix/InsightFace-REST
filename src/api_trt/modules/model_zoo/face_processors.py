@@ -9,6 +9,9 @@ def arcface_torch(model_path, backend, **kwargs):
     model = backend.Arcface(rec_name=model_path, input_mean=127.5, input_std=127.5, **kwargs)
     return model
 
+def adaface(model_path, backend, **kwargs):
+    model = backend.Arcface(rec_name=model_path, input_mean=127.5, input_std=127.5, swapRB=False, **kwargs)
+    return model
 
 # Backend wrapper for Gender/Age estimation model.
 def genderage_v1(model_path, backend, **kwargs):
