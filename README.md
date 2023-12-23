@@ -82,16 +82,17 @@ API and converting models to ONNX and TensorRT using Docker.
 
 ### Recognition:
 
-| Model                  | Auto download | Batch inference | Inference b=1 (ms) | Inference b=64 (ms) | Source                 |  ONNX File   |
-|------------------------|:-------------:|:---------------:|:------------------:|:-------------------:|:-----------------------|:------------:|
-| arcface_r100_v1        |     Yes*      |       Yes       |        2.6         |        54.8         | [official package][1]  | [link][dl8]  |
-| r100-arcface-msfdrop75 |      No       |       Yes       |         -          |          -          | [SubCenter-ArcFace][5] |     None     |
-| r50-arcface-msfdrop75  |      No       |       Yes       |         -          |          -          | [SubCenter-ArcFace][5] |     None     |
-| glint360k_r100FC_1.0   |      No       |       Yes       |         -          |          -          | [Partial-FC][6]        |     None     |
-| glint360k_r100FC_0.1   |      No       |       Yes       |         -          |          -          | [Partial-FC][6]        |     None     |
-| glintr100              |     Yes*      |       Yes       |        2.6         |        54.7         | [official package][1]  | [link][dl13] |
-| w600k_r50              |     Yes*      |       Yes       |        1.9         |        33.2         | [official package][1]  | [link][dl21] |
-| w600k_mbf              |     Yes*      |       Yes       |        0.7         |         9.9         | [official package][1]  | [link][dl22] |
+| Model                    | Auto download | Batch inference | Inference b=1 (ms) | Inference b=64 (ms) | Source                 |  ONNX File   |
+|--------------------------|:-------------:|:---------------:|:------------------:|:-------------------:|:-----------------------|:------------:|
+| arcface_r100_v1          |     Yes*      |       Yes       |        2.6         |        54.8         | [official package][1]  | [link][dl8]  |
+| r100-arcface-msfdrop75   |      No       |       Yes       |         -          |          -          | [SubCenter-ArcFace][5] |     None     |
+| r50-arcface-msfdrop75    |      No       |       Yes       |         -          |          -          | [SubCenter-ArcFace][5] |     None     |
+| glint360k_r100FC_1.0     |      No       |       Yes       |         -          |          -          | [Partial-FC][6]        |     None     |
+| glint360k_r100FC_0.1     |      No       |       Yes       |         -          |          -          | [Partial-FC][6]        |     None     |
+| glintr100                |     Yes*      |       Yes       |        2.6         |        54.7         | [official package][1]  | [link][dl13] |
+| w600k_r50                |     Yes*      |       Yes       |        1.9         |        33.2         | [official package][1]  | [link][dl21] |
+| w600k_mbf                |     Yes*      |       Yes       |        0.7         |         9.9         | [official package][1]  | [link][dl22] |
+| adaface_ir101_webface12m |     Yes*      |       Yes       |         -          |          -          | [AdaFace repo][11]     | [link][dl26] |
 
 ### Other:
 
@@ -131,6 +132,7 @@ improve performance.
 [8]: https://github.com/chandrikadeb7/Face-Mask-Detection
 [9]: https://github.com/deepinsight/insightface/tree/master/alignment/coordinateReg
 [10]: https://github.com/deepcam-cn/yolov5-face
+[11]: https://github.com/mk-minchul/AdaFace
 
 [dl1]: https://drive.google.com/file/d/1peUaq0TtNBhoXUbMqsCyQdL7t5JuhHMH/view?usp=sharing
 [dl2]: https://drive.google.com/file/d/12H4TXtGlAr1boEGtUukteolpQ9wfUTWe/view?usp=sharing
@@ -153,7 +155,7 @@ improve performance.
 [dl23]: https://drive.google.com/file/d/14Ah6jfXJ5QuzaN2OsKE-g61x3-_hBnQV/view?usp=sharing
 [dl24]: https://drive.google.com/file/d/1degIq0DEFML97PFvfpi-mMN8mfzRzy5z/view?usp=sharing
 [dl25]: https://drive.google.com/file/d/1PL52lvybe1nJU5k09twbfKNRWw904HgS/view?usp=sharing
-
+[dl26]: https://drive.google.com/file/d/1dgMFOASKnaujQcCL4sSYkKOkBrmXUUU1/view?usp=sharing
 
 ## Requirements:
 
