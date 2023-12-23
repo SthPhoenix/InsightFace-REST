@@ -332,6 +332,16 @@ models = {
         'dl_type': 'google'
     },
 
+    'adaface_ir101_webface12m': {
+        'in_package': False,
+        'shape': (1, 3, 112, 112),
+        'allow_batching': True,
+        'function': 'arcface_torch',
+        'reshape': False,
+        'md5': '83101d3b79e541b9a5c42483966bc273',
+        'link': 'dgMFOASKnaujQcCL4sSYkKOkBrmXUUU1',
+        'dl_type': 'google'
+    },
     'mask_detector': {
         'shape': (1, 224, 224, 3),
         'allow_batching': True,
