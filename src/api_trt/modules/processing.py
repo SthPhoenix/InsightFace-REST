@@ -56,7 +56,7 @@ class Processing:
         t0 = time.time()
 
         tl0 = time.time()
-        images = await get_images(images, decode=self.model.decode_requred)
+        images = await get_images(images, decode=self.model.decode_required)
         tl1 = time.time()
         took_loading = tl1 - tl0
         logging.debug(f'Reading images took: {took_loading * 1000:.3f} ms.')
