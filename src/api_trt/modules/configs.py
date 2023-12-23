@@ -339,7 +339,7 @@ models = {
         'function': 'adaface',
         'reshape': False,
         'md5': '83101d3b79e541b9a5c42483966bc273',
-        'link': 'dgMFOASKnaujQcCL4sSYkKOkBrmXUUU1',
+        'link': '1dgMFOASKnaujQcCL4sSYkKOkBrmXUUU1',
         'dl_type': 'google'
     },
     'mask_detector': {
@@ -364,6 +364,14 @@ models = {
 
     # You can put your own pretrained ArcFace model to /models/onnx/custom_rec_model
     'custom_rec_model': {
+        'in_package': False,
+        'shape': (1, 3, 112, 112),
+        'allow_batching': True,
+        'function': 'arcface_torch',
+        'reshape': False
+    },
+
+    'arcface_806070': {
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
