@@ -336,7 +336,7 @@ models = {
         'in_package': False,
         'shape': (1, 3, 112, 112),
         'allow_batching': True,
-        'function': 'arcface_torch',
+        'function': 'adaface',
         'reshape': False,
         'md5': '83101d3b79e541b9a5c42483966bc273',
         'link': 'dgMFOASKnaujQcCL4sSYkKOkBrmXUUU1',
