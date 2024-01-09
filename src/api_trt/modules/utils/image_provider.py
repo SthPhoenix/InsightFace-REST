@@ -11,6 +11,7 @@ import cv2
 import httpx
 import aiofiles
 import imageio
+import aiohttp
 
 from modules.utils.helpers import tobool
 
@@ -35,10 +36,10 @@ headers = {
 
 client = httpx.AsyncClient(headers=headers, follow_redirects=True)
 
+
 def sniff_gif(data):
     try:
         if b"GIF" in data[:32]:
-            print(f"Image is a GIF")
             sequence = imageio.get_reader(data, '.gif')
             binary = None
             for frame in sequence:
@@ -116,12 +117,13 @@ def decode_img_bytes(im_bytes, **kwargs):
     return _image
 
 
-async def dl_image(path, **kwargs):
+async def dl_image(path, session: aiohttp.ClientSession = None, **kwargs):
     __bin = None
     try:
         if path.startswith('http'):
-            resp = await client.get(path)
-            data = sniff_gif(resp.content)
+            resp = await session.get(path, allow_redirects=True)
+            content = await resp.content.read()
+            data = sniff_gif(content)
             __bin = np.frombuffer(data, dtype='uint8')
         else:
             if not os.path.exists(path):
@@ -162,14 +164,14 @@ def make_im_data(__bin, tb, decode=True):
     return im_data
 
 
-async def get_images(data: Dict[str, list], decode=True, **kwargs):
+async def get_images(data: Dict[str, list], decode=True, session: aiohttp.ClientSession = None, **kwargs):
     images = []
 
     if data.get('urls') is not None:
         urls = data['urls']
         tasks = []
         for url in urls:
-            tasks.append(asyncio.ensure_future(dl_image(url)))
+            tasks.append(asyncio.ensure_future(dl_image(url, session=session)))
 
         results = await asyncio.gather(*tasks)
         for res in results:
