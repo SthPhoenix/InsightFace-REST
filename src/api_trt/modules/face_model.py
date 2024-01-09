@@ -76,10 +76,19 @@ def reproject_points(dets, scale: float):
 
 
 class FaceAnalysis:
-    def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
-                 ga_name: str = 'genderage_v1', mask_detector: str = 'mask_detector',
-                 max_size=None, max_rec_batch_size: int = 1, max_det_batch_size: int = 1,
-                 backend_name: str = 'mxnet', force_fp16: bool = False, triton_uri=None, root_dir: str = '/models'):
+    def __init__(self,
+                 det_name: str = 'retinaface_r50_v1',
+                 rec_name: str = 'arcface_r100_v1',
+                 ga_name: str = 'genderage_v1',
+                 mask_detector: str = 'mask_detector',
+                 max_size=None,
+                 max_rec_batch_size: int = 1,
+                 max_det_batch_size: int = 1,
+                 backend_name: str = 'mxnet',
+                 force_fp16: bool = False,
+                 triton_uri=None,
+                 root_dir: str = '/models',
+                 **kwargs):
 
         if max_size is None:
             max_size = [640, 640]
@@ -146,8 +155,14 @@ class FaceAnalysis:
 
         return boxes, probs, landmarks
 
-    def process_faces(self, faces: List[dict], extract_embedding: bool = True, extract_ga: bool = True,
-                      return_face_data: bool = False, detect_masks: bool = True, mask_thresh: float = 0.89):
+    def process_faces(self,
+                      faces: List[dict],
+                      extract_embedding: bool = True,
+                      extract_ga: bool = True,
+                      return_face_data: bool = False,
+                      detect_masks: bool = True,
+                      mask_thresh: float = 0.89,
+                      **kwargs):
         chunked_faces = to_chunks(faces, self.max_rec_batch_size)
         for chunk in chunked_faces:
             chunk = list(chunk)
@@ -222,12 +237,18 @@ class FaceAnalysis:
                 yield face
 
     # Process single image
-    async def get(self, images, extract_embedding: bool = True, extract_ga: bool = True, detect_masks: bool = True,
-                  return_face_data: bool = True, max_size: List[int] = None, threshold: float = 0.6,
+    async def get(self, images,
+                  extract_embedding: bool = True,
+                  extract_ga: bool = True,
+                  detect_masks: bool = True,
+                  return_face_data: bool = True,
+                  max_size: List[int] = None,
+                  threshold: float = 0.6,
                   min_face_size: int = 0,
                   mask_thresh: float = 0.89,
                   limit_faces: int = 0,
-                  use_rotation: bool = False):
+                  use_rotation: bool = False,
+                  **kwargs):
 
         ts = time.perf_counter()
 
@@ -324,7 +345,12 @@ class FaceAnalysis:
                 face = face.get('data')
                 yield face
 
-    def embed_crops(self, images, extract_embedding: bool = True, extract_ga: bool = True, detect_masks: bool = False):
+    def embed_crops(self,
+                    images,
+                    extract_embedding: bool = True,
+                    extract_ga: bool = True,
+                    detect_masks: bool = False,
+                    **kwargs):
 
         t0 = time.time()
         output = dict(took_ms=None, data=[], status="ok")
@@ -354,10 +380,18 @@ class FaceAnalysis:
         output['took_ms'] = took * 1000
         return output
 
-    async def embed(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
-                    limit_faces: int = 0, min_face_size: int = 0, return_face_data: bool = False,
-                    extract_embedding: bool = True, extract_ga: bool = True, return_landmarks: bool = False,
-                    detect_masks: bool = False, use_rotation: bool = False):
+    async def embed(self,
+                    images: Dict[str, list],
+                    max_size: List[int] = None,
+                    threshold: float = 0.6,
+                    limit_faces: int = 0,
+                    min_face_size: int = 0,
+                    return_face_data: bool = False,
+                    extract_embedding: bool = True,
+                    extract_ga: bool = True,
+                    return_landmarks: bool = False,
+                    detect_masks: bool = False,
+                    use_rotation: bool = False):
 
         _get = partial(self.get, max_size=max_size, threshold=threshold,
                        return_face_data=return_face_data,
@@ -402,7 +436,12 @@ class FaceAnalysis:
 
         return output
 
-    def draw_faces(self, image, faces, draw_landmarks=True, draw_scores=True, draw_sizes=True):
+    def draw_faces(self,
+                   image,
+                   faces,
+                   draw_landmarks=True,
+                   draw_scores=True,
+                   draw_sizes=True):
 
         for face in faces:
             bbox = face["bbox"].astype(int)

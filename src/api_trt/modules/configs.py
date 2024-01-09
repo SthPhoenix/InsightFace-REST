@@ -369,14 +369,6 @@ models = {
         'allow_batching': True,
         'function': 'arcface_torch',
         'reshape': False
-    },
-
-    'arcface_806070': {
-        'in_package': False,
-        'shape': (1, 3, 112, 112),
-        'allow_batching': True,
-        'function': 'arcface_torch',
-        'reshape': False
     }
 }
 

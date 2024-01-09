@@ -2,6 +2,8 @@ import logging
 import os
 from typing import Optional, List
 
+import aiohttp
+from aiohttp import ClientTimeout, TCPConnector
 import msgpack
 from fastapi import FastAPI, File, Form, Header
 from fastapi_offline import FastAPIOffline
@@ -32,23 +34,37 @@ logging.basicConfig(
     datefmt='[%H:%M:%S]',
 )
 
-processing = Processing(det_name=settings.models.det_name, rec_name=settings.models.rec_name,
-                        ga_name=settings.models.ga_name,
-                        mask_detector=settings.models.mask_detector,
-                        max_size=settings.models.max_size,
-                        max_rec_batch_size=settings.models.rec_batch_size,
-                        max_det_batch_size=settings.models.det_batch_size,
-                        backend_name=settings.models.inference_backend,
-                        force_fp16=settings.models.force_fp16,
-                        triton_uri=settings.models.triton_uri,
-                        root_dir='/models'
-                        )
+processing = None
 
 app = FastAPIOffline(
     title="InsightFace-REST",
     description="FastAPI wrapper for InsightFace API.",
     version=__version__,
 )
+
+
+@app.on_event('startup')
+async def startup():
+    logging.info(f"Starting processing module...")
+    global processing
+    try:
+        timeout = ClientTimeout(total=60., )
+        dl_client = aiohttp.ClientSession(timeout=timeout, connector=TCPConnector(verify_ssl=False))
+        processing = Processing(det_name=settings.models.det_name, rec_name=settings.models.rec_name,
+                                ga_name=settings.models.ga_name,
+                                mask_detector=settings.models.mask_detector,
+                                max_size=settings.models.max_size,
+                                max_rec_batch_size=settings.models.rec_batch_size,
+                                max_det_batch_size=settings.models.det_batch_size,
+                                backend_name=settings.models.inference_backend,
+                                force_fp16=settings.models.force_fp16,
+                                triton_uri=settings.models.triton_uri,
+                                root_dir='/models',
+                                dl_client=dl_client
+                                )
+        logging.info(f"Processing module ready!")
+    except Exception as e:
+        logging.info(e)
 
 
 @app.post('/extract', tags=['Detection & recognition'])

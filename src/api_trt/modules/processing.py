@@ -6,6 +6,7 @@ import sys
 import time
 from typing import Dict, List, Union
 
+import aiohttp
 import cv2
 import numpy as np
 from modules.utils.image_provider import get_images
@@ -18,11 +19,20 @@ FaceAnalysis = face_model.FaceAnalysis
 
 class Processing:
 
-    def __init__(self, det_name: str = 'retinaface_r50_v1', rec_name: str = 'arcface_r100_v1',
-                 ga_name: str = 'genderage_v1', mask_detector: str = 'mask_detector',
+    def __init__(self,
+                 det_name: str = 'retinaface_r50_v1',
+                 rec_name: str = 'arcface_r100_v1',
+                 ga_name: str = 'genderage_v1',
+                 mask_detector: str = 'mask_detector',
                  max_size: List[int] = None,
-                 backend_name: str = 'trt', max_rec_batch_size: int = 1, max_det_batch_size: int = 1,
-                 force_fp16: bool = False, triton_uri=None, root_dir: str = '/models'):
+                 backend_name: str = 'trt',
+                 max_rec_batch_size: int = 1,
+                 max_det_batch_size: int = 1,
+                 force_fp16: bool = False,
+                 triton_uri=None,
+                 root_dir: str = '/models',
+                 dl_client: aiohttp.ClientSession = None,
+                 **kwargs):
 
         if max_size is None:
             max_size = [640, 480]
@@ -43,12 +53,23 @@ class Processing:
                                   triton_uri=triton_uri,
                                   root_dir=root_dir
                                   )
+        self.dl_client = dl_client
 
-    async def extract(self, images: Dict[str, list], max_size: List[int] = None, threshold: float = 0.6,
-                      limit_faces: int = 0, min_face_size: int = 0, embed_only: bool = False,
-                      return_face_data: bool = False, extract_embedding: bool = True,
-                      extract_ga: bool = True, return_landmarks: bool = False, detect_masks: bool = False,
-                      use_rotation: bool = False, verbose_timings=True):
+    async def extract(self,
+                      images: Dict[str, list],
+                      max_size: List[int] = None,
+                      threshold: float = 0.6,
+                      limit_faces: int = 0,
+                      min_face_size: int = 0,
+                      embed_only: bool = False,
+                      return_face_data: bool = False,
+                      extract_embedding: bool = True,
+                      extract_ga: bool = True,
+                      return_landmarks: bool = False,
+                      detect_masks: bool = False,
+                      use_rotation: bool = False,
+                      verbose_timings=True,
+                      **kwargs):
 
         if not max_size:
             max_size = self.max_size
@@ -56,7 +77,7 @@ class Processing:
         t0 = time.time()
 
         tl0 = time.time()
-        images = await get_images(images, decode=self.model.decode_required)
+        images = await get_images(images, decode=self.model.decode_required, session = self.dl_client)
         tl1 = time.time()
         took_loading = tl1 - tl0
         logging.debug(f'Reading images took: {took_loading * 1000:.3f} ms.')
@@ -83,15 +104,22 @@ class Processing:
 
             return output
 
-    async def draw(self, images: Union[Dict[str, list], bytes], threshold: float = 0.6,
-                   draw_landmarks: bool = True, draw_scores: bool = True, draw_sizes: bool = True, limit_faces=0,
+    async def draw(self,
+                   images: Union[Dict[str, list], bytes],
+                   threshold: float = 0.6,
+                   draw_landmarks: bool = True,
+                   draw_scores: bool = True,
+                   draw_sizes: bool = True,
+                   limit_faces=0,
                    min_face_size: int = 0,
                    detect_masks: bool = False,
                    use_rotation: bool = False,
-                   multipart=False):
+                   multipart=False,
+                   dl_client: aiohttp.ClientSession = None,
+                   **kwargs):
 
         if not multipart:
-            images = await get_images(images)
+            images = await get_images(images, session=dl_client)
             image = images[0].get('data')
         else:
             __bin = np.fromstring(images, np.uint8)
