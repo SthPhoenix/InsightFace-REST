@@ -1,22 +1,21 @@
 import asyncio
+import base64
 import io
+import logging
 import os
-from typing import Dict
 import time
 import traceback
-import logging
-import base64
-import numpy as np
-import cv2
-import httpx
+from typing import Dict
+
 import aiofiles
-import imageio
 import aiohttp
-
-from modules.utils.helpers import tobool
-
-from turbojpeg import TurboJPEG
+import cv2
 import exifread
+import imageio
+import numpy as np
+from modules.utils.helpers import tobool
+from tenacity import retry, wait_exponential, stop_after_attempt, before_sleep_log, retry_if_not_exception_type
+from turbojpeg import TurboJPEG
 
 if tobool(os.getenv('USE_NVJPEG', False)):
     try:
@@ -33,9 +32,6 @@ else:
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
 }
-
-client = httpx.AsyncClient(headers=headers, follow_redirects=True)
-
 
 def sniff_gif(data):
     try:
@@ -116,12 +112,24 @@ def decode_img_bytes(im_bytes, **kwargs):
     logging.debug(f'Decoding took: {(t1 - t0) * 1000:.3f} ms.')
     return _image
 
+@retry(wait=wait_exponential(min=0.5, max=5), stop=stop_after_attempt(5),reraise=True,
+       before_sleep=before_sleep_log(logging, logging.WARNING),
+       retry=retry_if_not_exception_type(ValueError))
+async def make_request(url, session):
+    resp = await session.get(url, allow_redirects=True)
+    # Here we make an assumption that 404 and 403 codes shouldn't require retries.
+    # Any other exception might be retried again.
+    if resp.status in [404, 403]:
+        raise ValueError(f"Failed to get data from {url}. Status code: {resp.status}")
+    if resp.status >=400:
+        raise aiohttp.ClientResponseError(resp.request_info, status=resp.status, history=())
+    return resp
 
 async def dl_image(path, session: aiohttp.ClientSession = None, **kwargs):
     __bin = None
     try:
         if path.startswith('http'):
-            resp = await session.get(path, allow_redirects=True)
+            resp = await make_request(path, session)
             content = await resp.content.read()
             data = sniff_gif(content)
             __bin = np.frombuffer(data, dtype='uint8')
