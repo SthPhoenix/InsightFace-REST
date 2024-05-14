@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 echo Preparing models...
 python prepare_models.py
 
