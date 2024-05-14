@@ -103,11 +103,10 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
     onnx_hash = config.models[model_name].get('md5')
     trt_rebuild_required = False
     if onnx_exists and onnx_hash:
+        logging.info(f"Checking model hash...")
         hashes_match = check_hash(onnx_path, onnx_hash, algo='md5')
         if not hashes_match:
-            logging.warning('ONNX model hash mismatch, trying to download it again. '
-                            'This behaviour is expected in current version for scrfd_*_gnkps models '
-                            'due to models update.')
+            logging.warning('ONNX model hash mismatch, trying to download it again. ')
             onnx_exists = False
             trt_rebuild_required = True
 
@@ -120,10 +119,17 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
                 download_from_gdrive(dl_link, onnx_path)
             else:
                 download(dl_link, onnx_path)
+            hashes_match = check_hash(onnx_path, onnx_hash, algo='md5')
+            if not hashes_match:
+                logging.error(f"ONNX model hash mismatch after download, try again, or download model manually and place it "
+                              f"at '{onnx_path}'")
+                exit(1)
+
             remove_initializer_from_input(onnx_path, onnx_path)
         else:
             logging.error("You have requested non standard model, but haven't provided download link or "
                           "ONNX model. Place model to proper folder and change configs.py accordingly.")
+            exit(1)
     if backend_name == 'triton':
         return model_name
 
