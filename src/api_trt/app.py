@@ -64,7 +64,8 @@ async def startup():
                                 )
         logging.info(f"Processing module ready!")
     except Exception as e:
-        logging.info(e)
+        logging.error(e)
+        exit(1)
 
 
 @app.post('/extract', tags=['Detection & recognition'])
@@ -131,7 +132,7 @@ async def draw(data: BodyDraw):
 
 @app.post('/multipart/draw_detections', tags=['Detection & recognition'])
 async def draw_upl(file: bytes = File(...), threshold: float = Form(0.6), draw_landmarks: bool = Form(True),
-                   draw_scores: bool = Form(True), draw_sizes: bool = Form(True), limit_faces: int = Form(0)):
+                   draw_scores: bool = Form(True), draw_sizes: bool = Form(True), limit_faces: int = Form(0), use_rotation: bool = Form(False)):
     """
     Return image with drawn faces for testing purposes.
 
@@ -147,7 +148,8 @@ async def draw_upl(file: bytes = File(...), threshold: float = Form(0.6), draw_l
     output = await processing.draw(file, threshold=threshold,
                                    draw_landmarks=draw_landmarks, draw_scores=draw_scores, draw_sizes=draw_sizes,
                                    limit_faces=limit_faces,
-                                   multipart=True)
+                                   multipart=True,
+                                   use_rotation=use_rotation)
     output.seek(0)
     return StreamingResponse(output, media_type='image/jpg')
 
