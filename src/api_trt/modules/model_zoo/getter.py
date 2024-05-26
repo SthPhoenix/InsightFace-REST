@@ -1,9 +1,9 @@
 import json
 import os
 from typing import List
-
+import logging
 import onnx
-
+from tenacity import retry, wait_exponential, stop_after_attempt, before_sleep_log, retry_if_not_exception_type
 from api_trt.logger import logger
 from api_trt.modules.configs import Configs, config
 from api_trt.modules.converters.remove_initializer_from_input import remove_initializer_from_input
@@ -85,6 +85,26 @@ def read_outputs_order(trt_dir):
     return outputs
 
 
+@retry(wait=wait_exponential(min=0.5, max=5), stop=stop_after_attempt(5), reraise=True,
+       before_sleep=before_sleep_log(logger, logging.WARNING),
+       retry=retry_if_not_exception_type(ValueError))
+def download_onnx(src, dst, dl_type='google', md5=None):
+    if src not in [None, '']:
+        if dl_type == 'google':
+            download_from_gdrive(src, dst)
+        else:
+            download(src, dst)
+        hashes_match = check_hash(dst, md5, algo='md5')
+        if hashes_match:
+            return dst
+        else:
+            logger.error(f"ONNX model hash mismatch after download")
+            raise AssertionError
+    else:
+        logger.error(f"No download link provided for {dst}")
+        raise ValueError
+
+
 def prepare_backend(model_name, backend_name, im_size: List[int] = None,
                     max_batch_size: int = 1,
                     force_fp16: bool = False,
@@ -119,6 +139,7 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
     onnx_exists = os.path.exists(onnx_path)
     onnx_hash = config.models[model_name].get('md5')
     trt_rebuild_required = False
+
     if onnx_exists and onnx_hash:
         logger.info(f"Checking model hash...")
         hashes_match = check_hash(onnx_path, onnx_hash, algo='md5')
@@ -132,22 +153,22 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
         dl_link = config.get_dl_link(model_name)
         dl_type = config.get_dl_type(model_name)
         if dl_link:
-            if dl_type == 'google':
-                download_from_gdrive(dl_link, onnx_path)
-            else:
-                download(dl_link, onnx_path)
-            hashes_match = check_hash(onnx_path, onnx_hash, algo='md5')
-            if not hashes_match:
+            try:
+                download_onnx(dl_link, onnx_path, dl_type, onnx_hash)
+            except AssertionError:
                 logger.error(
-                    f"ONNX model hash mismatch after download, try again, or download model manually and place it "
-                    f"at '{onnx_path}'")
+                    f"Model download failed after multiple attempts. "
+                    f"Try manually downloading model and placing it to `{onnx_path}`")
                 exit(1)
-
+            except Exception as e:
+                logger.error(e)
+                exit(1)
             remove_initializer_from_input(onnx_path, onnx_path)
         else:
             logger.error("You have requested non standard model, but haven't provided download link or "
                          "ONNX model. Place model to proper folder and change configs.py accordingly.")
             exit(1)
+
     if backend_name == 'triton':
         return model_name
 
