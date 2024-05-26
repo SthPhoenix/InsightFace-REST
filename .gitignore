@@ -8,7 +8,8 @@
 /src/api/modules/__pycache__
 /src/api/modules/utils/__pycache__
 /src/api/insightface
-/models
+/models/onnx
+/models/trt-engines
 /crops
 /test_images
 /deploy_debug.sh
