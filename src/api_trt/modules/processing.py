@@ -182,7 +182,7 @@ class Processing:
         """
 
         if not multipart:
-            images = await get_images(images, session=dl_client)
+            images = await get_images(images, session=self.dl_client)
             image = images[0].get('data')
         else:
             __bin = np.fromstring(images, np.uint8)
