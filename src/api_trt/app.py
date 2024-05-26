@@ -16,7 +16,7 @@ from api_trt.modules.processing import Processing
 from api_trt.schemas import BodyDraw, BodyExtract
 from api_trt.settings import Settings
 
-__version__ = "0.8.4.0"
+__version__ = "0.9.0.0"
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
