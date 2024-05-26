@@ -1,25 +1,10 @@
 version: '3.9'
 
-x-common-variables: &common-variables
-  DET_NAME: ${DET_NAME}
-  REC_NAME: ${REC_NAME}
-  GA_MODEL: ${GA_MODEL}
-  MASK_DETECTOR: ${MASK_DETECTOR}
-  REC_BATCH_SIZE: ${REC_BATCH_SIZE}
-  DET_BATCH_SIZE: ${DET_BATCH_SIZE}
-  MAX_SIZE: ${MAX_SIZE}
-  DEF_EXTRACT_GA: ${DEF_EXTRACT_GA}
-  DEF_DET_THRESH: ${DEF_DET_THRESH}
-  DEF_RETURN_FACE_DATA: ${DEF_RETURN_FACE_DATA}
-  DEF_EXTRACT_EMBEDDING: ${DEF_EXTRACT_EMBEDDING}
-  FORCE_FP16: ${FORCE_FP16}
-  USE_NVJPEG: ${USE_NVJPEG}
-  LOG_LEVEL: ${LOG_LEVEL}
-
 x-base_service: &base_service
+    hostname: ifr
     volumes:
-      - &v1 ../models:/models
-      - &v2 ../src/api_trt:/app
+      - &models ../models:/models
+      - &app ../src/:/app
       - &v_nginx ../misc/nginx_conf/conf.d:/etc/nginx/conf.d
 
 
@@ -31,16 +16,13 @@ services:
     build:
       context: ../src
       dockerfile: ../src/Dockerfile_trt
-    hostname: ifr
     ports:
       - "18081:18080"
-    environment:
-      <<: *common-variables
-      INFERENCE_BACKEND: ${INFERENCE_BACKEND}
-      NUM_WORKERS: ${NUM_WORKERS}
+    env_file:
+      - .env
     volumes:
-      - *v1
-      - *v2
+      - *app
+      - *models
     deploy:
       resources:
         reservations:
@@ -51,19 +33,16 @@ services:
 
   ifr-trt-gpu1:
     <<: *base_service
-    profiles: ['gpu', 'mgpu']
+    profiles: ['mgpu']
     image: insightface-rest:${IFR_VERSION}
     build:
       context: ../src
       dockerfile: ../src/Dockerfile_trt
-    hostname: ifr
-    environment:
-      <<: *common-variables
-      INFERENCE_BACKEND: ${INFERENCE_BACKEND}
-      NUM_WORKERS: ${NUM_WORKERS}
+    env_file:
+      - .env
     volumes:
-      - *v1
-      - *v2
+      - *app
+      - *models
     deploy:
       resources:
         reservations:
@@ -80,21 +59,20 @@ services:
     build:
       context: ../src
       dockerfile: ../src/Dockerfile_cpu
-    hostname: ifr
-    environment:
-      <<: *common-variables
-      INFERENCE_BACKEND: onnx
-      NUM_WORKERS: 1
+    ports:
+      - "18081:18080"
+    env_file:
+      - cpu.env
     volumes:
-      - *v1
-      - *v2
+      - *app
+      - *models
 
   nginx:
     profiles: ['mgpu']
     image: nginx:1.21.0-alpine
     container_name: nginx-ifr
     volumes:
-      - ../misc/nginx_conf/conf.d:/etc/nginx/conf.d
+      - *v_nginx
     ports:
       - 18080:18080
     depends_on:
