@@ -11,7 +11,7 @@ import numpy as np
 from numpy.linalg import norm
 
 from api_trt.logger import logger
-from api_trt.modules.imagedata import resize_image
+from api_trt.modules.utils.image_provider import resize_image
 from api_trt.modules.model_zoo.getter import get_model
 from api_trt.modules.utils import fast_face_align as face_align
 from api_trt.modules.utils.helpers import to_chunks, colorize_log, validate_max_size
