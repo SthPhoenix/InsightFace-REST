@@ -1,5 +1,10 @@
 # InsightFace-REST
 
+> WARNING: Latest update may cause troubles with previously compiled Numba functions.
+> If you met any errors concerning 'modules not found' Run folliwing command in repo root to remove `__pycache__`:
+> 
+> `find . | grep -E "(__pycache__|\.pyc$)" | sudo xargs rm -rf`
+
 This repository aims to provide convenient, easy deployable and scalable
 REST API for InsightFace face detection and recognition pipeline using
 FastAPI for serving and NVIDIA TensorRT for optimized inference.
