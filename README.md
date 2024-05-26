@@ -1,7 +1,7 @@
 # InsightFace-REST
 
 > WARNING: Latest update may cause troubles with previously compiled Numba functions.
-> If you met any errors concerning 'modules not found' Run folliwing command in repo root to remove `__pycache__`:
+> If you met any errors concerning 'modules not found' Run following command in repo root to remove `__pycache__`:
 > 
 > `find . | grep -E "(__pycache__|\.pyc$)" | sudo xargs rm -rf`
 
