@@ -1,5 +1,3 @@
-version: '3.5'
-
 services:
   ifr-trt-gpu0:
     image: insightface-rest:${IFR_VERSION}
@@ -11,7 +9,7 @@ services:
       - .env
     volumes:
       - ../models:/models
-      - ../src/api_trt:/app
+      - ../src:/app
     ports:
       - 18081:18080
     deploy:
