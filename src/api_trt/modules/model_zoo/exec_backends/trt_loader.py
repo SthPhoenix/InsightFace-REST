@@ -5,8 +5,26 @@ import tensorrt as trt
 import cupyx
 
 
-# Simple helper data class that's a little nicer to use than a 2-tuple.
 class HostDeviceMem(object):
+    """
+    A simple helper class for managing host and device memory buffers.
+
+    Attributes:
+        size (int): The size of the buffer in bytes.
+        dtype (numpy.dtype): The data type of the elements in the buffer.
+        host (cupy.ndarray): A pinned host array for CPU-side operations.
+        device (cupy.ndarray): A device array for GPU-side operations.
+
+    Methods:
+        __str__(): Returns a string representation of the host and device arrays.
+        __repr__(): Returns the string representation of the object.
+        @property nbytes(): Returns the size of the buffer in bytes.
+        @property hostptr(): Returns the pointer to the host array data.
+        @property devptr(): Returns the device pointer for the device array data.
+        copy_htod_async(stream): Copies data from the host to the device asynchronously using a given CUDA stream.
+        copy_dtoh_async(stream): Copies data from the device to the host asynchronously using a given CUDA stream.
+    """
+
     def __init__(self, size, dtype):
         self.size = size
         self.dtype = dtype
@@ -32,13 +50,49 @@ class HostDeviceMem(object):
         return self.device.data.ptr
 
     def copy_htod_async(self, stream):
+        """
+        Copies data from the host to the device asynchronously using a given CUDA stream.
+
+        Args:
+            stream (cupy.cuda.Stream): The CUDA stream for asynchronous operations.
+        """
         self.device.data.copy_from_host_async(self.hostptr, self.nbytes, stream)
 
     def copy_dtoh_async(self, stream):
+        """
+        Copies data from the device to the host asynchronously using a given CUDA stream.
+
+        Args:
+            stream (cupy.cuda.Stream): The CUDA stream for asynchronous operations.
+        """
         self.device.data.copy_to_host_async(self.hostptr, self.nbytes, stream)
 
 
 class TrtModel(object):
+    """
+    A wrapper for TensorRT engine that provides methods for loading and executing the model.
+
+    Attributes:
+        TRT_LOGGER (tensorrt.Logger): The logger instance used by TensorRT.
+        engine_file (str): The file path to the serialized TensorRT engine.
+        batch_size (int): The batch size of the input data.
+        engine (tensorrt.ICudaEngine): The deserialized TensorRT engine.
+        context (tensorrt.IExecutionContext): The execution context for running inference on the engine.
+        stream (cupy.cuda.Stream): A CUDA stream for asynchronous operations.
+        bindings (list): A list of pointers to input and output buffers.
+        outputs (list): A list of HostDeviceMem objects representing the model outputs.
+        out_shapes (list): A list of shapes of the model outputs.
+        out_names (list): A list of names of the model outputs.
+        input_shapes (list): A list of shapes of the model inputs.
+        input (HostDeviceMem): The HostDeviceMem object representing the input buffer.
+        max_batch_size (int): The maximum batch size supported by the engine.
+
+    Methods:
+        __init__(engine_file): Initializes the TrtModel instance with the path to the TensorRT engine file.
+        build(): Loads and deserializes the TensorRT engine, creates an execution context, and initializes buffers.
+        run(input=None, deflatten: bool = True, as_dict=False, from_device=False, infer_shape=None): Runs inference on the model with given input data.
+    """
+
     TRT_LOGGER = trt.Logger()
     trt.init_libnvinfer_plugins(None, "")
 
@@ -57,6 +111,9 @@ class TrtModel(object):
         self.max_batch_size = 1
 
     def build(self):
+        """
+        Loads and deserializes the TensorRT engine, creates an execution context, and initializes buffers.
+        """
         assert os.path.exists(self.engine_file), "Engine file doesn't exist"
 
         runtime = trt.Runtime(TrtModel.TRT_LOGGER)
@@ -94,12 +151,28 @@ class TrtModel(object):
         self.end = cp.cuda.Event()
 
     def __del__(self):
+        """
+        Deletes the execution context and engine when the TrtModel instance is destroyed.
+        """
         if hasattr(self, 'context'):
             del self.context
         if hasattr(self, 'engine'):
             del self.engine
 
     def run(self, input=None, deflatten: bool = True, as_dict=False, from_device=False, infer_shape=None):
+        """
+        Runs inference on the model with given input data.
+
+        Args:
+            input (numpy.ndarray): The input data to be fed into the model.
+            deflatten (bool): Whether to reshape the output tensors back to their original shapes. Defaults to True.
+            as_dict (bool): Whether to return the outputs as a dictionary with names as keys. Defaults to False.
+            from_device (bool): Whether the input data is already on the device. Defaults to False.
+            infer_shape (tuple): The shape of the input data if it's different from the default one.
+
+        Returns:
+            list or dict: A list of output tensors or a dictionary with names as keys, depending on the value of `as_dict`.
+        """
         if not from_device:
             allocate_place = np.prod(input.shape)
             with self.stream:

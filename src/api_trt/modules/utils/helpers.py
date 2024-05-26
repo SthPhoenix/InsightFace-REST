@@ -4,27 +4,74 @@ from distutils import util
 import logging
 
 def prepare_folders(paths):
+    """
+    Creates a list of directories if they do not exist.
+
+    Args:
+        paths (list): A list of directory paths.
+
+    Returns:
+        None
+    """
     for path in paths:
         os.makedirs(path, exist_ok=True)
 
 def to_chunks(iterable, size=10):
+    """
+    Splits an iterable into chunks of a specified size.
+
+    Args:
+        iterable: An iterable object.
+        size (int): The size of each chunk. Defaults to 10.
+
+    Yields:
+        A chunk of the iterable.
+    """
     iterator = iter(iterable)
     for first in iterator:
         yield chain([first], islice(iterator, size - 1))
 
 def tobool(input):
+    """
+    Converts a string input to a boolean value.
+
+    Args:
+        input (str): The input string.
+
+    Returns:
+        A boolean value.
+    """
     try:
         return bool(util.strtobool(input))
     except:
         return False
 
 def toNone(input):
+    """
+    Converts a string input to None if it is empty or contains the words "none" or "null".
+
+    Args:
+        input (str): The input string.
+
+    Returns:
+        None or the original input.
+    """
     if str(input).lower() in ['', 'none', 'null']:
         return None
     else:
         return input
 
 def parse_size(size=None, def_size='640,480'):
+    """
+    Parses a size string into a list of integers. If no size is provided, uses the default size.
+
+    Args:
+        size (str): The size string.
+        def_size (str): The default size string. Defaults to '640,480'.
+
+    Returns:
+        A list of integers representing the size.
+    """
     if size is None:
         size = def_size
     size_lst = list(map(int, size.split(',')))
@@ -32,6 +79,16 @@ def parse_size(size=None, def_size='640,480'):
 
 
 def colorize_log(string, color):
+    """
+    Colors a log message with a specified color.
+
+    Args:
+        string (str): The log message.
+        color (str): The color to use. Can be 'grey', 'yellow', 'red', 'bold_red', or 'green'.
+
+    Returns:
+        A colored log message.
+    """
     colors = dict(
         grey="\x1b[38;21m",
         yellow="\x1b[33;21m",
@@ -47,6 +104,15 @@ def colorize_log(string, color):
     return string
 
 def validate_max_size(max_size):
+    """
+    Validates that an image's maximum size is a multiple of 32 and adjusts it if necessary.
+
+    Args:
+        max_size (list): The maximum size as a list of integers.
+
+    Returns:
+        A validated maximum size.
+    """
     if max_size[0] % 32 != 0 or max_size[1] % 32 != 0:
         max_size[0] = max_size[0] // 32 * 32
         max_size[1] = max_size[1] // 32 * 32

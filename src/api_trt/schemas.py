@@ -2,6 +2,7 @@ import pydantic
 from pydantic import BaseModel
 from typing import Optional, List
 from settings import Settings
+
 example_img = 'test_images/Stallone.jpg'
 # Read runtime settings from environment variables
 settings = Settings()
@@ -64,9 +65,6 @@ class BodyExtract(BaseModel):
     msgpack: Optional[bool] = pydantic.Field(default=False,
                                              example=False,
                                              description='Use MSGPACK for response serialization')
-    use_rotation: Optional[bool] = pydantic.Field(default=False,
-                                                  example=False,
-                                                  description='Use rotation for better detection. Not yet implemented.')
 
 
 class BodyDraw(BaseModel):
@@ -99,6 +97,3 @@ class BodyDraw(BaseModel):
     detect_masks: Optional[bool] = pydantic.Field(default=settings.defaults.detect_masks,
                                                   example=settings.defaults.detect_masks,
                                                   description='Detect medical masks')
-    use_rotation: Optional[bool] = pydantic.Field(default=False,
-                                                  example=False,
-                                                  description='Use rotation for better detection. Not yet implemented.')

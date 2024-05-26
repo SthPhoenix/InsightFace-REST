@@ -22,6 +22,17 @@ Face.__new__.__defaults__ = (None,) * len(Face._fields)
 
 
 def serialize_face(_face_dict: dict, return_face_data: bool, return_landmarks: bool = False):
+    """
+    Serialize a face dictionary.
+
+    Args:
+        _face_dict (dict): The face dictionary.
+        return_face_data (bool): Whether to include the facedata in the serialized dictionary.
+        return_landmarks (bool): Whether to include the landmarks in the serialized dictionary.
+
+    Returns:
+        dict: The serialized face dictionary.
+    """
     if _face_dict.get('norm'):
         _face_dict.update(vec=_face_dict['vec'].tolist(),
                           norm=float(_face_dict['norm']))
@@ -50,6 +61,17 @@ class Detector:
     def __init__(self, det_name: str = 'retinaface_r50_v1', max_size=None,
                  backend_name: str = 'trt', force_fp16: bool = False, triton_uri=None, max_batch_size: int = 1,
                  root_dir='/models'):
+        """
+        Wrapper for face detector.
+
+        Args:
+            det_name (str): The name of the detection model.
+            max_size (List[int]): The maximum size of the input image.
+            backend_name (str): The name of the backend to use.
+            force_fp16 (bool): Whether to force float16 precision.
+            triton_uri (str): The URI of the Triton server.
+            root_dir (str): The directory where the models are stored.
+        """
         if max_size is None:
             max_size = [640, 480]
 
@@ -60,6 +82,16 @@ class Detector:
         self.retina.prepare(nms=0.35)
 
     def detect(self, data, threshold=0.3):
+        """
+        Detect faces in input images.
+
+        Args:
+           data (numpy array): The input images.
+           threshold (float): The detection threshold. (Default: 0.3)
+
+        Returns:
+           tuple: A tuple containing the bounding boxes, probabilities, and landmarks of the detected faces.
+        """
         bboxes, landmarks = self.retina.detect(data, threshold=threshold)
 
         boxes = [e[:, 0:4] for e in bboxes]
@@ -68,8 +100,17 @@ class Detector:
         return boxes, probs, landmarks
 
 
-# Translate bboxes and landmarks from resized to original image size
 def reproject_points(dets, scale: float):
+    """
+    Reproject a set of  points from the resized image back to the original image size.
+
+    Args:
+       points (np.ndarray): Array of point coordinates.
+       scale (float): The scaling factor used in the resizing process.
+
+    Returns:
+       np.ndarray: The reprojected point coordinates.
+    """
     if scale != 1.0:
         dets = dets / scale
     return dets
@@ -84,11 +125,28 @@ class FaceAnalysis:
                  max_size=None,
                  max_rec_batch_size: int = 1,
                  max_det_batch_size: int = 1,
-                 backend_name: str = 'mxnet',
+                 backend_name: str = 'trt',
                  force_fp16: bool = False,
                  triton_uri=None,
                  root_dir: str = '/models',
                  **kwargs):
+
+        """
+        A class for analyzing faces.
+
+        Args:
+            det_name (str): The name of the detection model.
+            rec_name (str): The name of the recognition model.
+            ga_name (str): The name of the gender and age estimation model.
+            mask_detector (str): The name of the mask detector model.
+            max_size (List[int]): The maximum size of the input image.
+            max_rec_batch_size (int): The maximum batch size for the recognition model.
+            max_det_batch_size (int): The maximum batch size for the detection model.
+            backend_name (str): The name of the backend to use.
+            force_fp16 (bool): Whether to force float16 precision.
+            triton_uri (str): The URI of the Triton server.
+            root_dir (str): The directory where the models are stored.
+        """
 
         if max_size is None:
             max_size = [640, 640]
@@ -135,7 +193,19 @@ class FaceAnalysis:
             self.mask_model = None
 
     def sort_boxes(self, boxes, probs, landmarks, shape, max_num=0):
-        # Based on original InsightFace python package implementation
+        """
+        Sort the detected faces by confidence score.
+        Based on original InsightFace python package implementation
+        Args:
+            boxes (numpy array): The bounding boxes of the detected faces.
+            probs (numpy array): The confidence scores of the detected faces.
+            landmarks (numpy array): The landmarks of the detected faces.
+            shape (tuple): The shape of the input image.
+            max_num (int): The maximum number of faces to return.
+
+        Returns:
+            tuple: A tuple containing the sorted bounding boxes, probabilities, and landmarks.
+        """
         if max_num > 0 and boxes.shape[0] > max_num:
             area = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
             img_center = shape[0] // 2, shape[1] // 2
@@ -163,6 +233,20 @@ class FaceAnalysis:
                       detect_masks: bool = True,
                       mask_thresh: float = 0.89,
                       **kwargs):
+        """
+        Process the detected faces.
+
+        Args:
+            faces (List[dict]): The list of detected faces.
+            extract_embedding (bool): Whether to extract the embedding for each face.
+            extract_ga (bool): Whether to extract the gender and age estimation for each face.
+            return_face_data (bool): Whether to return the facedata for each face.
+            detect_masks (bool): Whether to detect masks for each face.
+            mask_thresh (float): The threshold for detecting masks.
+
+        Yields:
+            dict: A dictionary containing the processed face data.
+        """
         chunked_faces = to_chunks(faces, self.max_rec_batch_size)
         for chunk in chunked_faces:
             chunk = list(chunk)
@@ -190,6 +274,7 @@ class FaceAnalysis:
                 t0 = time.perf_counter()
                 masks = self.mask_model.get(crops)
                 t1 = time.perf_counter()
+                t1 = time.perf_counter()
                 took = t1 - t0
                 logging.debug(
                     f'Detecting masks for  {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
@@ -201,7 +286,6 @@ class FaceAnalysis:
                 age = None
                 mask = None
                 mask_probs = None
-
                 embedding = embeddings[i]
                 if extract_embedding:
                     embedding_norm = norm(embedding)
@@ -247,9 +331,25 @@ class FaceAnalysis:
                   min_face_size: int = 0,
                   mask_thresh: float = 0.89,
                   limit_faces: int = 0,
-                  use_rotation: bool = False,
                   **kwargs):
+        """
+        Process a list of images using the FaceAnalysis model.
 
+        Args:
+            images (List[np.ndarray]): A list of image arrays.
+            extract_embedding (bool, optional): Whether to extract embeddings from faces. Defaults to True.
+            extract_ga (bool, optional): Whether to extract gender and age information from faces. Defaults to True.
+            detect_masks (bool, optional): Whether to detect masks on faces. Defaults to False.
+            return_face_data (bool, optional): Whether to return face data in the output. Defaults to False.
+            max_size (List[int], optional): The maximum size of the input images. Defaults to None.
+            threshold (float, optional): The detection threshold. Defaults to 0.6.
+            limit_faces (int, optional): The maximum number of faces to detect per image. Defaults to 0.
+            min_face_size (int, optional): The minimum face size to detect. Defaults to 0.
+            mask_thresh (float, optional): The mask detection threshold. Defaults to 0.89.
+
+        Returns:
+            List[dict]: A list of dictionaries containing face data and embeddings.
+        """
         ts = time.perf_counter()
 
         # If detector has input_shape attribute, use it instead of provided value
@@ -340,6 +440,14 @@ class FaceAnalysis:
         return faces_by_img
 
     def __iterate_images(self, crops):
+        """Iterate over a list of image arrays. Yields only non-failed images.
+
+        Args:
+            images (List[np.ndarray]): A list of image arrays.
+
+        Yields:
+            np.ndarray: Each image array in the input list.
+        """
         for face in crops:
             if face.get('traceback') is None:
                 face = face.get('data')
@@ -351,7 +459,18 @@ class FaceAnalysis:
                     extract_ga: bool = True,
                     detect_masks: bool = False,
                     **kwargs):
+        """
+        Embed a list of already cropped 112x112 images using the FaceAnalysis model.
 
+        Args:
+           images (List[np.ndarray]): A list of image arrays.
+           extract_embedding (bool, optional): Whether to extract embeddings from faces. Defaults to True.
+           extract_ga (bool, optional): Whether to extract gender and age information from faces. Defaults to True.
+           detect_masks (bool, optional): Whether to detect masks on faces. Defaults to False.
+
+        Returns:
+           dict: A dictionary containing the embedded images and their corresponding embeddings.
+        """
         t0 = time.time()
         output = dict(took_ms=None, data=[], status="ok")
 
@@ -390,16 +509,31 @@ class FaceAnalysis:
                     extract_embedding: bool = True,
                     extract_ga: bool = True,
                     return_landmarks: bool = False,
-                    detect_masks: bool = False,
-                    use_rotation: bool = False):
+                    detect_masks: bool = False):
+        """
+        Embed a list of images using the FaceAnalysis model.
 
+        Args:
+            images (List[np.ndarray]): A list of image arrays.
+            max_size (List[int], optional): The maximum size of the input images. Defaults to None.
+            threshold (float, optional): The detection threshold. Defaults to 0.6.
+            limit_faces (int, optional): The maximum number of faces to detect per image. Defaults to 0.
+            min_face_size (int, optional): The minimum face size to detect. Defaults to 0.
+            return_face_data (bool, optional): Whether to return face data in the output. Defaults to False.
+            extract_embedding (bool, optional): Whether to extract embeddings from faces. Defaults to True.
+            extract_ga (bool, optional): Whether to extract gender and age information from faces. Defaults to True.
+            return_landmarks (bool, optional): Whether to return detected face landmarks. Defaults to False.
+            detect_masks (bool, optional): Whether to detect masks on faces. Defaults to False.
+
+        Returns:
+           dict: A dictionary containing the embedded images and their corresponding embeddings.
+        """
         _get = partial(self.get, max_size=max_size, threshold=threshold,
                        return_face_data=return_face_data,
                        extract_embedding=extract_embedding, extract_ga=extract_ga,
                        limit_faces=limit_faces,
                        min_face_size=min_face_size,
-                       detect_masks=detect_masks,
-                       use_rotation=use_rotation)
+                       detect_masks=detect_masks)
 
         _serialize = partial(serialize_face, return_face_data=return_face_data,
                              return_landmarks=return_landmarks)
@@ -442,7 +576,19 @@ class FaceAnalysis:
                    draw_landmarks=True,
                    draw_scores=True,
                    draw_sizes=True):
+        """
+        Draw the detected faces on the image.
 
+        Args:
+            image (numpy array): The input image.
+            faces (List[dict]): A list of face dictionaries containing the bounding box, landmarks, and score.
+            draw_landmarks (bool): Whether to draw the landmarks. Defaults to True.
+            draw_scores (bool): Whether to draw the scores. Defaults to True.
+            draw_sizes (bool): Whether to draw the sizes. Defaults to True.
+
+        Returns:
+            numpy array: The image with the detected faces drawn on it.
+        """
         for face in faces:
             bbox = face["bbox"].astype(int)
             pt1 = tuple(bbox[0:2])

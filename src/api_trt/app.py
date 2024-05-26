@@ -45,6 +45,13 @@ app = FastAPIOffline(
 
 @app.on_event('startup')
 async def startup():
+    """
+    Perform any necessary setup when the application starts up.
+    This includes initializing the `processing` object aiohttp.ClientSession.
+
+    Raises:
+        Exception: If an error occurs during processing initialization.
+    """
     logging.info(f"Starting processing module...")
     global processing
     try:
@@ -96,8 +103,7 @@ async def extract(data: BodyExtract, accept: Optional[List[str]] = Header(None))
                                       limit_faces=data.limit_faces, min_face_size=data.min_face_size,
                                       return_landmarks=data.return_landmarks,
                                       detect_masks=data.detect_masks,
-                                      verbose_timings=data.verbose_timings,
-                                      use_rotation=data.use_rotation)
+                                      verbose_timings=data.verbose_timings)
 
     if data.msgpack or 'application/x-msgpack' in accept:
         return PlainTextResponse(msgpack.dumps(output, use_single_float=True), media_type='application/x-msgpack')
@@ -124,8 +130,7 @@ async def draw(data: BodyDraw):
                                    draw_landmarks=data.draw_landmarks, draw_scores=data.draw_scores,
                                    limit_faces=data.limit_faces, min_face_size=data.min_face_size,
                                    draw_sizes=data.draw_sizes,
-                                   detect_masks=data.detect_masks,
-                                   use_rotation=data.use_rotation)
+                                   detect_masks=data.detect_masks)
     output.seek(0)
     return StreamingResponse(output, media_type="image/png")
 
@@ -148,8 +153,7 @@ async def draw_upl(file: bytes = File(...), threshold: float = Form(0.6), draw_l
     output = await processing.draw(file, threshold=threshold,
                                    draw_landmarks=draw_landmarks, draw_scores=draw_scores, draw_sizes=draw_sizes,
                                    limit_faces=limit_faces,
-                                   multipart=True,
-                                   use_rotation=use_rotation)
+                                   multipart=True)
     output.seek(0)
     return StreamingResponse(output, media_type='image/jpg')
 

@@ -22,7 +22,7 @@ from .exec_backends import onnxrt_backend as onnx_backend
 # Since TensorRT, TritonClient and PyCUDA are optional dependencies it might be not available
 try:
     from .exec_backends import trt_backend
-    #from .exec_backends import triton_backend as triton_backend
+    # from .exec_backends import triton_backend as triton_backend
     from ..converters.onnx_to_trt import convert_onnx, check_fp16
 except Exception as e:
     print(e)
@@ -51,6 +51,16 @@ func_map = {
 
 
 def sniff_output_order(model_path, save_dir):
+    """
+    Sniffs the output order of a model.
+
+    Args:
+        model_path (str): The path to the ONNX model.
+        save_dir (str): The directory where the output order will be saved.
+
+    Returns:
+        List[str]: A list of output names in the correct order.
+    """
     outputs_file = os.path.join(save_dir, 'output_order.json')
     if not os.path.exists(outputs_file):
         model = onnx.load(model_path)
@@ -63,6 +73,15 @@ def sniff_output_order(model_path, save_dir):
 
 
 def read_outputs_order(trt_dir):
+    """
+    Reads the output order from a TRT directory.
+
+    Args:
+       trt_dir (str): The directory containing the TRT model.
+
+    Returns:
+       List[str]: A list of output names in the correct order.
+    """
     outputs = None
     outputs_file = os.path.join(trt_dir, 'output_order.json')
     if os.path.exists(outputs_file):
@@ -77,16 +96,19 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
                     download_model: bool = True,
                     config: Configs = None):
     """
-    Check if ONNX, MXNet and TensorRT models exist and download/create them otherwise.
+    Prepares the backend for a model.
 
-    :param model_name: Name of required model. Must be one of keys in `models` dict.
-    :param backend_name: Name of inference backend. (onnx, trt)
-    :param im_size: Desired maximum size of image in W,H form. Will be overridden if model doesn't support reshaping.
-    :param max_batch_size: Maximum batch size for inference, currently supported for ArcFace model only.
-    :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful. TensorRT specific.
-    :param download_model: Download MXNet or ONNX model if it not exist.
-    :param config:  Configs class instance
-    :return: ONNX model serialized to string, or path to TensorRT engine
+    Args:
+        model_name (str): The name of the model.
+        backend_name (str): The name of the backend (onnx, trt).
+        im_size (List[int]): The desired maximum size of the image in W, H form.
+        max_batch_size (int): The maximum batch size for inference.
+        force_fp16 (bool): Whether to force use of FP16 precision.
+        download_model (bool): Whether to download the model if it doesn't exist.
+        config (Configs): The configuration object.
+
+    Returns:
+        str: The path to the prepared backend model.
     """
 
     prepare_folders([config.onnx_models_dir, config.trt_engines_dir])
@@ -121,8 +143,9 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
                 download(dl_link, onnx_path)
             hashes_match = check_hash(onnx_path, onnx_hash, algo='md5')
             if not hashes_match:
-                logging.error(f"ONNX model hash mismatch after download, try again, or download model manually and place it "
-                              f"at '{onnx_path}'")
+                logging.error(
+                    f"ONNX model hash mismatch after download, try again, or download model manually and place it "
+                    f"at '{onnx_path}'")
                 exit(1)
 
             remove_initializer_from_input(onnx_path, onnx_path)
@@ -183,17 +206,20 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
               force_fp16: bool = False,
               root_dir: str = "/models", download_model: bool = True, triton_uri=None, **kwargs):
     """
-    Returns inference backend instance with loaded model.
+    Returns an inference backend instance with a loaded model.
 
-    :param model_name: Name of required model. Must be one of keys in `models` dict.
-    :param backend_name: Name of inference backend. (onnx, mxnet, trt)
-    :param im_size: Desired maximum size of image in W,H form. Will be overridden if model doesn't support reshaping.
-    :param max_batch_size: Maximum batch size for inference, currently supported for ArcFace model only.
-    :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful. TensorRT specific.
-    :param root_dir: Root directory where models will be stored.
-    :param download_model: Download MXNet or ONNX model. Might be disabled if TRT model was already created.
-    :param kwargs: Placeholder.
-    :return: Inference backend with loaded model.
+    Args:
+        model_name (str): The name of the model.
+        backend_name (str): The name of the backend (onnx, mxnet, trt).
+        im_size (List[int]): The desired maximum size of the image in W, H form.
+        max_batch_size (int): The maximum batch size for inference.
+        force_fp16 (bool): Whether to force use of FP16 precision.
+        root_dir (str): The root directory where models will be stored.
+        download_model (bool): Whether to download the model if it doesn't exist.
+        triton_uri (str): The URI of the Triton server.
+
+    Returns:
+        object: An inference backend instance with a loaded model.
     """
 
     config = Configs(models_dir=root_dir)
@@ -202,7 +228,7 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
         'onnx': onnx_backend,
         'trt': trt_backend,
         'mxnet': 'mxnet',
-        #'triton': triton_backend
+        # 'triton': triton_backend
     }
 
     if backend_name not in backends:

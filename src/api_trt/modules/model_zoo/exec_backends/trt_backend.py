@@ -8,6 +8,20 @@ from .trt_loader import TrtModel
 
 
 def _normalize_on_device(input, stream, out, mean=0., std=1., swapRB=True):
+    """
+    Normalizes the input image on the device using CUDA.
+
+    Args:
+        input (np.ndarray): The input image as a NumPy array.
+        stream (cupy.cuda.Stream): The CUDA stream for memory operations.
+        out (cupy.ndarray): The output array to store the normalized image.
+        mean (float, optional): The mean value for normalization. Defaults to 0.
+        std (float, optional): The standard deviation for normalization. Defaults to 1.
+        swapRB (bool, optional): Whether to swap the red and blue channels. Defaults to True.
+
+    Returns:
+        tuple: A tuple containing the shape of the normalized image.
+    """
     allocate_place = np.prod(input.shape)
     with stream:
         g_img = cp.asarray(input)
@@ -20,6 +34,17 @@ def _normalize_on_device(input, stream, out, mean=0., std=1., swapRB=True):
 
 
 def _normalize_on_device_masks(input, stream, out):
+    """
+    Normalizes the input mask image on the device using CUDA.
+
+    Args:
+        input (np.ndarray): The input mask image as a NumPy array.
+        stream (cupy.cuda.Stream): The CUDA stream for memory operations.
+        out (cupy.ndarray): The output array to store the normalized mask image.
+
+    Returns:
+        tuple: A tuple containing the shape of the normalized mask image.
+    """
     allocate_place = np.prod(input.shape)
     with stream:
         g_img = cp.asarray(input)
@@ -30,7 +55,29 @@ def _normalize_on_device_masks(input, stream, out):
 
 
 class Arcface:
+    """
+    Class for performing face recognition using an ArcFace model loaded from a TensorRT engine.
 
+    Args:
+        rec_name (str): The file path to the TensorRT engine for the ArcFace model.
+        input_mean (float, optional): The mean value for input normalization. Defaults to 0.
+        input_std (float, optional): The standard deviation for input normalization. Defaults to 1.
+        swapRB (bool, optional): Whether to swap the red and blue channels in input images. Defaults to False.
+
+    Attributes:
+        rec_model (TrtModel): The TensorRT model instance.
+        input_mean (float): The mean value for input normalization.
+        input_std (float): The standard deviation for input normalization.
+        input_shape (tuple): The shape of the expected input images.
+        swapRB (bool): Whether to swap the red and blue channels in input images.
+        max_batch_size (int): The maximum batch size supported by the TensorRT engine.
+        stream (cupy.cuda.Stream): The CUDA stream for memory operations.
+        input_ptr (cupy.ndarray): The input array pointer for the TensorRT model.
+
+    Methods:
+        prepare(): Warm up the ArcFace TensorRT engine by running a dummy inference.
+        get_embedding(face_img): Get the embedding vector for a given face image.
+    """
     def __init__(self, rec_name: str = '/models/trt-engines/arcface_r100_v1/arcface_r100_v1.plan',
                  input_mean: float = 0.,
                  input_std: float = 1.,
@@ -47,6 +94,9 @@ class Arcface:
 
     # warmup
     def prepare(self, **kwargs):
+        """
+        Warm up the ArcFace TensorRT engine by running a dummy inference.
+        """
         logging.info("Warming up ArcFace TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
@@ -61,6 +111,15 @@ class Arcface:
             f"Engine warmup complete! Expecting input shape: {self.input_shape}. Max batch size: {self.max_batch_size}")
 
     def get_embedding(self, face_img):
+        """
+        Get the embedding vector for a given face image.
+
+        Args:
+            face_img (np.ndarray or list of np.ndarray): The input face image as a NumPy array or a list of such arrays.
+
+        Returns:
+            np.ndarray: The embedding vector for the given face image(s).
+        """
         if not isinstance(face_img, list):
             face_img = [face_img]
         face_img = np.stack(face_img)
@@ -76,13 +135,29 @@ class Arcface:
 
 
 class FaceGenderage:
+    """
+    Class for performing gender and age estimation using a GenderAge model loaded from a TensorRT engine.
 
+    Args:
+        rec_name (str): The file path to the TensorRT engine for the GenderAge model.
+
+    Attributes:
+        rec_model (TrtModel): The TensorRT model instance.
+        input_shape (tuple): The shape of the expected input images.
+
+    Methods:
+        prepare(): Warm up the GenderAge TensorRT engine by running a dummy inference.
+        get(face_img): Get the gender and age for a given face image.
+    """
     def __init__(self, rec_name: str = '/models/trt-engines/genderage_v1/genderage_v1.plan', **kwargs):
         self.rec_model = TrtModel(rec_name)
         self.input_shape = None
 
     # warmup
     def prepare(self, **kwargs):
+        """
+        Warm up the GenderAge TensorRT engine by running a dummy inference.
+        """
         logging.info("Warming up GenderAge TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
@@ -95,6 +170,15 @@ class FaceGenderage:
             f"Engine warmup complete! Expecting input shape: {self.input_shape}. Max batch size: {self.max_batch_size}")
 
     def get(self, face_img):
+        """
+        Get the gender and age for a given face image.
+
+        Args:
+            face_img (np.ndarray or list of np.ndarray): The input face image as a NumPy array or a list of such arrays.
+
+        Returns:
+            list of tuples: A list containing tuples of gender and age for each input face image.
+        """
         if not isinstance(face_img, list):
             face_img = [face_img]
 
@@ -119,12 +203,29 @@ class FaceGenderage:
 
 
 class MaskDetection:
+    """
+    Class for performing mask detection using a Mask Detection model loaded from a TensorRT engine.
+
+    Args:
+        rec_name (str): The file path to the TensorRT engine for the Mask Detection model.
+
+    Attributes:
+        rec_model (TrtModel): The TensorRT model instance.
+        input_shape (tuple): The shape of the expected input images.
+
+    Methods:
+        prepare(): Warm up the mask detection TensorRT engine by running a dummy inference.
+        get(face_img): Get the mask and no-mask probabilities for a given face image.
+    """
     def __init__(self, rec_name: str = '/models/trt-engines/mask_detection/mask_detection.plan', **kwargs):
         self.rec_model = TrtModel(rec_name)
         self.input_shape = None
 
     # warmup
     def prepare(self, **kwargs):
+        """
+        Warm up the mask detection TensorRT engine by running a dummy inference.
+        """
         logging.info("Warming up mask detection TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
@@ -140,6 +241,15 @@ class MaskDetection:
             f"Mask detection engine warmup complete! Expecting input shape: {self.input_shape}. Max batch size: {self.max_batch_size}")
 
     def get(self, face_img):
+        """
+        Get the mask and no-mask probabilities for a given face image.
+
+        Args:
+            face_img (np.ndarray or list of np.ndarray): The input face image as a NumPy array or a list of such arrays.
+
+        Returns:
+            list of tuples: A list containing tuples of mask and no-mask probabilities for each input face image.
+        """
         if not isinstance(face_img, list):
             face_img = [face_img]
 
@@ -161,9 +271,28 @@ class MaskDetection:
 
 
 class DetectorInfer:
+    """
+    Class for performing face detection using a detector model loaded from a TensorRT engine.
 
+    Args:
+        model (str): The file path to the TensorRT engine for the detector model.
+        output_order (list, optional): The order of output tensors as they appear in the model. Defaults to None.
+
+    Attributes:
+        rec_model (TrtModel): The TensorRT model instance.
+        model_name (str): The name of the detector model file.
+        stream (cupy.cuda.Stream): The CUDA stream for memory operations.
+        input_ptr (cupy.ndarray): The input array pointer for the TensorRT model.
+        input_shape (tuple): The shape of the expected input images.
+        output_order (list): The order of output tensors as they appear in the model.
+
+    Methods:
+        prepare(): Warm up the face detector TensorRT engine by running a dummy inference.
+        run(input=None, from_device=False, infer_shape=None): Run the detector on input images and return the results.
+    """
     def __init__(self, model='/models/trt-engines/centerface/centerface.plan',
                  output_order=None, **kwargs):
+
         self.rec_model = TrtModel(model)
         self.model_name = os.path.basename(model)
         self.stream = None
@@ -173,6 +302,9 @@ class DetectorInfer:
 
     # warmup
     def prepare(self, **kwargs):
+        """
+        Warm up the face detector TensorRT engine by running a dummy inference.
+        """
         logging.info(f"Warming up face detector TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
@@ -192,6 +324,17 @@ class DetectorInfer:
         logging.info(f"Engine warmup complete! Expecting input shape: {self.input_shape}")
 
     def run(self, input=None, from_device=False, infer_shape=None, **kwargs):
+        """
+        Run the detector on input images and return the results.
+
+        Args:
+            input (np.ndarray or list of np.ndarray): The input image as a NumPy array or a list of such arrays.
+            from_device (bool, optional): Whether to run the inference from device memory. Defaults to False.
+            infer_shape (tuple, optional): The shape for inference. Defaults to None.
+
+        Returns:
+            list: A list containing the results of the detector inference.
+        """
         net_out = self.rec_model.run(input, deflatten=True, as_dict=True, from_device=from_device,
                                      infer_shape=infer_shape)
         net_out = [net_out[e] for e in self.output_order]

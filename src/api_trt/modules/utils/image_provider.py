@@ -34,6 +34,15 @@ headers = {
 }
 
 def sniff_gif(data):
+    """
+       Sniffs first 32 bytes of data and decodes first frame if it's GIF.
+
+       Args:
+           data (bytes): The input data to be processed.
+
+       Returns:
+           bytes: The binary image if it's a GIF, otherwise the original data.
+       """
     try:
         if b"GIF" in data[:32]:
             sequence = imageio.get_reader(data, '.gif')
@@ -51,7 +60,16 @@ def sniff_gif(data):
         return data
 
 def transposeImage(image, orientation):
-    """See Orientation in https://www.exif.org/Exif2-2.PDF for details."""
+    """
+    Transposes the image based on the given orientation.
+    See Orientation in https://www.exif.org/Exif2-2.PDF for details.
+    Args:
+        image (np.ndarray): The input image.
+        orientation (exifread.Image): The orientation of the image.
+
+    Returns:
+        np.ndarray: The transposed image.
+    """
     if orientation == None: return image
     val = orientation.values[0]
     if val == 1:
@@ -75,6 +93,15 @@ def transposeImage(image, orientation):
 
 
 async def read_as_bytes(path, **kwargs):
+    """
+    Asynchronously reads the file at the given path and returns it as a bytes object.
+
+    Args:
+        path (str): The path of the file to be read.
+
+    Returns:
+        np.ndarray: The file contents.
+    """
     async with aiofiles.open(path, mode='rb') as fl:
         data = await fl.read()
         data = sniff_gif(data)
@@ -83,6 +110,15 @@ async def read_as_bytes(path, **kwargs):
 
 
 def b64_to_bytes(b64encoded, **kwargs):
+    """
+    Decodes the base64 encoded string and returns it as a bytes object.
+
+    Args:
+        b64encoded (str): The base64 encoded string to be decoded.
+
+    Returns:
+        tuple: A tuple containing the decoded bytes and any error message.
+    """
     __bin = None
     try:
         __bin = b64encoded.split(",")[-1]
@@ -100,6 +136,16 @@ def b64_to_bytes(b64encoded, **kwargs):
 
 
 def decode_img_bytes(im_bytes, **kwargs):
+    """
+    Decodes the image bytes and returns it as a numpy array.
+    Tries JPEG decoding with TurboJPEG or NVJpeg first.
+
+    Args:
+        im_bytes (bytes): The image bytes to be decoded.
+
+    Returns:
+        np.ndarray: The decoded image.
+    """
     t0 = time.perf_counter()
     try:
         rot = exifread.process_file(io.BytesIO(im_bytes)).get('Image Orientation', None)
@@ -116,6 +162,16 @@ def decode_img_bytes(im_bytes, **kwargs):
        before_sleep=before_sleep_log(logging, logging.WARNING),
        retry=retry_if_not_exception_type(ValueError))
 async def make_request(url, session):
+    """
+    Makes a GET request to the given URL and returns the response. Retries on failure.
+
+    Args:
+        url (str): The URL of the request.
+        session (aiohttp.ClientSession): The client session for making requests.
+
+    Returns:
+        aiohttp.ClientResponse: The response from the server.
+    """
     resp = await session.get(url, allow_redirects=True)
     # Here we make an assumption that 404 and 403 codes shouldn't require retries.
     # Any other exception might be retried again.
@@ -126,6 +182,16 @@ async def make_request(url, session):
     return resp
 
 async def dl_image(path, session: aiohttp.ClientSession = None, **kwargs):
+    """
+    Downloads the image from the given path and returns it as a bytes object.
+
+    Args:
+        path (str): The path of the file to be downloaded.
+        session (aiohttp.ClientSession): The client session for making requests.
+
+    Returns:
+        tuple: A tuple containing the downloaded bytes and any error message.
+    """
     __bin = None
     try:
         if path.startswith('http'):
@@ -146,6 +212,17 @@ async def dl_image(path, session: aiohttp.ClientSession = None, **kwargs):
 
 
 def make_im_data(__bin, tb, decode=True):
+    """
+    Creates a dictionary containing the image data and any error message occurred.
+
+    Args:
+        __bin (np.ndarray): The image bytes.
+        tb (str): The error message.
+        decode (bool): Whether to decode the image or not.
+
+    Returns:
+        dict: A dictionary containing the image data and any error message.
+    """
     traceback_msg = None
     if tb is None:
         if decode:
@@ -173,6 +250,18 @@ def make_im_data(__bin, tb, decode=True):
 
 
 async def get_images(data: Dict[str, list], decode=True, session: aiohttp.ClientSession = None, **kwargs):
+    """
+    Downloads and decodes the images from the given data.
+
+    Args:
+        data (Dict[str, list]): The input data containing URLs or base64 encoded strings.
+        decode (bool): Whether to decode the images or not. Defaults to True.
+        session (aiohttp.ClientSession): The client session for making requests.
+
+    Returns:
+        list: A list of dictionaries containing the image data and any error message.
+    """
+
     images = []
 
     if data.get('urls') is not None:

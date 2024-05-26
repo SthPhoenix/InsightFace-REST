@@ -19,7 +19,12 @@ logging.basicConfig(
 
 
 def prepare_models(root_dir: str = '/models'):
+    """
+    Bootstrap models before running API.
 
+    Args:
+      root_dir (str):  root_dir (str): The root directory for models. Defaults to '/models'.
+    """
     model_configs = Configs(models_dir=root_dir)
 
     rec_name = settings.models.rec_name

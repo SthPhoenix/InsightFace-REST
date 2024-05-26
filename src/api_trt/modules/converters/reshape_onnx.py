@@ -5,14 +5,20 @@ from typing import List
 import logging
 
 def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
-    '''
-    :param model: Input ONNX model object
-    :param n: Batch size dimension
-    :param h: Height dimension
-    :param w: Width dimension
-    :param mode: Set `retinaface` to reshape RetinaFace model, otherwise reshape Centerface
-    :return: ONNX model with reshaped input and outputs
-    '''
+    """
+    Reshape ONNX model input and output for different image sizes. Only applicable for MXNet Retinaface models
+    and official Centerface models.
+
+    Args:
+        model (onnx.ModelProto): Input ONNX model object
+        n (int): Batch size dimension
+        h (int): Height dimension
+        w (int): Width dimension
+        mode (str): Set `retinaface` to reshape RetinaFace model, otherwise reshape Centerface
+
+    Returns:
+        onnx.ModelProto: ONNX model with reshaped input and outputs
+    """
     if mode == 'auto':
         # Assert that retinaface models have outputs containing word 'stride' in their names
 
@@ -73,16 +79,19 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
 
 def reshape_onnx_input(onnx_path: str, out_path: str, im_size: List[int] = None, batch_size: int = 1,
                        mode: str = 'auto'):
-    '''
+    """
     Reshape ONNX file input and output for different image sizes. Only applicable for MXNet Retinaface models
     and official Centerface models.
 
-    :param onnx_path: Path to input ONNX file
-    :param out_path: Path to output ONNX file
-    :param im_size: Desired output image size in W, H format. Default: [640, 480]
-    :param mode: Available modes: retinaface, centerface, auto (try to detect if input model is retina- or centerface)
-    :return:
-    '''
+    Args:
+        onnx_path (str): Path to input ONNX file
+        out_path (str): Path to output ONNX file
+        im_size (List[int]): Desired output image size in W, H format. Default: [640, 480]
+        mode (str): Available modes: retinaface, centerface, auto (try to detect if input model is retina- or centerface)
+
+    Returns:
+        None
+    """
 
     if im_size is None:
         im_size = [640, 480]

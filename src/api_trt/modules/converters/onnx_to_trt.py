@@ -17,11 +17,14 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
     """
     Builds TensorRT engine from provided ONNX file
 
-    :param input_onnx: serialized ONNX model.
-    :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful.
-    :param max_batch_size: Define maximum batch size supported by engine. If >1 creates optimization profile.
-    :param max_workspace: Maximum builder workspace in MB.
-    :return: TensorRT engine
+    Args:
+        input_onnx (Union[str, bytes]): serialized ONNX model.
+        force_fp16 (bool): Force use of FP16 precision, even if device doesn't support it. Be careful.
+        max_batch_size (int): Define maximum batch size supported by engine. If >1 creates optimization profile.
+        max_workspace (int): Maximum builder workspace in MB.
+
+    Returns:
+        TensorRT engine
     """
 
     with trt.Builder(TRT_LOGGER) as builder, \
@@ -63,6 +66,12 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
 
 
 def check_fp16():
+    """
+    Check if the device supports FP16 precision.
+
+    Returns:
+        bool: True if device supports FP16 precision, False otherwise.
+    """
     builder = trt.Builder(TRT_LOGGER)
     has_fp16 = builder.platform_has_fast_fp16
     return has_fp16
@@ -70,14 +79,18 @@ def check_fp16():
 
 def convert_onnx(input_onnx: Union[str, bytes], engine_file_path: str, force_fp16: bool = False,
                  max_batch_size: int = 1):
-    '''
+    """
     Creates TensorRT engine and serializes it to disk
-    :param input_onnx: Path to ONNX file on disk or serialized ONNX model.
-    :param engine_file_path: Path where TensorRT engine should be saved.
-    :param force_fp16: Force use of FP16 precision, even if device doesn't support it. Be careful.
-    :param max_batch_size: Define maximum batch size supported by engine. If >1 creates optimization profile.
-    :return: None
-    '''
+
+    Args:
+        input_onnx (Union[str, bytes]): Path to ONNX file on disk or serialized ONNX model.
+        engine_file_path (str): Path where TensorRT engine should be saved.
+        force_fp16 (bool): Force use of FP16 precision, even if device doesn't support it. Be careful.
+        max_batch_size (int): Define maximum batch size supported by engine. If >1 creates optimization profile.
+
+    Returns:
+        None
+    """
 
     onnx_obj = None
     if isinstance(input_onnx, str):
