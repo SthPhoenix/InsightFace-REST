@@ -18,6 +18,8 @@ from turbojpeg import TurboJPEG
 
 from api_trt.logger import logger
 from api_trt.modules.utils.helpers import tobool
+from api_trt.settings import Settings
+
 
 if tobool(os.getenv('USE_NVJPEG', False)):
     try:
@@ -31,9 +33,9 @@ if tobool(os.getenv('USE_NVJPEG', False)):
 else:
     jpeg = TurboJPEG()
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
-}
+
+settings = Settings()
+headers = settings.defaults.img_req_headers
 
 
 def resize_image(image, max_size: list = None):
