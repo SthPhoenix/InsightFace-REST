@@ -22,3 +22,4 @@ tritonclient[http,grpc]
 imageio
 aiohttp
 tenacity
+colorlog
