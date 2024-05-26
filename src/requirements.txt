@@ -13,7 +13,7 @@ icc-rt
 numba
 opencv-python
 scikit-image
-onnx==1.15.0
+onnx==1.16.0
 onnxruntime==1.16.3
 onnx-simplifier
 git+https://github.com/lilohuang/PyTurboJPEG.git
