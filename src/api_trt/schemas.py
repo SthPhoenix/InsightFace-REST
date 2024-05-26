@@ -1,7 +1,7 @@
 import pydantic
 from pydantic import BaseModel
 from typing import Optional, List
-from settings import Settings
+from api_trt.settings import Settings
 
 example_img = 'test_images/Stallone.jpg'
 # Read runtime settings from environment variables
