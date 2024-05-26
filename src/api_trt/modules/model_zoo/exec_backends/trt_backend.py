@@ -4,8 +4,8 @@ import numpy as np
 import logging
 import cupy as cp
 import time
-from .trt_loader import TrtModel
-
+from api_trt.modules.model_zoo.exec_backends.trt_loader import TrtModel
+from api_trt.logger import logger
 
 def _normalize_on_device(input, stream, out, mean=0., std=1., swapRB=True):
     """
@@ -97,7 +97,7 @@ class Arcface:
         """
         Warm up the ArcFace TensorRT engine by running a dummy inference.
         """
-        logging.info("Warming up ArcFace TensorRT engine...")
+        logger.info("Warming up ArcFace TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
         self.max_batch_size = self.rec_model.max_batch_size
@@ -107,7 +107,7 @@ class Arcface:
             self.input_shape = (1,) + self.input_shape[1:]
 
         self.rec_model.run(np.zeros(self.input_shape, np.float32))
-        logging.info(
+        logger.info(
             f"Engine warmup complete! Expecting input shape: {self.input_shape}. Max batch size: {self.max_batch_size}")
 
     def get_embedding(self, face_img):
@@ -130,7 +130,7 @@ class Arcface:
 
         embeddings = self.rec_model.run(deflatten=True, from_device=True, infer_shape=infer_shape)[0]
         took = time.perf_counter() - t0
-        logging.debug(f'Rec inference cost: {took*1000:.3f} ms.')
+        logger.debug(f'Rec inference cost: {took*1000:.3f} ms.')
         return embeddings
 
 
@@ -158,7 +158,7 @@ class FaceGenderage:
         """
         Warm up the GenderAge TensorRT engine by running a dummy inference.
         """
-        logging.info("Warming up GenderAge TensorRT engine...")
+        logger.info("Warming up GenderAge TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
         self.max_batch_size = self.rec_model.max_batch_size
@@ -166,7 +166,7 @@ class FaceGenderage:
             self.input_shape = (1,) + self.input_shape[1:]
 
         self.rec_model.run(np.zeros(self.input_shape, np.float32))
-        logging.info(
+        logger.info(
             f"Engine warmup complete! Expecting input shape: {self.input_shape}. Max batch size: {self.max_batch_size}")
 
     def get(self, face_img):
@@ -226,7 +226,7 @@ class MaskDetection:
         """
         Warm up the mask detection TensorRT engine by running a dummy inference.
         """
-        logging.info("Warming up mask detection TensorRT engine...")
+        logger.info("Warming up mask detection TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
         self.max_batch_size = self.rec_model.max_batch_size
@@ -237,7 +237,7 @@ class MaskDetection:
             self.input_shape = (1,) + self.input_shape[1:]
 
         self.rec_model.run(np.zeros(self.input_shape, np.float32))
-        logging.info(
+        logger.info(
             f"Mask detection engine warmup complete! Expecting input shape: {self.input_shape}. Max batch size: {self.max_batch_size}")
 
     def get(self, face_img):
@@ -305,7 +305,7 @@ class DetectorInfer:
         """
         Warm up the face detector TensorRT engine by running a dummy inference.
         """
-        logging.info(f"Warming up face detector TensorRT engine...")
+        logger.info(f"Warming up face detector TensorRT engine...")
         self.rec_model.build()
         self.input_shape = self.rec_model.input_shapes[0]
         self.out_shapes = self.rec_model.out_shapes
@@ -321,7 +321,7 @@ class DetectorInfer:
         if not self.output_order:
             self.output_order = self.rec_model.out_names
         self.rec_model.run(np.zeros(self.input_shape, np.float32))
-        logging.info(f"Engine warmup complete! Expecting input shape: {self.input_shape}")
+        logger.info(f"Engine warmup complete! Expecting input shape: {self.input_shape}")
 
     def run(self, input=None, from_device=False, infer_shape=None, **kwargs):
         """

@@ -1,8 +1,9 @@
-import os
-import tensorrt as trt
 import sys
-from typing import Tuple, Union
-import logging
+from typing import Union
+
+import tensorrt as trt
+
+from api_trt.logger import logger
 
 # Based on code from NVES_R's response at
 # https://forums.developer.nvidia.com/t/segmentation-fault-when-creating-the-trt-builder-in-python-works-fine-with-trtexec/111376
@@ -33,12 +34,12 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
             trt.OnnxParser(network, TRT_LOGGER) as parser:
         has_fp16 = builder.platform_has_fast_fp16
         if force_fp16 or has_fp16:
-            logging.info('Building TensorRT engine with FP16 support.')
+            logger.info('Building TensorRT engine with FP16 support.')
             if not has_fp16:
-                logging.warning('Builder reports no fast FP16 support. Performance drop expected.')
+                logger.warning('Builder reports no fast FP16 support. Performance drop expected.')
             config.set_flag(trt.BuilderFlag.FP16)
         else:
-            logging.warning('Building engine in FP32 mode.')
+            logger.warning('Building engine in FP32 mode.')
 
         config.max_workspace_size = max_workspace * 1024 * 1024
 
@@ -49,7 +50,7 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
             sys.exit(1)
 
         if max_batch_size != 1:
-            logging.warning('Batch size !=1 is used. Ensure your inference code supports it.')
+            logger.warning('Batch size !=1 is used. Ensure your inference code supports it.')
         profile = builder.create_optimization_profile()
         # Get input name and shape for building optimization profile
         input = network.get_input(0)

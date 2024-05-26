@@ -5,12 +5,12 @@ import time
 import logging
 from typing import Union
 
-from .common.nms import nms
-from ..exec_backends.onnxrt_backend import DetectorInfer as DIO
-
+from api_trt.modules.model_zoo.detectors.common.nms import nms
+from api_trt.modules.model_zoo.exec_backends.onnxrt_backend import DetectorInfer as DIO
+from api_trt.logger import logger
 # Since TensorRT and pycuda are optional dependencies it might be not available
 try:
-    from ..exec_backends.trt_backend import DetectorInfer as DIT
+    from api_trt.modules.model_zoo.exec_backends.trt_backend import DetectorInfer as DIT
 except:
     DIT = None
 
@@ -269,7 +269,7 @@ class RetinaFace:
             t0 = time.time()
             net_out = self.model.run(input_blob)
             t1 = time.time()
-            logging.debug(f"Inference took: {(t1 - t0)*1000:.3f} ms.")
+            logger.debug(f"Inference took: {(t1 - t0)*1000:.3f} ms.")
             det, landmarks = self.postprocess(net_out, threshold)
             det_list.append(det)
             lmk_list.append(landmarks)
@@ -378,5 +378,5 @@ class RetinaFace:
         if self.use_landmarks:
             landmarks = landmarks[keep]
         t1 = time.time()
-        logging.debug(f"Postprocess took: {(t1 - t0)*1000:.3f} ms.")
+        logger.debug(f"Postprocess took: {(t1 - t0)*1000:.3f} ms.")
         return det, landmarks

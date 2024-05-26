@@ -5,25 +5,25 @@ from typing import List
 import traceback
 import onnx
 
-from .face_detectors import *
-from .face_processors import *
+from api_trt.modules.model_zoo.face_detectors import *
+from api_trt.modules.model_zoo.face_processors import *
 
-# from ..converters.insight2onnx import convert_insight_model
-from ..converters.reshape_onnx import reshape, reshape_onnx_input
-from ..converters.remove_initializer_from_input import remove_initializer_from_input
-from ..utils.helpers import prepare_folders
-from ..utils.download import download
-from ..utils.download_google import download_from_gdrive, check_hash
+# from api_trt.modules.converters.insight2onnx import convert_insight_model
+from api_trt.modules.converters.reshape_onnx import reshape, reshape_onnx_input
+from api_trt.modules.converters.remove_initializer_from_input import remove_initializer_from_input
+from api_trt.modules.utils.helpers import prepare_folders
+from api_trt.modules.utils.download import download
+from api_trt.modules.utils.download_google import download_from_gdrive, check_hash
 
-from ..configs import Configs
-
-from .exec_backends import onnxrt_backend as onnx_backend
+from api_trt.modules.configs import Configs
+from api_trt.logger import logger
+from api_trt.modules.model_zoo.exec_backends import onnxrt_backend as onnx_backend
 
 # Since TensorRT, TritonClient and PyCUDA are optional dependencies it might be not available
 try:
-    from .exec_backends import trt_backend
+    from api_trt.modules.model_zoo.exec_backends import trt_backend
     # from .exec_backends import triton_backend as triton_backend
-    from ..converters.onnx_to_trt import convert_onnx, check_fp16
+    from api_trt.modules.converters.onnx_to_trt import convert_onnx, check_fp16
 except Exception as e:
     print(e)
 
@@ -125,10 +125,10 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
     onnx_hash = config.models[model_name].get('md5')
     trt_rebuild_required = False
     if onnx_exists and onnx_hash:
-        logging.info(f"Checking model hash...")
+        logger.info(f"Checking model hash...")
         hashes_match = check_hash(onnx_path, onnx_hash, algo='md5')
         if not hashes_match:
-            logging.warning('ONNX model hash mismatch, trying to download it again. ')
+            logger.warning('ONNX model hash mismatch, trying to download it again. ')
             onnx_exists = False
             trt_rebuild_required = True
 
@@ -143,14 +143,14 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
                 download(dl_link, onnx_path)
             hashes_match = check_hash(onnx_path, onnx_hash, algo='md5')
             if not hashes_match:
-                logging.error(
+                logger.error(
                     f"ONNX model hash mismatch after download, try again, or download model manually and place it "
                     f"at '{onnx_path}'")
                 exit(1)
 
             remove_initializer_from_input(onnx_path, onnx_path)
         else:
-            logging.error("You have requested non standard model, but haven't provided download link or "
+            logger.error("You have requested non standard model, but haven't provided download link or "
                           "ONNX model. Place model to proper folder and change configs.py accordingly.")
             exit(1)
     if backend_name == 'triton':
@@ -159,7 +159,7 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
     if backend_name == 'onnx':
         model = onnx.load(onnx_path)
         if reshape_allowed is True:
-            logging.info(f'Reshaping ONNX inputs to: {shape}')
+            logger.info(f'Reshaping ONNX inputs to: {shape}')
             model = reshape(model, h=im_size[1], w=im_size[0])
         return model.SerializeToString()
 
@@ -176,13 +176,13 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
         prepare_folders([trt_dir])
 
         if not config.get_outputs_order(model_name):
-            logging.debug('No output order provided, trying to read it from ONNX model.')
+            logger.debug('No output order provided, trying to read it from ONNX model.')
             sniff_output_order(onnx_path, trt_dir)
 
         if not os.path.exists(trt_path) or trt_rebuild_required:
 
             if reshape_allowed is True or max_batch_size != 1:
-                logging.info(f'Reshaping ONNX inputs to: {shape}')
+                logger.info(f'Reshaping ONNX inputs to: {shape}')
                 model = onnx.load(onnx_path)
                 onnx_batch_size = 1
                 if max_batch_size != 1:
@@ -193,12 +193,12 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
             else:
                 temp_onnx_model = onnx_path
 
-            logging.info(f"Building TRT engine for {model_name}...")
+            logger.info(f"Building TRT engine for {model_name}...")
             convert_onnx(temp_onnx_model,
                          engine_file_path=trt_path,
                          max_batch_size=max_batch_size,
                          force_fp16=force_fp16)
-            logging.info('Building TRT engine complete!')
+            logger.info('Building TRT engine complete!')
         return trt_path
 
 
@@ -232,11 +232,11 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
     }
 
     if backend_name not in backends:
-        logging.error(f"Unknown backend '{backend_name}' specified. Exiting.")
+        logger.error(f"Unknown backend '{backend_name}' specified. Exiting.")
         exit(1)
 
     if model_name not in config.models.keys():
-        logging.error(f"Unknown model {model_name} specified."
+        logger.error(f"Unknown model {model_name} specified."
                       f" Please select one of the following:\n"
                       f"{', '.join(list(config.models.keys()))}")
         exit(1)
@@ -249,7 +249,7 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
 
     outputs = config.get_outputs_order(model_name)
     if not outputs and backend_name == 'trt':
-        logging.debug(f'No output order provided, for "{model_name}" trying to read it from "output_order.json"')
+        logger.debug(f'No output order provided, for "{model_name}" trying to read it from "output_order.json"')
         trt_dir, trt_path = config.build_model_paths(model_name, 'plan')
         outputs = read_outputs_order(trt_dir)
 

@@ -17,9 +17,10 @@ from fastapi.responses import UJSONResponse
 from starlette.responses import StreamingResponse, RedirectResponse, PlainTextResponse
 from starlette.staticfiles import StaticFiles
 
-from modules.processing import Processing
-from schemas import BodyDraw, BodyExtract
-from settings import Settings
+from api_trt.modules.processing import Processing
+from api_trt.schemas import BodyDraw, BodyExtract
+from api_trt.settings import Settings
+from api_trt.logger import logger
 
 __version__ = "0.8.4.0"
 
@@ -33,6 +34,8 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)s - %(message)s',
     datefmt='[%H:%M:%S]',
 )
+
+
 
 processing = None
 
@@ -52,7 +55,7 @@ async def startup():
     Raises:
         Exception: If an error occurs during processing initialization.
     """
-    logging.info(f"Starting processing module...")
+    logger.info(f"Starting processing module...")
     global processing
     try:
         timeout = ClientTimeout(total=60., )
@@ -69,9 +72,9 @@ async def startup():
                                 root_dir='/models',
                                 dl_client=dl_client
                                 )
-        logging.info(f"Processing module ready!")
+        logger.info(f"Processing module ready!")
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
         exit(1)
 
 

@@ -13,9 +13,11 @@ import cv2
 import exifread
 import imageio
 import numpy as np
-from modules.utils.helpers import tobool
 from tenacity import retry, wait_exponential, stop_after_attempt, before_sleep_log, retry_if_not_exception_type
 from turbojpeg import TurboJPEG
+
+from api_trt.logger import logger
+from api_trt.modules.utils.helpers import tobool
 
 if tobool(os.getenv('USE_NVJPEG', False)):
     try:
@@ -32,6 +34,7 @@ else:
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
 }
+
 
 def sniff_gif(data):
     """
@@ -58,6 +61,7 @@ def sniff_gif(data):
             return data
     except:
         return data
+
 
 def transposeImage(image, orientation):
     """
@@ -127,12 +131,9 @@ def b64_to_bytes(b64encoded, **kwargs):
         __bin = np.frombuffer(__bin, dtype='uint8')
     except Exception:
         tb = traceback.format_exc()
-        logging.warning(tb)
+        logger.warning(tb)
         return __bin, tb
     return __bin, None
-
-
-
 
 
 def decode_img_bytes(im_bytes, **kwargs):
@@ -152,14 +153,15 @@ def decode_img_bytes(im_bytes, **kwargs):
         _image = jpeg.decode(im_bytes)
         _image = transposeImage(_image, orientation=rot)
     except:
-        logging.debug('JPEG decoder failed, fallback to cv2.imdecode')
+        logger.debug('JPEG decoder failed, fallback to cv2.imdecode')
         _image = cv2.imdecode(im_bytes, cv2.IMREAD_COLOR)
     t1 = time.perf_counter()
-    logging.debug(f'Decoding took: {(t1 - t0) * 1000:.3f} ms.')
+    logger.debug(f'Decoding took: {(t1 - t0) * 1000:.3f} ms.')
     return _image
 
-@retry(wait=wait_exponential(min=0.5, max=5), stop=stop_after_attempt(5),reraise=True,
-       before_sleep=before_sleep_log(logging, logging.WARNING),
+
+@retry(wait=wait_exponential(min=0.5, max=5), stop=stop_after_attempt(5), reraise=True,
+       before_sleep=before_sleep_log(logger, logging.WARNING),
        retry=retry_if_not_exception_type(ValueError))
 async def make_request(url, session):
     """
@@ -177,9 +179,10 @@ async def make_request(url, session):
     # Any other exception might be retried again.
     if resp.status in [404, 403]:
         raise ValueError(f"Failed to get data from {url}. Status code: {resp.status}")
-    if resp.status >=400:
+    if resp.status >= 400:
         raise aiohttp.ClientResponseError(resp.request_info, status=resp.status, history=())
     return resp
+
 
 async def dl_image(path, session: aiohttp.ClientSession = None, **kwargs):
     """
@@ -206,7 +209,7 @@ async def dl_image(path, session: aiohttp.ClientSession = None, **kwargs):
             __bin = await read_as_bytes(path)
     except Exception:
         tb = traceback.format_exc()
-        logging.warning(tb)
+        logger.warning(tb)
         return __bin, tb
     return __bin, None
 
@@ -231,7 +234,7 @@ def make_im_data(__bin, tb, decode=True):
             except Exception:
                 data = None
                 tb = traceback.format_exc()
-                logging.warning(tb)
+                logger.warning(tb)
         else:
             data = __bin
 
@@ -242,7 +245,7 @@ def make_im_data(__bin, tb, decode=True):
     if tb:
         data = None
         traceback_msg = tb
-        logging.warning(tb)
+        logger.warning(tb)
 
     im_data = dict(data=data,
                    traceback=traceback_msg)

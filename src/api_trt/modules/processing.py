@@ -9,8 +9,8 @@ from typing import Dict, List, Union
 import aiohttp
 import cv2
 import numpy as np
-from modules.utils.image_provider import get_images
-
+from api_trt.modules.utils.image_provider import get_images
+from api_trt.logger import logger
 f_model = os.getenv("FACE_MODEL_CLASS", "face_model")
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 face_model = importlib.import_module(f_model, package=None)
@@ -116,7 +116,7 @@ class Processing:
         images = await get_images(images, decode=self.model.decode_required, session = self.dl_client)
         tl1 = time.time()
         took_loading = tl1 - tl0
-        logging.debug(f'Reading images took: {took_loading * 1000:.3f} ms.')
+        logger.debug(f'Reading images took: {took_loading * 1000:.3f} ms.')
 
         if embed_only:
             _faces_dict = self.model.embed_crops(images,

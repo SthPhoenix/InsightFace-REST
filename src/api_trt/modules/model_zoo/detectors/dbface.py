@@ -6,12 +6,12 @@ import logging
 from typing import Union
 from numba import njit
 
-from .common.nms import nms
-from ..exec_backends.onnxrt_backend import DetectorInfer as DIO
-
+from api_trt.modules.model_zoo.detectors.common.nms import nms
+from api_trt.modules.model_zoo.exec_backends.onnxrt_backend import DetectorInfer as DIO
+from api_trt.logger import logger
 # Since TensorRT and pycuda are optional dependencies it might be not available
 try:
-    from ..exec_backends.trt_backend import DetectorInfer as DIT
+    from api_trt.modules.model_zoo.exec_backends.trt_backend import DetectorInfer as DIT
 except:
     DIT = None
 
@@ -113,7 +113,7 @@ class DBFace(object):
             t0 = time.time()
             hm, box, landmark = self.net.run(img)
             t1 = time.time()
-            logging.debug(f"DBFace inference took: {t1 - t0}")
+            logger.debug(f"DBFace inference took: {t1 - t0}")
             det, landmarks = self.postprocess(hm, box, landmark, threshold=threshold)
             det_list.append(det)
             lmk_list.append(landmarks)
@@ -140,8 +140,8 @@ class DBFace(object):
         lms = np.asarray(landmarks, dtype=np.float32)
         lms = lms[keep, :]
         #tn1 = time.time()
-        #logging.debug(f"NMS took: {tn1 - tn0} ({1 / (tn1 - tn0)} im/sec)")
+        #logger.debug(f"NMS took: {tn1 - tn0} ({1 / (tn1 - tn0)} im/sec)")
         t1 = time.time()
-        logging.debug(f"DBFace postprocess took: {t1 - t0}")
+        logger.debug(f"DBFace postprocess took: {t1 - t0}")
         return boxes, lms
 

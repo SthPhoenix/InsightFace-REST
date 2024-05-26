@@ -1,11 +1,11 @@
 import os
 import logging
 
-from modules.utils.helpers import parse_size, tobool, validate_max_size
-from modules.model_zoo.getter import prepare_backend
-from modules.configs import Configs
-from settings import Settings
-
+from api_trt.modules.utils.helpers import parse_size, tobool, validate_max_size
+from api_trt.modules.model_zoo.getter import prepare_backend
+from api_trt.modules.configs import Configs
+from api_trt.settings import Settings
+from api_trt.logger import logger
 settings = Settings()
 
 logging.basicConfig(
@@ -45,13 +45,13 @@ def prepare_models(root_dir: str = '/models'):
                 batch_size = settings.models.det_batch_size
             else:
                 batch_size = settings.models.rec_batch_size
-        logging.info(f"Preparing '{model}' model...")
+        logger.info(f"Preparing '{model}' model...")
 
         prepare_backend(model_name=model, backend_name=settings.models.inference_backend, im_size=max_size,
                         force_fp16=settings.models.force_fp16,
                         max_batch_size=batch_size, config=model_configs)
 
-        logging.info(f"'{model}' model ready!")
+        logger.info(f"'{model}' model ready!")
 
 
 if __name__ == "__main__":

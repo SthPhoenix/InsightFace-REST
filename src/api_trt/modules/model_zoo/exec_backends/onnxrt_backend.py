@@ -2,7 +2,7 @@ import onnxruntime
 import cv2
 import numpy as np
 import logging
-
+from api_trt.logger import logger
 
 class Arcface:
     def __init__(self, rec_name='/models/onnx/arcface_r100_v1/arcface_r100_v1.onnx',
@@ -18,7 +18,7 @@ class Arcface:
 
     # warmup
     def prepare(self, **kwargs):
-        logging.info("Warming up ArcFace ONNX Runtime engine...")
+        logger.info("Warming up ArcFace ONNX Runtime engine...")
         self.rec_model.run(self.outputs, {self.rec_model.get_inputs()[0].name: [np.zeros((3, 112, 112), np.float32)]})
 
     def get_embedding(self, face_img):
@@ -46,7 +46,7 @@ class FaceGenderage:
 
     # warmup
     def prepare(self, **kwargs):
-        logging.info("Warming up GenderAge ONNX Runtime engine...")
+        logger.info("Warming up GenderAge ONNX Runtime engine...")
         self.rec_model.run(self.outputs,
                            {self.rec_model.get_inputs()[0].name: [np.zeros(tuple(self.input.shape[1:]), np.float32)]})
 
@@ -87,7 +87,7 @@ class MaskDetection:
 
     # warmup
     def prepare(self, **kwargs):
-        logging.info("Warming up mask detection ONNX Runtime engine...")
+        logger.info("Warming up mask detection ONNX Runtime engine...")
         self.rec_model.run(self.outputs,
                            {self.rec_model.get_inputs()[0].name: [np.zeros(tuple(self.input.shape[1:]), np.float32)]})
 
@@ -117,7 +117,7 @@ class DetectorInfer:
                  output_order=None, **kwargs):
 
         self.rec_model = onnxruntime.InferenceSession(model)
-        logging.info('Detector started')
+        logger.info('Detector started')
         self.input = self.rec_model.get_inputs()[0]
         self.input_dtype = self.input.type
         if self.input_dtype == 'tensor(float)':
@@ -131,7 +131,7 @@ class DetectorInfer:
 
     # warmup
     def prepare(self, **kwargs):
-        logging.info("Warming up face detection ONNX Runtime engine...")
+        logger.info("Warming up face detection ONNX Runtime engine...")
         if self.output_order is None:
             self.output_order = [e.name for e in self.rec_model.get_outputs()]
         self.out_shapes = [e.shape for e in self.rec_model.get_outputs()]

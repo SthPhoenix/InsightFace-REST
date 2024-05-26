@@ -1,19 +1,20 @@
 import asyncio
+import base64
 import collections
-import logging
 import time
-from functools import partial
-from typing import Dict, List, Union
 import traceback
+from functools import partial
+from typing import Dict, List
 
 import cv2
 import numpy as np
-import base64
-from modules.imagedata import resize_image
-from modules.model_zoo.getter import get_model
-from modules.utils import fast_face_align as face_align
-from modules.utils.helpers import to_chunks, colorize_log, validate_max_size
 from numpy.linalg import norm
+
+from api_trt.logger import logger
+from api_trt.modules.imagedata import resize_image
+from api_trt.modules.model_zoo.getter import get_model
+from api_trt.modules.utils import fast_face_align as face_align
+from api_trt.modules.utils.helpers import to_chunks, colorize_log, validate_max_size
 
 Face = collections.namedtuple("Face", ['bbox', 'landmark', 'det_score', 'embedding', 'gender', 'age', 'embedding_norm',
                                        'normed_embedding', 'facedata', 'scale', 'num_det', 'mask', 'mask_probs'])
@@ -158,7 +159,7 @@ class FaceAnalysis:
         self.det_name = det_name
         self.rec_name = rec_name
         if backend_name not in ('trt', 'triton') and max_rec_batch_size != 1:
-            logging.warning('Batch processing supported only for TensorRT & Triton backend. Fallback to 1.')
+            logger.warning('Batch processing supported only for TensorRT & Triton backend. Fallback to 1.')
             self.max_rec_batch_size = 1
 
         assert det_name is not None
@@ -259,7 +260,7 @@ class FaceAnalysis:
                 t0 = time.perf_counter()
                 embeddings = self.rec_model.get_embedding(crops)
                 took = time.perf_counter() - t0
-                logging.debug(
+                logger.debug(
                     f'Embedding {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
 
             if extract_ga and self.ga_model:
@@ -267,7 +268,7 @@ class FaceAnalysis:
                 ga = self.ga_model.get(crops)
                 t1 = time.perf_counter()
                 took = t1 - t0
-                logging.debug(
+                logger.debug(
                     f'Extracting g/a for {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
 
             if detect_masks and self.mask_model:
@@ -276,7 +277,7 @@ class FaceAnalysis:
                 t1 = time.perf_counter()
                 t1 = time.perf_counter()
                 took = t1 - t0
-                logging.debug(
+                logger.debug(
                     f'Detecting masks for  {total} faces took: {took * 1000:.3f} ms. ({(took / total) * 1000:.3f} ms. per face)')
 
             for i, crop in enumerate(crops):
@@ -363,7 +364,7 @@ class FaceAnalysis:
         # Pre-assign threshold to detect function
         _partial_detect = partial(self.det_model.detect, threshold=threshold)
 
-        # Initialize resied images iterator
+        # Initialize resized images iterator
         res_images = map(_partial_resize, images)
         batches = to_chunks(res_images, self.max_det_batch_size)
 
@@ -375,7 +376,7 @@ class FaceAnalysis:
             t0 = time.perf_counter()
             det_predictions = zip(*_partial_detect(batch_imgs))
             t1 = time.perf_counter()
-            logging.debug(f'Detection took: {(t1 - t0) * 1000:.3f} ms.')
+            logger.debug(f'Detection took: {(t1 - t0) * 1000:.3f} ms.')
 
             for idx, pred in enumerate(det_predictions):
                 await asyncio.sleep(0)
@@ -393,7 +394,7 @@ class FaceAnalysis:
 
                     # Translate points to original image size
                     boxes = reproject_points(boxes, scales[idx])
-                    logging.debug(landmarks.shape)
+                    logger.debug(landmarks.shape)
                     landmarks = reproject_points(landmarks, scales[idx])
                     # Crop faces from original image instead of resized to improve quality
                     if extract_ga or extract_embedding or return_face_data or detect_masks:
@@ -414,7 +415,7 @@ class FaceAnalysis:
                             faces.append(face)
 
                     t1 = time.perf_counter()
-                    logging.debug(f'Cropping {len(boxes)} faces took: {(t1 - t0) * 1000:.3f} ms.')
+                    logger.debug(f'Cropping {len(boxes)} faces took: {(t1 - t0) * 1000:.3f} ms.')
 
         # Process detected faces
         tps = time.perf_counter()
@@ -425,7 +426,7 @@ class FaceAnalysis:
                                             return_face_data=return_face_data,
                                             detect_masks=detect_masks, mask_thresh=mask_thresh))
         tpf = time.perf_counter()
-        logging.debug(colorize_log(f'Processing faces took: {(tpf - tps) * 1000:.3f} ms.', 'green'))
+        logger.debug(colorize_log(f'Processing faces took: {(tpf - tps) * 1000:.3f} ms.', 'green'))
         faces_by_img = []
         offset = 0
 
@@ -436,7 +437,7 @@ class FaceAnalysis:
 
         tf = time.perf_counter()
 
-        logging.debug(colorize_log(f'Full processing took: {(tf - ts) * 1000:.3f} ms.', 'red'))
+        logger.debug(colorize_log(f'Full processing took: {(tf - ts) * 1000:.3f} ms.', 'red'))
         return faces_by_img
 
     def __iterate_images(self, crops):
@@ -556,7 +557,7 @@ class FaceAnalysis:
                     tss = time.perf_counter()
                     _faces_dict['faces'] = list(map(_serialize, faces))
                     tsf = time.perf_counter()
-                    logging.debug(f'Serializing took: {(tsf - tss) * 1000} ms.')
+                    logger.debug(f'Serializing took: {(tsf - tss) * 1000} ms.')
                     took = time.perf_counter() - t0
                     _faces_dict['took_ms'] = took * 1000
                     _faces_dict['status'] = 'ok'

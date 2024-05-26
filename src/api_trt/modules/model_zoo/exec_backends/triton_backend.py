@@ -14,7 +14,7 @@ import tritonclient.utils.cuda_shared_memory as cudashm
 
 # from tritonclient.grpc import service_pb2, service_pb2_grpc
 import tritonclient.grpc as grpcclient
-
+from api_trt.logger import logger
 # import tritonclient.grpc.model_config_pb2 as mc
 
 
@@ -195,7 +195,7 @@ class DetectorInfer:
             print("failed to retrieve the metadata: " + str(e))
             sys.exit(1)
 
-        logging.info(model_metadata)
+        logger.info(model_metadata)
 
         try:
             model_config = self.triton_client.get_model_config(

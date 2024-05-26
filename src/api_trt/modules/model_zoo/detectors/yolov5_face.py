@@ -7,13 +7,13 @@ import cv2
 import numpy as np
 from numba import njit
 
-from .common.nms import nms
-from ..exec_backends.onnxrt_backend import DetectorInfer as DIO
-
+from api_trt.modules.model_zoo.detectors.common.nms import nms
+from api_trt.modules.model_zoo.exec_backends.onnxrt_backend import DetectorInfer as DIO
+from api_trt.logger import logger
 # Since TensorRT and pycuda are optional dependencies it might be not available
 try:
     import cupy as cp
-    from ..exec_backends.trt_backend import DetectorInfer as DIT
+    from api_trt.modules.model_zoo.exec_backends.trt_backend import DetectorInfer as DIT
 except BaseException:
     DIT = None
 
@@ -151,7 +151,7 @@ class YoloV5:
         else:
             net_outs = self.session.run(blob)
         t1 = time.time()
-        logging.debug(f'Inference cost: {(t1 - t0) * 1000:.3f} ms.')
+        logger.debug(f'Inference cost: {(t1 - t0) * 1000:.3f} ms.')
         return net_outs
 
     def _postprocess(self, net_outs, threshold=0.6):

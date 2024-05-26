@@ -1,8 +1,10 @@
-import onnx
 import math
-import os
 from typing import List
-import logging
+
+import onnx
+
+from api_trt.logger import logger
+
 
 def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
     """
@@ -51,12 +53,12 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
 
     d = model.graph.input[0].type.tensor_type.shape.dim
     d[0].dim_value = n
-    logging.debug(f"In shape: {d}")
+    logger.debug(f"In shape: {d}")
     if mode != 'arcface':
         d[2].dim_value = h
         d[3].dim_value = w
     divisor = 4
-    logging.debug(f"Mode: {mode}")
+    logger.debug(f"Mode: {mode}")
     if mode == 'yolov5-face':
         d = model.graph.output[0].type.tensor_type.shape.dim
         mx = (h * w) / 16
@@ -73,7 +75,7 @@ def reshape(model, n: int = 1, h: int = 480, w: int = 640, mode='auto'):
             if mode not in  ('arcface', 'mask_detector'):
                 d[2].dim_value = math.ceil(h / divisor)
                 d[3].dim_value = math.ceil(w / divisor)
-    logging.debug(f"Out shape: {d}")
+    logger.debug(f"Out shape: {d}")
     return model
 
 

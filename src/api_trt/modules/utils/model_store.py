@@ -9,7 +9,7 @@ import os
 import zipfile
 import glob
 
-from .download import download, check_sha1
+from api_trt.modules.utils.download import download, check_sha1
 
 _model_sha1 = {name: checksum for checksum, name in [
     ('95be21b58e29e9c1237f229dae534bd854009ce0', 'arcface_r100_v1'),
