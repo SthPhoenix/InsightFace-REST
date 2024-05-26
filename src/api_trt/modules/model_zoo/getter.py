@@ -1,28 +1,23 @@
-import os
-import logging
 import json
+import os
 from typing import List
-import traceback
+
 import onnx
 
+from api_trt.logger import logger
+from api_trt.modules.configs import Configs, config
+from api_trt.modules.converters.remove_initializer_from_input import remove_initializer_from_input
+from api_trt.modules.converters.reshape_onnx import reshape
+from api_trt.modules.model_zoo.exec_backends import onnxrt_backend as onnx_backend
 from api_trt.modules.model_zoo.face_detectors import *
 from api_trt.modules.model_zoo.face_processors import *
-
-# from api_trt.modules.converters.insight2onnx import convert_insight_model
-from api_trt.modules.converters.reshape_onnx import reshape, reshape_onnx_input
-from api_trt.modules.converters.remove_initializer_from_input import remove_initializer_from_input
-from api_trt.modules.utils.helpers import prepare_folders
 from api_trt.modules.utils.download import download
 from api_trt.modules.utils.download_google import download_from_gdrive, check_hash
-
-from api_trt.modules.configs import Configs
-from api_trt.logger import logger
-from api_trt.modules.model_zoo.exec_backends import onnxrt_backend as onnx_backend
+from api_trt.modules.utils.helpers import prepare_folders
 
 # Since TensorRT, TritonClient and PyCUDA are optional dependencies it might be not available
 try:
     from api_trt.modules.model_zoo.exec_backends import trt_backend
-    # from .exec_backends import triton_backend as triton_backend
     from api_trt.modules.converters.onnx_to_trt import convert_onnx, check_fp16
 except Exception as e:
     print(e)
@@ -94,7 +89,7 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
                     max_batch_size: int = 1,
                     force_fp16: bool = False,
                     download_model: bool = True,
-                    config: Configs = None):
+                    config: Configs = config):
     """
     Prepares the backend for a model.
 
@@ -151,7 +146,7 @@ def prepare_backend(model_name, backend_name, im_size: List[int] = None,
             remove_initializer_from_input(onnx_path, onnx_path)
         else:
             logger.error("You have requested non standard model, but haven't provided download link or "
-                          "ONNX model. Place model to proper folder and change configs.py accordingly.")
+                         "ONNX model. Place model to proper folder and change configs.py accordingly.")
             exit(1)
     if backend_name == 'triton':
         return model_name
@@ -222,8 +217,6 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
         object: An inference backend instance with a loaded model.
     """
 
-    config = Configs(models_dir=root_dir)
-
     backends = {
         'onnx': onnx_backend,
         'trt': trt_backend,
@@ -237,8 +230,8 @@ def get_model(model_name: str, backend_name: str, im_size: List[int] = None, max
 
     if model_name not in config.models.keys():
         logger.error(f"Unknown model {model_name} specified."
-                      f" Please select one of the following:\n"
-                      f"{', '.join(list(config.models.keys()))}")
+                     f" Please select one of the following:\n"
+                     f"{', '.join(list(config.models.keys()))}")
         exit(1)
 
     backend = backends[backend_name]

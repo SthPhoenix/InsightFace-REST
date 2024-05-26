@@ -3,7 +3,7 @@ import logging
 
 from api_trt.modules.utils.helpers import parse_size, tobool, validate_max_size
 from api_trt.modules.model_zoo.getter import prepare_backend
-from api_trt.modules.configs import Configs
+from api_trt.modules.configs import config
 from api_trt.settings import Settings
 from api_trt.logger import logger
 settings = Settings()
@@ -25,7 +25,7 @@ def prepare_models(root_dir: str = '/models'):
     Args:
       root_dir (str):  root_dir (str): The root directory for models. Defaults to '/models'.
     """
-    model_configs = Configs(models_dir=root_dir)
+    model_configs = config
 
     rec_name = settings.models.rec_name
     det_name = settings.models.det_name
