@@ -99,6 +99,7 @@ class TrtModel(object):
     def __init__(self, engine_file):
         self.engine_file = engine_file
         self.batch_size = 1
+        self.trt10 = False
         self.engine = None
         self.context = None
         self.stream = None
@@ -123,32 +124,56 @@ class TrtModel(object):
         if self.engine is None:
             raise RuntimeError('Unable to load the engine file')
 
+        self.trt10 = not hasattr(self.engine, "num_bindings")
         self.context = self.engine.create_execution_context()
         self.stream = cp.cuda.Stream(non_blocking=True)
 
-        self.max_batch_size = self.engine.get_profile_shape(0, 0)[2][0]
-        for binding in self.engine:
-            shape = self.engine.get_binding_shape(binding)
-            if shape[0] == -1:
-                shape = (self.max_batch_size,) + shape[1:]
 
-            size = trt.volume(shape)
-            dtype = trt.nptype(self.engine.get_binding_dtype(binding))
-            buffer = HostDeviceMem(size, dtype)
 
-            self.bindings.append(buffer.devptr)
-            if self.engine.binding_is_input(binding):
-                self.input = buffer
-                self.input_shapes.append(self.engine.get_binding_shape(binding))
-            else:
-                self.outputs.append(buffer)
-                self.out_shapes.append(self.engine.get_binding_shape(binding))
-                self.out_names.append(binding)
+        if self.trt10:
+            self.input_tensor_name = self.engine.get_tensor_name(0)
+            self.max_batch_size = self.engine.get_tensor_profile_shape(self.input_tensor_name, 0)[2][0]
+            for i in range(self.engine.num_io_tensors):
+                tensor_name = self.engine.get_tensor_name(i)
+                shape = self.engine.get_tensor_shape(tensor_name)
+                if shape[0] == -1:
+                    shape = (self.max_batch_size,) + shape[1:]
+                size =  trt.volume(shape)
+                dtype = trt.nptype(self.engine.get_tensor_dtype(tensor_name))
+                buffer = HostDeviceMem(size, dtype)
+                self.bindings.append(buffer.devptr)
+                if self.engine.get_tensor_mode(tensor_name) == trt.TensorIOMode.INPUT:
+                    self.input = buffer
+                    self.input_shapes.append(self.engine.get_tensor_shape(tensor_name))
+                else:
+                    self.outputs.append(buffer)
+                    self.out_shapes.append(self.engine.get_tensor_shape(tensor_name))
+                    self.out_names.append(tensor_name)
+        else:
+            self.max_batch_size = self.engine.get_profile_shape(0, 0)[2][0]
+            for binding in self.engine:
+                shape = self.engine.get_binding_shape(binding)
+                if shape[0] == -1:
+                    shape = (self.max_batch_size,) + shape[1:]
+
+                size = trt.volume(shape)
+                dtype = trt.nptype(self.engine.get_binding_dtype(binding))
+                buffer = HostDeviceMem(size, dtype)
+
+                self.bindings.append(buffer.devptr)
+                if self.engine.binding_is_input(binding):
+                    self.input = buffer
+                    self.input_shapes.append(self.engine.get_binding_shape(binding))
+                else:
+                    self.outputs.append(buffer)
+                    self.out_shapes.append(self.engine.get_binding_shape(binding))
+                    self.out_names.append(binding)
 
         assert self.input is not None
 
         self.start = cp.cuda.Event()
         self.end = cp.cuda.Event()
+
 
     def __del__(self):
         """
@@ -173,6 +198,7 @@ class TrtModel(object):
         Returns:
             list or dict: A list of output tensors or a dictionary with names as keys, depending on the value of `as_dict`.
         """
+
         if not from_device:
             allocate_place = np.prod(input.shape)
             with self.stream:
@@ -180,10 +206,25 @@ class TrtModel(object):
                 self.input.device[:allocate_place] = cp.asarray(input, order='C').flatten()
                 infer_shape = g_img.shape
 
-        self.context.set_binding_shape(0, infer_shape)
+
+        if self.trt10:
+            self.context.set_input_shape(self.engine.get_tensor_name(0), infer_shape)
+        else:
+            self.context.set_binding_shape(0, infer_shape)
 
         self.start.record(self.stream)
-        self.context.execute_async_v2(bindings=self.bindings, stream_handle=self.stream.ptr)
+
+
+        if self.trt10:
+            # Setup tensor address
+            for i in range(self.engine.num_io_tensors):
+                self.context.set_tensor_address(self.engine.get_tensor_name(i), self.bindings[i])
+
+        # Run inference
+        if self.trt10:
+            self.context.execute_async_v3(stream_handle=self.stream.ptr)
+        else:
+            self.context.execute_async_v2(bindings=self.bindings, stream_handle=self.stream.ptr)
 
         for out in self.outputs:
             out.copy_dtoh_async(self.stream)

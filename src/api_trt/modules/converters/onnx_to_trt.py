@@ -41,8 +41,12 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
         else:
             logger.warning('Building engine in FP32 mode.')
 
-        config.max_workspace_size = max_workspace * 1024 * 1024
+        trt10 = not hasattr(config, 'max_workspace_size')
 
+        if trt10:
+            config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, max_workspace * 1024 * 1024)
+        else:
+            config.max_workspace_size = max_workspace * 1024 * 1024
         if not parser.parse(input_onnx):
             print('ERROR: Failed to parse the ONNX')
             for error in range(parser.num_errors):
@@ -62,8 +66,10 @@ def _build_engine_onnx(input_onnx: Union[str, bytes], force_fp16: bool = False, 
         input_name = input.name
         profile.set_shape(input_name, min_opt_shape, min_opt_shape, max_shape)
         config.add_optimization_profile(profile)
-
-        return builder.build_engine(network, config=config)
+        if trt10:
+            return builder.build_serialized_network(network, config), trt10
+        else:
+            return builder.build_engine(network, config=config), trt10
 
 
 def check_fp16():
@@ -100,10 +106,13 @@ def convert_onnx(input_onnx: Union[str, bytes], engine_file_path: str, force_fp1
     elif isinstance(input_onnx, bytes):
         onnx_obj = input_onnx
 
-    engine = _build_engine_onnx(input_onnx=onnx_obj,
+    engine, trt10 = _build_engine_onnx(input_onnx=onnx_obj,
                                 force_fp16=force_fp16, max_batch_size=max_batch_size)
 
     assert not isinstance(engine, type(None))
 
     with open(engine_file_path, "wb") as f:
-        f.write(engine.serialize())
+        if trt10:
+            f.write(engine)
+        else:
+            f.write(engine.serialize())
