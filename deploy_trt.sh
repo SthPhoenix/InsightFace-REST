@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.8.3.0'
+TAG='v0.9.0.0'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -124,7 +124,7 @@ for i in $(seq 0 $(($n_gpu - 1)) ); do
         -e DEF_EXTRACT_EMBEDDING=$extract_embeddings\
         -e DEF_EXTRACT_GA=$detect_ga\
         -v $PWD/models:/models\
-        -v $PWD/src/api_trt:/app\
+        -v $PWD/src:/app\
         --health-cmd='curl -f http://localhost:18080/info || exit 1'\
         --health-interval=1m\
         --health-timeout=10s\

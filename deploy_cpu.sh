@@ -1,7 +1,7 @@
 #! /bin/bash
 
 IMAGE='insightface-rest'
-TAG='v0.8.3.0-cpu'
+TAG='v0.9.0.0-cpu'
 
 # Change InsightFace-REST logging level (DEBUG,INFO,WARNING,ERROR)
 log_level=INFO
@@ -100,7 +100,7 @@ docker run  -p $START_PORT:18080\
     -e DEF_EXTRACT_EMBEDDING=$extract_embeddings\
     -e DEF_EXTRACT_GA=$detect_ga\
     -v $PWD/models:/models\
-    -v $PWD/src/api_trt:/app\
+    -v $PWD/src:/app\
     --health-cmd='curl -f http://localhost:18080/info || exit 1'\
     --health-interval=1m\
     --health-timeout=10s\
