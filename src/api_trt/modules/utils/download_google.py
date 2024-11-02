@@ -39,20 +39,26 @@ def check_hash(filename, hash, algo='md5'):
     return hasher.hexdigest()[0:l] == hash[0:l]
 
 
-
 # Script taken from https://stackoverflow.com/a/39225039
 def download_from_gdrive(id, destination):
     URL = "https://docs.google.com/uc?export=download"
+
     def get_confirm_token(response):
         for key, value in response.cookies.items():
             if key.startswith('download_warning'):
-                return value
+                return {"confirm": value}
 
         if 'text/html' in response.headers['Content-Type']:
             m = re.search('.*confirm=([^\"]*)', response.text, re.M)
             if m and m.groups():
-                return m.groups()[0]
-
+                return {"confirm": m.groups()[0]}
+            else:
+                params = {}
+                matches = re.findall('<input type=\"hidden\" name=\"(?P<name>[^\"]*)\" value=\"(?P<value>[^\"]*)\".*?>',
+                                     response.text, re.M)
+                for match in matches:
+                    params[match[0]] = match[1]
+                return params
         return None
 
     def save_response_content(response, destination):
@@ -76,16 +82,17 @@ def download_from_gdrive(id, destination):
                                   total=int(total_length / 1024. + 0.5),
                                   unit='KB', unit_scale=False, dynamic_ncols=True):
                     f.write(chunk)
+
     session = requests.Session()
     response = session.get(URL, params={'id': id}, stream=True)
     token = get_confirm_token(response)
-
     if token:
-        params = {'id': id, 'confirm': token}
+        if len(token) > 1:
+            URL = 'https://drive.usercontent.google.com/download'
+        token['id'] = id
         headers = {'Range': 'bytes=0-'}
-        response = session.get(URL, params=params, headers=headers, stream=True)
+        response = session.get(URL, params=token, headers=headers, stream=True)
 
     if response.status_code not in (200, 206):
         raise RuntimeError(f"Failed downloading file {id}")
-
     save_response_content(response, destination)
