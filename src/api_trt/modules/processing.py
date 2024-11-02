@@ -121,7 +121,7 @@ class Processing:
         logger.debug(f'Reading images took: {took_loading * 1000:.3f} ms.')
 
         if embed_only:
-            _faces_dict = self.model.embed_crops(images,
+            _faces_dict = await self.model.embed_crops(images,
                                                  extract_embedding=extract_embedding,
                                                  extract_ga=extract_ga,
                                                  detect_masks=detect_masks)

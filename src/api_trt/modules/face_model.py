@@ -454,7 +454,7 @@ class FaceAnalysis:
                 face = face.get('data')
                 yield face
 
-    def embed_crops(self,
+    async def embed_crops(self,
                     images,
                     extract_embedding: bool = True,
                     extract_ga: bool = True,
