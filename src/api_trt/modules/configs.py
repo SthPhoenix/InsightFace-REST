@@ -53,5 +53,8 @@ class Configs(object):
     def get_dl_type(self, model_name):
         return self.models.get(model_name, {}).get('dl_type')
 
+    def get_function(self, model_name):
+        return self.models.get(model_name, {}).get('function')
+
 
 config = Configs()
