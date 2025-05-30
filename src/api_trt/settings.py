@@ -3,10 +3,10 @@ from typing import Union, Optional, List
 from pydantic.v1.env_settings import BaseSettings
 from pydantic.v1.validators import str_validator
 
-
 headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:126.0) Gecko/20100101 Firefox/126.0'
 }
+
 
 def empty_to_none(v: str) -> Optional[str]:
     if v == '' or v.lower() == "none":
@@ -43,6 +43,7 @@ class Defaults(BaseSettings):
     detect_masks: bool = False
     det_thresh: float = 0.6
     img_req_headers: dict = headers
+    sslv3_hack: bool = False
 
     class Config:
         env_prefix = 'DEF_'
