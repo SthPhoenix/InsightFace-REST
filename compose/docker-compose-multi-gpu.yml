@@ -4,14 +4,15 @@ services:
   ifr-trt-gpu0:
     image: insightface-rest:${IFR_VERSION}
     build:
-      context: ../src
-      dockerfile: ../src/Dockerfile_trt
+      context: ../
+      dockerfile: dockerfiles/Dockerfile_trt
     hostname: ifr
     env_file:
       - .env
     volumes:
       - ../models:/models
-      - ../src:/app
+      - ../if_rest:/app/if_rest
+      - ../entrypoint.sh:/app/entrypoint.sh
     deploy:
       resources:
         reservations:
@@ -29,14 +30,15 @@ services:
   ifr-trt-gpu1:
     image: insightface-rest:${IFR_VERSION}
     build:
-      context: ../src
-      dockerfile: ../src/Dockerfile_trt
+      context: ../
+      dockerfile: dockerfiles/Dockerfile_trt
     hostname: ifr
     env_file:
       - .env
     volumes:
       - ../models:/models
-      - ../src:/app
+      - ../if_rest:/app/if_rest
+      - ../entrypoint.sh:/app/entrypoint.sh
     deploy:
       resources:
         reservations:

@@ -1,0 +1,30 @@
+FROM python:3.8-slim
+
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+ENV PIP_INSTALL="python -m pip --no-cache-dir install --upgrade"
+
+RUN apt-get update &&\
+    apt-get install -y\
+            libgl1-mesa-glx \
+            protobuf-compiler \
+            libprotoc-dev \
+            libb64-0d \
+            libglib2.0-0 \
+            libgomp1 \
+            gcc \
+            curl  \
+            libturbojpeg0 \
+            git &&\
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN $PIP_INSTALL -r requirements.txt
+
+WORKDIR /app
+COPY if_rest /app/if_rest
+COPY entrypoint.sh /app/entrypoint.sh
+
+
+ENTRYPOINT [ "bash" ]
+CMD ["entrypoint.sh"]

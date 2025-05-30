@@ -4,7 +4,8 @@ x-base_service: &base_service
     hostname: ifr
     volumes:
       - &models ../models:/models
-      - &app ../src/:/app
+      - &app ../if_rest:/app/if_rest
+      - &entrypoint ../entrypoint.sh:/app/entrypoint.sh
       - &v_nginx ../misc/nginx_conf/conf.d:/etc/nginx/conf.d
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:18080/health" ]
@@ -13,21 +14,21 @@ x-base_service: &base_service
       retries: 3
       start_period: 30s
 
-
 services:
   ifr-trt-gpu0:
     <<: *base_service
     profiles: ['gpu', 'mgpu']
     image: insightface-rest:${IFR_VERSION}
     build:
-      context: ../src
-      dockerfile: ../src/Dockerfile_trt
+      context: ../
+      dockerfile: dockerfiles/Dockerfile_trt
     ports:
       - "18081:18080"
     env_file:
       - .env
     volumes:
       - *app
+      - *entrypoint
       - *models
     deploy:
       resources:
@@ -42,12 +43,13 @@ services:
     profiles: ['mgpu']
     image: insightface-rest:${IFR_VERSION}
     build:
-      context: ../src
-      dockerfile: ../src/Dockerfile_trt
+      context: ../
+      dockerfile: dockerfiles/Dockerfile_trt
     env_file:
       - .env
     volumes:
       - *app
+      - *entrypoint
       - *models
     deploy:
       resources:
@@ -63,14 +65,15 @@ services:
     profiles: ['cpu']
     image: insightface-rest:${IFR_VERSION}-cpu
     build:
-      context: ../src
-      dockerfile: ../src/Dockerfile_cpu
+      context: ../
+      dockerfile: dockerfiles/Dockerfile_cpu
     ports:
       - "18081:18080"
     env_file:
       - cpu.env
     volumes:
       - *app
+      - *entrypoint
       - *models
 
   nginx:

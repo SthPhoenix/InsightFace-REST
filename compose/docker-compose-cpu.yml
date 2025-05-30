@@ -2,14 +2,15 @@ services:
   ifr-cpu:
     image: insightface-rest-cpu:${IFR_VERSION}
     build:
-      context: ../src
-      dockerfile: ../src/Dockerfile_cpu
+      context: ../
+      dockerfile: dockerfiles/Dockerfile_cpu
     hostname: ifr
     env_file:
       - cpu.env
     volumes:
       - ../models:/models
-      - ../src:/app
+      - ../if_rest:/app/if_rest
+      - ../entrypoint.sh:/app/entrypoint.sh
     ports:
       - 18081:18080
 
