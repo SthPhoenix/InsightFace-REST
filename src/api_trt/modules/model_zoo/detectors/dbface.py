@@ -1,25 +1,23 @@
 from __future__ import division
-import numpy as np
-import cv2
+
 import time
-import logging
 from typing import Union
+
+import numpy as np
 from numba import njit
 
-from api_trt.modules.model_zoo.detectors.common.nms import nms
-from api_trt.modules.model_zoo.exec_backends.onnxrt_backend import DetectorInfer as DIO
 from api_trt.logger import logger
-# Since TensorRT and pycuda are optional dependencies it might be not available
-try:
-    from api_trt.modules.model_zoo.exec_backends.trt_backend import DetectorInfer as DIT
-except:
-    DIT = None
+from api_trt.modules.model_zoo.detectors.abstract import AbstractDetector
+from api_trt.modules.model_zoo.detectors.common.nms import nms
+from api_trt.modules.model_zoo.exec_backends.abstract import AbstractDetectorInfer
+
 
 
 @njit()
 def _exp(v):
     gate: int = 1
     base = np.exp(1)
+
     def a(v):
         if abs(v) < gate:
             return v * base
@@ -55,6 +53,7 @@ def get_topk_score_indices(hm_pool, hm, k):
     scores = ary[indices]
     return scores, indices
 
+
 @njit()
 def bx_lm(box, landmark, scores, threshold, xs, ys):
     size = xs.shape[0]
@@ -82,15 +81,15 @@ def prepare_image(img):
     mean = np.array([0.408, 0.447, 0.47], dtype=np.float32)
     std = np.array([0.289, 0.274, 0.278], dtype=np.float32)
     img = ((img / 255.0 - mean) / std).astype(np.float32)
-    #img = ((img / 255.0)).astype(np.float32)
+    # img = ((img / 255.0)).astype(np.float32)
     img = img.transpose((2, 0, 1))
     img = np.expand_dims(img, 0)
 
     return img
 
 
-class DBFace(object):
-    def __init__(self, inference_backend: Union[DIT, DIO], landmarks=True):
+class DBFace(AbstractDetector):
+    def __init__(self, inference_backend: AbstractDetectorInfer, landmarks=True):
         self.landmarks = landmarks
         self.net = inference_backend
         self.masks = False
@@ -133,15 +132,14 @@ class DBFace(object):
 
         boxes, landmarks = bx_lm(box, landmark, scores, threshold, xs, ys)
 
-        #tn0 = time.time()
+        # tn0 = time.time()
         boxes = np.asarray(boxes, dtype=np.float32)
         keep = nms(boxes, self.nms_threshold)
         boxes = boxes[keep, :]
         lms = np.asarray(landmarks, dtype=np.float32)
         lms = lms[keep, :]
-        #tn1 = time.time()
-        #logger.debug(f"NMS took: {tn1 - tn0} ({1 / (tn1 - tn0)} im/sec)")
+        # tn1 = time.time()
+        # logger.debug(f"NMS took: {tn1 - tn0} ({1 / (tn1 - tn0)} im/sec)")
         t1 = time.time()
         logger.debug(f"DBFace postprocess took: {t1 - t0}")
         return boxes, lms
-

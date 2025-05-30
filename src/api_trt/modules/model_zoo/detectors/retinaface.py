@@ -1,18 +1,16 @@
 from __future__ import division
-import numpy as np
-import cv2
+
 import time
-import logging
 from typing import Union
 
-from api_trt.modules.model_zoo.detectors.common.nms import nms
-from api_trt.modules.model_zoo.exec_backends.onnxrt_backend import DetectorInfer as DIO
+import cv2
+import numpy as np
+
 from api_trt.logger import logger
-# Since TensorRT and pycuda are optional dependencies it might be not available
-try:
-    from api_trt.modules.model_zoo.exec_backends.trt_backend import DetectorInfer as DIT
-except:
-    DIT = None
+from api_trt.modules.model_zoo.detectors.abstract import AbstractDetector
+from api_trt.modules.model_zoo.detectors.common.nms import nms
+from api_trt.modules.model_zoo.exec_backends.abstract import AbstractDetectorInfer
+
 
 def _whctrs(anchor):
     """
@@ -210,10 +208,10 @@ def landmark_pred(boxes, landmark_deltas):
     return pred
 
 
-class RetinaFace:
-    def __init__(self, inference_backend: Union[DIO, DIT], rac='net3l', masks: bool =False, **kwargs):
+class RetinaFace(AbstractDetector):
+    def __init__(self, inference_backend: AbstractDetectorInfer, rac='net3l', masks: bool = False, **kwargs):
         self.rac = rac
-        self.masks=masks
+        self.masks = masks
         self.model = inference_backend
         self.input_shape = (1, 3, 480, 640)
 
@@ -258,7 +256,7 @@ class RetinaFace:
     def detect(self, imgs: Union[list, tuple], threshold: float = 0.6):
 
         if not isinstance(imgs, tuple):
-                imgs = (imgs)
+            imgs = (imgs)
 
         det_list = []
         lmk_list = []
@@ -269,7 +267,7 @@ class RetinaFace:
             t0 = time.time()
             net_out = self.model.run(input_blob)
             t1 = time.time()
-            logger.debug(f"Inference took: {(t1 - t0)*1000:.3f} ms.")
+            logger.debug(f"Inference took: {(t1 - t0) * 1000:.3f} ms.")
             det, landmarks = self.postprocess(net_out, threshold)
             det_list.append(det)
             lmk_list.append(landmarks)
@@ -332,8 +330,8 @@ class RetinaFace:
 
             if self.masks:
                 type_scores = net_out[idx + 2]
-                mask_scores = type_scores[:, A*2:, :, :]
-                mask_scores = clip_pad(mask_scores,(height, width))
+                mask_scores = type_scores[:, A * 2:, :, :]
+                mask_scores = clip_pad(mask_scores, (height, width))
                 mask_scores = mask_scores.transpose((0, 2, 3, 1)).reshape((-1, 1))
                 mask_scores = mask_scores[order]
                 mask_scores_list.append(mask_scores)
@@ -378,5 +376,5 @@ class RetinaFace:
         if self.use_landmarks:
             landmarks = landmarks[keep]
         t1 = time.time()
-        logger.debug(f"Postprocess took: {(t1 - t0)*1000:.3f} ms.")
+        logger.debug(f"Postprocess took: {(t1 - t0) * 1000:.3f} ms.")
         return det, landmarks

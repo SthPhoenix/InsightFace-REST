@@ -1,21 +1,19 @@
 import time
-from typing import Union
-from functools import wraps
-import logging
 
 import cv2
 import numpy as np
 from numba import njit
 
-from api_trt.modules.model_zoo.detectors.common.nms import nms
-from api_trt.modules.model_zoo.exec_backends.onnxrt_backend import DetectorInfer as DIO
 from api_trt.logger import logger
+from api_trt.modules.model_zoo.detectors.abstract import AbstractDetector
+from api_trt.modules.model_zoo.detectors.common.nms import nms
+from api_trt.modules.model_zoo.exec_backends.abstract import AbstractDetectorInfer
+
 # Since TensorRT and pycuda are optional dependencies it might be not available
 try:
     import cupy as cp
-    from api_trt.modules.model_zoo.exec_backends.trt_backend import DetectorInfer as DIT
 except BaseException:
-    DIT = None
+    pass
 
 
 @njit(cache=True, fastmath=True)
@@ -26,6 +24,7 @@ def xywh2xyxy(x):
     x[:, 2] = x[:, 0] + x[:, 2]  # bottom right x
     x[:, 3] = x[:, 1] + x[:, 3]  # bottom right y
     return x
+
 
 @njit(cache=True, fastmath=True)
 def _filter(dets, threshold, nms_threshold):
@@ -40,6 +39,7 @@ def _filter(dets, threshold, nms_threshold):
     lmks = lmks[keep, :]
     lmks = lmks.reshape((lmks.shape[0], -1, 2))
     return det_out, lmks
+
 
 def _normalize_on_device(input, stream, out):
     """
@@ -61,9 +61,9 @@ def _normalize_on_device(input, stream, out):
     return g_img.shape
 
 
-class YoloV5:
+class YoloV5(AbstractDetector):
 
-    def __init__(self, inference_backend: Union[DIT, DIO]):
+    def __init__(self, inference_backend: AbstractDetectorInfer):
         self.session = inference_backend
         self.nms_threshold = 0.4
         self.masks = False
@@ -71,7 +71,7 @@ class YoloV5:
         self.stream = None
         self.input_ptr = None
 
-    def prepare(self, nms_treshold: float = 0.4, **kwargs):
+    def prepare(self, nms_threshold: float = 0.4, **kwargs):
         """
         Read network params and populate class parameters
 
@@ -79,7 +79,7 @@ class YoloV5:
 
         """
 
-        self.nms_threshold = nms_treshold
+        self.nms_threshold = nms_threshold
         self.session.prepare()
         self.out_shapes = self.session.out_shapes
         self.input_shape = self.session.input_shape
@@ -168,12 +168,9 @@ class YoloV5:
         kpss_list = []
 
         for i in range(batch_size):
-
             dets = net_outs[0][i]
             det_out, lmks = _filter(dets, threshold, self.nms_threshold)
             dets_list.append(det_out)
             kpss_list.append(lmks)
 
         return dets_list, kpss_list
-
-

@@ -4,26 +4,25 @@
 
 
 from __future__ import division
+
 import time
-from typing import Union
 from functools import wraps
-import logging
 
 import cv2
 import numpy as np
 from numba import njit
 
-from api_trt.modules.model_zoo.detectors.common.nms import nms
-from api_trt.modules.model_zoo.exec_backends.onnxrt_backend import DetectorInfer as DIO
 from api_trt.logger import logger
+from api_trt.modules.model_zoo.detectors.abstract import AbstractDetector
+from api_trt.modules.model_zoo.detectors.common.nms import nms
+from api_trt.modules.model_zoo.exec_backends.abstract import AbstractDetectorInfer
+
 # Since TensorRT and pycuda are optional dependencies it might be not available
 try:
     import cupy as cp
-    from api_trt.modules.model_zoo.exec_backends.trt_backend import DetectorInfer as DIT
 except BaseException:
     DIT = None
 
-import asyncio
 
 def timing(f):
     @wraps(f)
@@ -146,9 +145,9 @@ def _normalize_on_device(input, stream, out):
     return g_img.shape
 
 
-class SCRFD:
+class SCRFD(AbstractDetector):
 
-    def __init__(self, inference_backend: Union[DIT, DIO], ver=1):
+    def __init__(self, inference_backend: AbstractDetectorInfer, ver=1):
         self.session = inference_backend
         self.center_cache = {}
         self.nms_threshold = 0.4
@@ -162,14 +161,14 @@ class SCRFD:
         self.stream = None
         self.input_ptr = None
 
-    def prepare(self, nms_treshold: float = 0.4, **kwargs):
+    def prepare(self, nms_threshold: float = 0.4, **kwargs):
         """
         Read network params and populate class parameters
 
         :param nms_treshold: Threshold for NMS IoU
 
         """
-        self.nms_threshold = nms_treshold
+        self.nms_threshold = nms_threshold
         self.session.prepare()
         self.out_shapes = self.session.out_shapes
         self.input_shape = self.session.input_shape
@@ -337,8 +336,6 @@ class SCRFD:
         :param anchor_centers: Precomputed anchor centers for all strides
         :return: filtered bboxes, keypoints and scores
         """
-
-
 
         batch_size = self.infer_shape[0]
         bboxes_by_img = []

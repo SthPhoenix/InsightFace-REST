@@ -1,21 +1,17 @@
 import time
-import numpy as np
-import logging
-
-from api_trt.modules.model_zoo.detectors.common.nms import nms
 from typing import Union
-from api_trt.modules.model_zoo.exec_backends.onnxrt_backend import DetectorInfer as DIO
+
+import numpy as np
+
 from api_trt.logger import logger
-# Since TensorRT and pycuda are optional dependencies it might be not available
-try:
-    from api_trt.modules.model_zoo.exec_backends.trt_backend import DetectorInfer as DIT
-except:
-    DIT = None
+from api_trt.modules.model_zoo.detectors.abstract import AbstractDetector
+from api_trt.modules.model_zoo.detectors.common.nms import nms
+from api_trt.modules.model_zoo.exec_backends.abstract import AbstractDetectorInfer
 
 
 
-class CenterFace(object):
-    def __init__(self, inference_backend: Union[DIT, DIO], landmarks=True):
+class CenterFace(AbstractDetector):
+    def __init__(self, inference_backend: AbstractDetectorInfer, landmarks=True):
         self.landmarks = True
         self.net = inference_backend
         self.nms_threshold = 0.3
@@ -44,7 +40,7 @@ class CenterFace(object):
             t0 = time.time()
             heatmap, scale, offset, lms = self.net.run(blob)
             t1 = time.time()
-            logger.debug(f"Inference took: {(t1 - t0)*1000:.3f} ms.")
+            logger.debug(f"Inference took: {(t1 - t0) * 1000:.3f} ms.")
             det, landmarks = self.postprocess(heatmap, lms, offset, scale, (h, w), threshold)
             det_list.append(det)
             lmk_list.append(landmarks)
@@ -66,7 +62,7 @@ class CenterFace(object):
             if self.landmarks:
                 lms = np.empty(shape=[0, 10], dtype=np.float32)
         t1 = time.time()
-        logger.debug(f"Postprocess took: {(t1 - t0)*1000:.3f} ms.")
+        logger.debug(f"Postprocess took: {(t1 - t0) * 1000:.3f} ms.")
 
         if self.landmarks:
             return dets, lms
