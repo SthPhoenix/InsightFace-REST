@@ -6,6 +6,12 @@ x-base_service: &base_service
       - &models ../models:/models
       - &app ../src/:/app
       - &v_nginx ../misc/nginx_conf/conf.d:/etc/nginx/conf.d
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:18080/health" ]
+      interval: 300s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 
 services:
