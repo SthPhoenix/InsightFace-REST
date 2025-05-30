@@ -47,6 +47,11 @@ in official DeepInsight InsightFace
    ```bash
    cd InsightFace-REST/compose
    ```
+   
+3. Copy `example.env` to `.env`, modify configs if needed:
+   ```bash
+   cp example.env .env
+   ```
 
 3. Build image:
    ```bash
