@@ -11,10 +11,10 @@ import numpy as np
 from numpy.linalg import norm
 
 from api_trt.logger import logger
-from api_trt.modules.utils.image_provider import resize_image
 from api_trt.modules.model_zoo.getter import get_model
 from api_trt.modules.utils import fast_face_align as face_align
 from api_trt.modules.utils.helpers import to_chunks, colorize_log, validate_max_size
+from api_trt.modules.utils.image_provider import resize_image
 
 Face = collections.namedtuple("Face", ['bbox', 'landmark', 'det_score', 'embedding', 'gender', 'age', 'embedding_norm',
                                        'normed_embedding', 'facedata', 'scale', 'num_det', 'mask', 'mask_probs'])
@@ -455,11 +455,11 @@ class FaceAnalysis:
                 yield face
 
     async def embed_crops(self,
-                    images,
-                    extract_embedding: bool = True,
-                    extract_ga: bool = True,
-                    detect_masks: bool = False,
-                    **kwargs):
+                          images,
+                          extract_embedding: bool = True,
+                          extract_ga: bool = True,
+                          detect_masks: bool = False,
+                          **kwargs):
         """
         Embed a list of already cropped 112x112 images using the FaceAnalysis model.
 
@@ -488,8 +488,11 @@ class FaceAnalysis:
                 else:
                     _face_dict = serialize_face(_face_dict=next(faces), return_face_data=False,
                                                 return_landmarks=False)
+                    _face_dict['bbox'] = [0, 0, 112, 112]
+                    _face_dict['size'] = 112
+                    _face_dict['prob'] = 1.
                     _face_dict['status'] = 'ok'
-                output['data'].append(_face_dict)
+                output['data'].append({"status": "ok", "took_ms": 0, "faces": [_face_dict]})
         except Exception as e:
             tb = traceback.format_exc()
             print(tb)
