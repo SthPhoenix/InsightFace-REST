@@ -30,27 +30,33 @@ in official DeepInsight InsightFace
     - ONNX Runtime for CPU inference
 - 📈 **Optimized Postprocessing**: 2x faster SCRFD implementation
 
-## Contents
+## Prerequisites
 
-[List of supported models](#list-of-supported-models)
+1. **Docker** (latest stable version)
+2. **NVIDIA Container Toolkit**
+3. **NVIDIA GPU Drivers** (535 or newer)
+4. Compatible NVIDIA GPU (for GPU acceleration)
 
-- [Detection](#detection)
-- [Recognition](#recognition)
-- [Other](#other)
+## Quick Start with Docker
 
-[Prerequesites](#prerequesites)
+1. Clone repository:
+   ```bash
+    git clone https://github.com/SthPhoenix/InsightFace-REST
+    cd InsightFace-REST
+   ```
+2. Move to `compose` dir:
+   ```bash
+   cd InsightFace-REST/compose
+   ```
 
-[Running with Docker](#running-with-docker)
+3. Run docker compose:
+   ```bash
+   docker compose up
+   ```
+4. Access API documentation: http://localhost:18081/docs
 
-[API usage](#api-usage)
+For other deployment options refer to [README.md](https://github.com/SthPhoenix/InsightFace-REST/blob/master/compose/README.md) in `compose` directory.
 
-- [/extract](#extract-endpoint)
-
-[Work in progress](#work-in-progress)
-
-[Known issues](#known-issues)
-
-[Changelog](#changelog)
 
 ## List of supported models:
 
@@ -188,32 +194,6 @@ improve performance.
 
 [dl26]: https://drive.google.com/file/d/1dgMFOASKnaujQcCL4sSYkKOkBrmXUUU1/view?usp=sharing
 
-## Prerequisites
-
-1. **Docker** (latest stable version)
-2. **NVIDIA Container Toolkit**
-3. **NVIDIA GPU Drivers** (535 or newer)
-4. Compatible NVIDIA GPU (for GPU acceleration)
-
-## Quick Start with Docker
-
-1. Clone repository:
-   ```bash
-    git clone https://github.com/SthPhoenix/InsightFace-REST
-    cd InsightFace-REST
-   ```
-2. Move to `compose` dir:
-   ```bash
-   cd InsightFace-REST/compose
-   ```
-
-3. Run docker compose:
-   ```bash
-   docker compose up
-   ```
-4. Access API documentation: http://localhost:18081/docs
-
-For other deployment options refer to [README.md](https://github.com/SthPhoenix/InsightFace-REST/blob/master/compose/README.md) in `compose` directory.
 
 ## API usage:
 
