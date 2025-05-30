@@ -34,10 +34,10 @@ def to_chunks(iterable, size=10):
         yield chain([first], islice(iterator, size - 1))
 
 
-def file2base64(path):
+def read_image(path):
     with open(path, mode='rb') as fl:
-        encoded = base64.b64encode(fl.read()).decode('ascii')
-        return encoded
+        data = fl.read()
+        return data
 
 
 def save_crop(data, name):
@@ -103,6 +103,8 @@ class IFRClient:
         extract_uri = f'{server}/extract'
 
         if mode == 'data':
+            if not use_msgpack:
+                data = [base64.b64encode(image).decode('ascii') for image in data]
             images = dict(data=data)
         elif mode == 'paths':
             images = dict(urls=data)
@@ -115,11 +117,15 @@ class IFRClient:
                    return_landmarks=return_landmarks,
                    embed_only=embed_only,  # If set to true API expects each image to be 112x112 face crop
                    limit_faces=limit_faces,  # Limit maximum number of processed faces, 0 = no limit
-                   use_rotation=True,
                    msgpack=use_msgpack,
                    )
 
-        resp = self.sess.post(extract_uri, json=req, timeout=120)
+        if use_msgpack:
+            resp = self.sess.post(extract_uri, data=msgpack.dumps(req), timeout=120,
+                                  headers={'content-type': 'application/msgpack', 'accept': 'application/x-msgpack'})
+        else:
+            resp = self.sess.post(extract_uri, json=req, timeout=120)
+
         if resp.headers['content-type'] == 'application/x-msgpack':
             content = msgpack.loads(resp.content)
         else:
@@ -190,14 +196,14 @@ if __name__ == "__main__":
             files = ['test_images/Stallone.jpg']
         print(f'No data directory provided. Using `{files[0]}` for testing.')
     else:
-        files = glob.glob(os.path.join(args.dir, '*/*.*'))
+        files = glob.glob(os.path.join(args.dir, '*.*'))
         files = [file for file in files if os.path.splitext(file)[1].lower() in allowed_ext]
         if args.dir.startswith('src/api_trt/'):
             files = [file.replace('src/api_trt/', '') for file in files]
         else:
             print('Images will be sent in base64 encoding')
             mode = 'data'
-            files = [file2base64(file) for file in files]
+            files = [read_image(file, ) for file in files]
 
     print(f"Total files detected: {len(files)}")
     total = len(files)
