@@ -1,11 +1,15 @@
 import os
+import time
+
+import cupy as cp
 import cv2
 import numpy as np
-import logging
-import cupy as cp
-import time
-from api_trt.modules.model_zoo.exec_backends.trt_loader import TrtModel
+
 from api_trt.logger import logger
+from api_trt.modules.model_zoo.exec_backends.abstract import AbstractArcFace, AbstractFaceGenderAge, \
+    AbstractMaskDetection, AbstractDetectorInfer
+from api_trt.modules.model_zoo.exec_backends.trt_loader import TrtModel
+
 
 def _normalize_on_device(input, stream, out, mean=0., std=1., swapRB=True):
     """
@@ -54,7 +58,7 @@ def _normalize_on_device_masks(input, stream, out):
     return g_img.shape
 
 
-class Arcface:
+class Arcface(AbstractArcFace):
     """
     Class for performing face recognition using an ArcFace model loaded from a TensorRT engine.
 
@@ -78,6 +82,7 @@ class Arcface:
         prepare(): Warm up the ArcFace TensorRT engine by running a dummy inference.
         get_embedding(face_img): Get the embedding vector for a given face image.
     """
+
     def __init__(self, rec_name: str = '/models/trt-engines/arcface_r100_v1/arcface_r100_v1.plan',
                  input_mean: float = 0.,
                  input_std: float = 1.,
@@ -87,7 +92,7 @@ class Arcface:
         self.input_mean = input_mean
         self.input_std = input_std
         self.input_shape = None
-        self.swapRB=swapRB
+        self.swapRB = swapRB
         self.max_batch_size = 1
         self.stream = None
         self.input_ptr = None
@@ -130,11 +135,11 @@ class Arcface:
 
         embeddings = self.rec_model.run(deflatten=True, from_device=True, infer_shape=infer_shape)[0]
         took = time.perf_counter() - t0
-        logger.debug(f'Rec inference cost: {took*1000:.3f} ms.')
+        logger.debug(f'Rec inference cost: {took * 1000:.3f} ms.')
         return embeddings
 
 
-class FaceGenderage:
+class FaceGenderage(AbstractFaceGenderAge):
     """
     Class for performing gender and age estimation using a GenderAge model loaded from a TensorRT engine.
 
@@ -149,6 +154,7 @@ class FaceGenderage:
         prepare(): Warm up the GenderAge TensorRT engine by running a dummy inference.
         get(face_img): Get the gender and age for a given face image.
     """
+
     def __init__(self, rec_name: str = '/models/trt-engines/genderage_v1/genderage_v1.plan', **kwargs):
         self.rec_model = TrtModel(rec_name)
         self.input_shape = None
@@ -202,7 +208,7 @@ class FaceGenderage:
         return _ga
 
 
-class MaskDetection:
+class MaskDetection(AbstractMaskDetection):
     """
     Class for performing mask detection using a Mask Detection model loaded from a TensorRT engine.
 
@@ -217,6 +223,7 @@ class MaskDetection:
         prepare(): Warm up the mask detection TensorRT engine by running a dummy inference.
         get(face_img): Get the mask and no-mask probabilities for a given face image.
     """
+
     def __init__(self, rec_name: str = '/models/trt-engines/mask_detection/mask_detection.plan', **kwargs):
         self.rec_model = TrtModel(rec_name)
         self.input_shape = None
@@ -270,7 +277,7 @@ class MaskDetection:
         return _mask
 
 
-class DetectorInfer:
+class DetectorInfer(AbstractDetectorInfer):
     """
     Class for performing face detection using a detector model loaded from a TensorRT engine.
 
@@ -290,6 +297,7 @@ class DetectorInfer:
         prepare(): Warm up the face detector TensorRT engine by running a dummy inference.
         run(input=None, from_device=False, infer_shape=None): Run the detector on input images and return the results.
     """
+
     def __init__(self, model='/models/trt-engines/centerface/centerface.plan',
                  output_order=None, **kwargs):
 

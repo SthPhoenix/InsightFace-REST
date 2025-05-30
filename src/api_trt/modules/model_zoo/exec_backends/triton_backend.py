@@ -1,20 +1,20 @@
-import numpy as np
 import cv2
 import os
 import sys
-import argparse
+
+import cv2
 import numpy as np
-import logging
-
-# import tritonclient.http as httpclient
-from tritonclient.utils import triton_to_np_dtype
-from tritonclient.utils import InferenceServerException
-# import tritonclient.utils.shared_memory as shm
-import tritonclient.utils.cuda_shared_memory as cudashm
-
 # from tritonclient.grpc import service_pb2, service_pb2_grpc
 import tritonclient.grpc as grpcclient
+# import tritonclient.utils.shared_memory as shm
+import tritonclient.utils.cuda_shared_memory as cudashm
+from tritonclient.utils import InferenceServerException
+# import tritonclient.http as httpclient
+from tritonclient.utils import triton_to_np_dtype
+
 from api_trt.logger import logger
+from api_trt.modules.model_zoo.exec_backends.abstract import AbstractArcFace, AbstractDetectorInfer
+
 # import tritonclient.grpc.model_config_pb2 as mc
 
 
@@ -55,8 +55,8 @@ def parse_model_grpc(model_metadata, model_config):
     if len(input_metadata.shape) != expected_input_dims:
         raise Exception(
             "expecting input to have {} dimensions, model '{}' input has {}".
-                format(expected_input_dims, model_metadata.name,
-                       len(input_metadata.shape)))
+            format(expected_input_dims, model_metadata.name,
+                   len(input_metadata.shape)))
 
     if input_config.format == "FORMAT_NHWC":
         h = input_metadata.shape[1 if input_batch_dim else 0]
@@ -76,7 +76,7 @@ model_name = 'arcface_r100_v1'
 model_version = '1'
 
 
-class Arcface:
+class Arcface(AbstractArcFace):
     def __init__(self, rec_name='arcface_r100_v1', triton_uri='localhost:8001', model_version='1',
                  input_mean: float = 0.,
                  input_std: float = 1.,
@@ -170,7 +170,7 @@ class Arcface:
         return out[0]
 
 
-class DetectorInfer:
+class DetectorInfer(AbstractDetectorInfer):
 
     def __init__(self, model='retinaface_r50_v1', output_order=None, triton_uri='localhost:8001', model_version='1',
                  **kwargs):

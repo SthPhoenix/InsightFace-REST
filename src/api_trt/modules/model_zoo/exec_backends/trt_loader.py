@@ -3,8 +3,7 @@ import numpy as np
 import os
 import tensorrt as trt
 import cupyx
-
-
+from api_trt.logger import logger
 class HostDeviceMem(object):
     """
     A simple helper class for managing host and device memory buffers.
@@ -66,6 +65,7 @@ class HostDeviceMem(object):
             stream (cupy.cuda.Stream): The CUDA stream for asynchronous operations.
         """
         self.device.data.copy_to_host_async(self.hostptr, self.nbytes, stream)
+
 
 
 class TrtModel(object):

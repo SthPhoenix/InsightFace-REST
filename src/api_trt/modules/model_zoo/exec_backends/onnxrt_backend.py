@@ -1,10 +1,13 @@
-import onnxruntime
 import cv2
 import numpy as np
-import logging
-from api_trt.logger import logger
+import onnxruntime
 
-class Arcface:
+from api_trt.logger import logger
+from api_trt.modules.model_zoo.exec_backends.abstract import AbstractArcFace, AbstractFaceGenderAge, \
+    AbstractMaskDetection, AbstractDetectorInfer
+
+
+class Arcface(AbstractArcFace):
     def __init__(self, rec_name='/models/onnx/arcface_r100_v1/arcface_r100_v1.onnx',
                  input_mean: float = 0.,
                  input_std: float = 1.,
@@ -35,7 +38,7 @@ class Arcface:
         return net_out[0]
 
 
-class FaceGenderage:
+class FaceGenderage(AbstractFaceGenderAge):
 
     def __init__(self, rec_name='/models/onnx/genderage_v1/genderage_v1.onnx', outputs=None, **kwargs):
         self.rec_model = onnxruntime.InferenceSession(rec_name)
@@ -57,7 +60,6 @@ class FaceGenderage:
         face_img = np.stack(face_img)
         imgs = face_img.copy()
 
-
         if not face_img[0].shape == (3, 112, 112):
             input_size = tuple(face_img[0].shape[0:2][::-1])
             imgs = cv2.dnn.blobFromImages(face_img, 1.0, input_size,
@@ -76,7 +78,8 @@ class FaceGenderage:
             _ga.append((gender, age))
         return _ga
 
-class MaskDetection:
+
+class MaskDetection(AbstractMaskDetection):
 
     def __init__(self, rec_name='/models/onnx/genderage_v1/genderage_v1.onnx', outputs=None, **kwargs):
         self.rec_model = onnxruntime.InferenceSession(rec_name)
@@ -100,7 +103,7 @@ class MaskDetection:
                 face_img[i] = img
             face_img = np.stack(face_img)
 
-        face_img = np.multiply(face_img, 1/127.5, dtype='float32') - 1.
+        face_img = np.multiply(face_img, 1 / 127.5, dtype='float32') - 1.
         _mask = []
 
         ret = self.rec_model.run(self.outputs, {self.input.name: face_img})[0]
@@ -111,7 +114,7 @@ class MaskDetection:
         return _mask
 
 
-class DetectorInfer:
+class DetectorInfer(AbstractDetectorInfer):
 
     def __init__(self, model='/models/onnx/centerface/centerface.onnx',
                  output_order=None, **kwargs):
