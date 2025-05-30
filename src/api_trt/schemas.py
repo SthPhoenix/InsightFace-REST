@@ -9,7 +9,7 @@ settings = Settings()
 
 
 class Images(BaseModel):
-    data: Optional[List[str]] = pydantic.Field(default=None, example=None, description='List of base64 encoded images')
+    data: Optional[List[str] | List[bytes]] = pydantic.Field(default=None, example=None, description='List of base64 encoded images')
     urls: Optional[List[str]] = pydantic.Field(default=None,
                                                example=[example_img],
                                                description='List of images urls')
@@ -65,6 +65,9 @@ class BodyExtract(BaseModel):
     msgpack: Optional[bool] = pydantic.Field(default=False,
                                              example=False,
                                              description='Use MSGPACK for response serialization')
+    img_req_headers: Optional[dict] = pydantic.Field(default={},
+                                             example={},
+                                             description='Custom headers for image retrieving from remote servers')
 
 
 class BodyDraw(BaseModel):
