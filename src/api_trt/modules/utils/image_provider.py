@@ -18,8 +18,8 @@ from turbojpeg import TurboJPEG
 
 from api_trt.logger import logger
 from api_trt.modules.utils.helpers import tobool
+from api_trt.schemas import Images
 from api_trt.settings import Settings
-
 
 if tobool(os.getenv('USE_NVJPEG', False)):
     try:
@@ -33,9 +33,8 @@ if tobool(os.getenv('USE_NVJPEG', False)):
 else:
     jpeg = TurboJPEG()
 
-
 settings = Settings()
-headers = settings.defaults.img_req_headers
+def_headers = settings.defaults.img_req_headers
 
 
 def resize_image(image, max_size: list = None):
@@ -153,7 +152,7 @@ async def read_as_bytes(path, **kwargs):
         return _bytes
 
 
-def b64_to_bytes(b64encoded, **kwargs):
+def b64_to_bytes(b64encoded, b64_decode=True, **kwargs):
     """
     Decodes the base64 encoded string and returns it as a bytes object.
 
@@ -165,8 +164,11 @@ def b64_to_bytes(b64encoded, **kwargs):
     """
     __bin = None
     try:
-        __bin = b64encoded.split(",")[-1]
-        __bin = base64.b64decode(__bin)
+        if b64_decode:
+            __bin = b64encoded.split(",")[-1]
+            __bin = base64.b64decode(__bin)
+        else:
+            __bin = b64encoded
         __bin = sniff_gif(__bin)
         __bin = np.frombuffer(__bin, dtype='uint8')
     except Exception:
@@ -203,7 +205,7 @@ def decode_img_bytes(im_bytes, **kwargs):
 @retry(wait=wait_exponential(min=0.5, max=5), stop=stop_after_attempt(5), reraise=True,
        before_sleep=before_sleep_log(logger, logging.WARNING),
        retry=retry_if_not_exception_type(ValueError))
-async def make_request(url, session):
+async def make_request(url, session, headers: dict = None):
     """
     Makes a GET request to the given URL and returns the response. Retries on failure.
 
@@ -214,7 +216,9 @@ async def make_request(url, session):
     Returns:
         aiohttp.ClientResponse: The response from the server.
     """
-    resp = await session.get(url, allow_redirects=True)
+    if not headers:
+        headers = def_headers
+    resp = await session.get(url, allow_redirects=True, headers=headers)
     # Here we make an assumption that 404 and 403 codes shouldn't require retries.
     # Any other exception might be retried again.
     if resp.status in [404, 403]:
@@ -224,7 +228,7 @@ async def make_request(url, session):
     return resp
 
 
-async def dl_image(path, session: aiohttp.ClientSession = None, **kwargs):
+async def dl_image(path, session: aiohttp.ClientSession = None, headers=None, **kwargs):
     """
     Downloads the image from the given path and returns it as a bytes object.
 
@@ -238,7 +242,7 @@ async def dl_image(path, session: aiohttp.ClientSession = None, **kwargs):
     __bin = None
     try:
         if path.startswith('http'):
-            resp = await make_request(path, session)
+            resp = await make_request(path, session, headers=headers)
             content = await resp.content.read()
             data = sniff_gif(content)
             __bin = np.frombuffer(data, dtype='uint8')
@@ -292,7 +296,9 @@ def make_im_data(__bin, tb, decode=True):
     return im_data
 
 
-async def get_images(data: Dict[str, list], decode=True, session: aiohttp.ClientSession = None, **kwargs):
+async def get_images(data: Images, decode=True, session: aiohttp.ClientSession = None, b64_decode=True,
+                     headers: dict = None,
+                     **kwargs):
     """
     Downloads and decodes the images from the given data.
 
@@ -307,11 +313,11 @@ async def get_images(data: Dict[str, list], decode=True, session: aiohttp.Client
 
     images = []
 
-    if data.get('urls') is not None:
-        urls = data['urls']
+    if data.urls is not None:
+        urls = data.urls
         tasks = []
         for url in urls:
-            tasks.append(asyncio.ensure_future(dl_image(url, session=session)))
+            tasks.append(asyncio.ensure_future(dl_image(url, session=session, headers=headers)))
 
         results = await asyncio.gather(*tasks)
         for res in results:
@@ -319,11 +325,11 @@ async def get_images(data: Dict[str, list], decode=True, session: aiohttp.Client
             im_data = make_im_data(__bin, tb, decode=decode)
             images.append(im_data)
 
-    elif data.get('data') is not None:
-        b64_images = data['data']
+    elif data.data is not None:
+        b64_images = data.data
         images = []
         for b64_img in b64_images:
-            __bin, tb = b64_to_bytes(b64_img)
+            __bin, tb = b64_to_bytes(b64_img, b64_decode=b64_decode)
             im_data = make_im_data(__bin, tb, decode=decode)
             images.append(im_data)
 
