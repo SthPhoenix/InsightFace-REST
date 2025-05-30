@@ -42,7 +42,6 @@ in official DeepInsight InsightFace
 1. Clone repository:
    ```bash
     git clone https://github.com/SthPhoenix/InsightFace-REST
-    cd InsightFace-REST
    ```
 2. Move to `compose` dir:
    ```bash
