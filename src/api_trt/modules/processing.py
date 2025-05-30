@@ -1,17 +1,19 @@
-import io
 import importlib
-import logging
+import io
 import os
 import sys
 import time
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Annotated
 
 import aiohttp
 import cv2
 import numpy as np
-from api_trt.modules.utils.image_provider import get_images
-from api_trt.logger import logger
+from fastapi import Depends
 
+from api_trt.logger import logger
+from api_trt.modules.utils.image_provider import get_images
+from api_trt.schemas import Images
+from api_trt.settings import Settings
 
 f_model = os.getenv("FACE_MODEL_CLASS", "face_model")
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
@@ -33,7 +35,6 @@ class Processing:
                  force_fp16: bool = False,
                  triton_uri=None,
                  root_dir: str = '/models',
-                 dl_client: aiohttp.ClientSession = None,
                  **kwargs):
         """
         Processing class for detecting faces, extracting embeddings and drawing faces from images.
@@ -59,23 +60,34 @@ class Processing:
         self.max_rec_batch_size = max_rec_batch_size
         self.max_det_batch_size = max_det_batch_size
         self.det_name = det_name
+        self.rec_name = rec_name
+        self.ga_name = ga_name
         self.max_size = max_size
-        self.model = FaceAnalysis(det_name=det_name,
-                                  rec_name=rec_name,
-                                  ga_name=ga_name,
-                                  mask_detector=mask_detector,
+        self.mask_detector = mask_detector
+        self.force_fp16 = force_fp16
+        self.backend_name = backend_name
+        self.triton_uri = triton_uri
+        self.root_dir = root_dir
+        self.dl_client = None
+        self.model: FaceAnalysis = None
+
+    async def start(self, dl_client: aiohttp.ClientSession = None):
+        self.dl_client = dl_client
+        self.model = FaceAnalysis(det_name=self.det_name,
+                                  rec_name=self.rec_name,
+                                  ga_name=self.ga_name,
+                                  mask_detector=self.mask_detector,
                                   max_size=self.max_size,
                                   max_rec_batch_size=self.max_rec_batch_size,
                                   max_det_batch_size=self.max_det_batch_size,
-                                  backend_name=backend_name,
-                                  force_fp16=force_fp16,
-                                  triton_uri=triton_uri,
-                                  root_dir=root_dir
+                                  backend_name=self.backend_name,
+                                  force_fp16=self.force_fp16,
+                                  triton_uri=self.triton_uri,
+                                  root_dir=self.root_dir
                                   )
-        self.dl_client = dl_client
 
     async def extract(self,
-                      images: Dict[str, list],
+                      images: Images,
                       max_size: List[int] = None,
                       threshold: float = 0.6,
                       limit_faces: int = 0,
@@ -87,6 +99,8 @@ class Processing:
                       return_landmarks: bool = False,
                       detect_masks: bool = False,
                       verbose_timings=True,
+                      b64_decode=True,
+                      img_req_headers=None,
                       **kwargs):
         """
         Extracts faces from images.
@@ -109,22 +123,27 @@ class Processing:
             Dict[str, Union[List[Dict], bytes]]: A dictionary containing extracted faces and timing information.
         """
 
+        if img_req_headers is None:
+            img_req_headers = {}
+
         if not max_size:
             max_size = self.max_size
 
         t0 = time.time()
 
         tl0 = time.time()
-        images = await get_images(images, decode=self.model.decode_required, session = self.dl_client)
+        images = await get_images(images, decode=self.model.decode_required, session=self.dl_client,
+                                  b64_decode=b64_decode, headers=img_req_headers)
+
         tl1 = time.time()
         took_loading = tl1 - tl0
         logger.debug(f'Reading images took: {took_loading * 1000:.3f} ms.')
 
         if embed_only:
             _faces_dict = await self.model.embed_crops(images,
-                                                 extract_embedding=extract_embedding,
-                                                 extract_ga=extract_ga,
-                                                 detect_masks=detect_masks)
+                                                       extract_embedding=extract_embedding,
+                                                       extract_ga=extract_ga,
+                                                       detect_masks=detect_masks)
             return _faces_dict
 
         else:
@@ -150,7 +169,7 @@ class Processing:
             return output
 
     async def draw(self,
-                   images: Union[Dict[str, list], bytes],
+                   images: Images,
                    threshold: float = 0.6,
                    draw_landmarks: bool = True,
                    draw_scores: bool = True,
@@ -206,3 +225,27 @@ class Processing:
         is_success, buffer = cv2.imencode(".jpg", image)
         io_buf = io.BytesIO(buffer)
         return io_buf
+
+
+processing: Processing | None = None
+
+
+async def get_processing() -> Processing:
+    global processing
+    settings = Settings()
+    if not processing:
+        processing = Processing(det_name=settings.models.det_name, rec_name=settings.models.rec_name,
+                                ga_name=settings.models.ga_name,
+                                mask_detector=settings.models.mask_detector,
+                                max_size=settings.models.max_size,
+                                max_rec_batch_size=settings.models.rec_batch_size,
+                                max_det_batch_size=settings.models.det_batch_size,
+                                backend_name=settings.models.inference_backend,
+                                force_fp16=settings.models.force_fp16,
+                                triton_uri=settings.models.triton_uri,
+                                root_dir='/models'
+                                )
+    return processing
+
+
+ProcessingDep = Annotated[Processing, Depends(get_processing)]
