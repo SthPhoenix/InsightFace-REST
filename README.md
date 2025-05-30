@@ -49,11 +49,16 @@ in official DeepInsight InsightFace
    cd InsightFace-REST/compose
    ```
 
-3. Run docker compose:
+3. Build image:
+   ```bash
+   docker compose build
+   ```
+
+4. Run docker compose:
    ```bash
    docker compose up
    ```
-4. Access API documentation: http://localhost:18081/docs
+5. Access API documentation: http://localhost:18081/docs
 
 For other deployment options refer to [README.md](https://github.com/SthPhoenix/InsightFace-REST/blob/master/compose/README.md) in `compose` directory.
 
