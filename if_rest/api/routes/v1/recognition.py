@@ -65,7 +65,7 @@ async def extract(data: BodyExtract,
         b64_decode = True
         if content_type == 'application/msgpack':
             b64_decode = False
-        output = await processing.extract(data.images, max_size=data.max_size, return_face_data=data.return_face_data,
+        output = await processing.extract(data.images, return_face_data=data.return_face_data,
                                           embed_only=data.embed_only, extract_embedding=data.extract_embedding,
                                           threshold=data.threshold, extract_ga=data.extract_ga,
                                           limit_faces=data.limit_faces, min_face_size=data.min_face_size,
