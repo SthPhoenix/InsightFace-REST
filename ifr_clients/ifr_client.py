@@ -86,6 +86,7 @@ class IFRClient:
             return_landmarks: bool = False,
             embed_only: bool = False,
             limit_faces: int = 0,
+            min_face_size: int = 0,
             img_req_headers: Dict[str, str] = None,
             use_msgpack: bool = True,
             raw_response: bool = True
@@ -108,6 +109,7 @@ class IFRClient:
             return_landmarks: Whether to include facial landmarks in response
             embed_only: Set True if input images are pre-cropped faces (112x112)
             limit_faces: Maximum faces to process per image (0 = no limit)
+            min_face_size: Faces smaller than this value will be ignored (0 = no limit)
             img_req_headers: Headers to use for requesting images from remote servers.
             use_msgpack: Use MessagePack for faster binary serialization and bandwidth savings.
             raw_response: Return raw dictionary instead of parsed response object
@@ -143,6 +145,7 @@ class IFRClient:
                    return_landmarks=return_landmarks,
                    embed_only=embed_only,  # If set to true API expects each image to be 112x112 face crop
                    limit_faces=limit_faces,  # 0 = process all detected faces
+                   min_face_size=min_face_size,
                    msgpack=use_msgpack,
                    img_req_headers=img_req_headers
                    )
