@@ -1,1 +1,2 @@
 from ifr_clients.ifr_client import IFRClient
+from ifr_clients.ifr_client_async import IFRClientAsync
