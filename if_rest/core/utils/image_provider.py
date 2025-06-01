@@ -221,7 +221,7 @@ async def make_request(url, session, headers: dict = None):
     resp = await session.get(url, allow_redirects=True, headers=headers)
     # Here we make an assumption that 404 and 403 codes shouldn't require retries.
     # Any other exception might be retried again.
-    if resp.status in [404, 403]:
+    if resp.status in [404, 403, 401]:
         raise ValueError(f"Failed to get data from {url}. Status code: {resp.status}")
     if resp.status >= 400:
         raise aiohttp.ClientResponseError(resp.request_info, status=resp.status, history=())
