@@ -1,5 +1,5 @@
 import logging
-from typing import Union, Dict, Any, List
+from typing import Union, Dict, Any, List, Literal
 
 import msgpack
 import requests
@@ -79,7 +79,7 @@ class IFRClient:
     def extract(
             self,
             data: List[Union[str, bytes]],
-            mode: str = 'paths',
+            mode: Literal['paths', 'data'] = 'paths',
             threshold: float = 0.6,
             extract_embedding: bool = True,
             return_face_data: bool = False,
