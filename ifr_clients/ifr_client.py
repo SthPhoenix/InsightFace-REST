@@ -86,6 +86,7 @@ class IFRClient:
             return_landmarks: bool = False,
             embed_only: bool = False,
             limit_faces: int = 0,
+            img_req_headers: Dict[str, str] = None,
             use_msgpack: bool = True,
             raw_response: bool = True
     ) -> Union[RecognitionResponse, dict]:
@@ -107,12 +108,16 @@ class IFRClient:
             return_landmarks: Whether to include facial landmarks in response
             embed_only: Set True if input images are pre-cropped faces (112x112)
             limit_faces: Maximum faces to process per image (0 = no limit)
+            img_req_headers: Headers to use for requesting images from remote servers.
             use_msgpack: Use MessagePack for faster binary serialization and bandwidth savings.
             raw_response: Return raw dictionary instead of parsed response object
 
         Returns:
             Processed recognition results either as RecognitionResponse object or raw dict
         """
+
+        if not img_req_headers:
+            img_req_headers = {}
 
         extract_uri = f'{self.server}/extract'
 
@@ -139,6 +144,7 @@ class IFRClient:
                    embed_only=embed_only,  # If set to true API expects each image to be 112x112 face crop
                    limit_faces=limit_faces,  # 0 = process all detected faces
                    msgpack=use_msgpack,
+                   img_req_headers=img_req_headers
                    )
 
         # Send request with appropriate serialization
